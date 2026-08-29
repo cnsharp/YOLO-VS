@@ -16,7 +16,7 @@ A VSIX extension that integrates AI Agents into Visual Studio 2022, providing ca
 
 ## Tech stack
 
-- **Extension skeleton**: `Microsoft.VisualStudio.SDK` 17.14.x (`AsyncPackage`)
+- **Extension skeleton**: `Microsoft.VisualStudio.SDK` 17.0.31902.203 (`AsyncPackage`)
 - **UI framework**: WPF (tool window content)
 - **Target framework**: `net472` (maximizes compatibility with the VS Shell / COM interop)
 - **Debug target**: Visual Studio 2026 (v18), debugged via the VSIX experimental instance with F5
@@ -27,85 +27,95 @@ A VSIX extension that integrates AI Agents into Visual Studio 2022, providing ca
 
 ```
 yolo-vs/
-  YoloVS.csproj              # Project file
-  source.extension.vsixmanifest  # VSIX manifest
-  YoloPackage.cs             # AsyncPackage entry point
-  Constants.cs               # Constant definitions
-  Resources.resx             # Localization resources
+  Yolo.csproj                 # SDK-style project file (net472)
+  Yolo.sln                    # Solution
+  Yolo.vsct                   # Command table: View menu + Ctrl+W,Y
+  source.extension.vsixmanifest  # VSIX manifest (InstallationTarget [17.0,19.0))
+  YoloPackage.cs              # AsyncPackage entry point
+  YoloToolWindowCommand.cs    # View-menu command (toggles the tool window)
+  Constants.cs                # Constant definitions
+  agents.json                 # Agent metadata (embedded resource)
+  Resources.resx / Resources.Designer.cs  # Localization resources
+  Properties/AssemblyInfo.cs
 
   ToolWindow/
-    YoloToolWindowPane.cs    # Tool window panel
-    YoloPanel.xaml(.cs)      # Panel UI and code-behind
+    YoloToolWindowPane.cs     # ToolWindowPane
+    YoloPanel.xaml(.cs)       # Panel UI (dropdown + Y/R toggles + multi-tab terminal)
 
-  Terminal/
-    YoloTerminalHost.cs      # Terminal host (ConPTY wrapper)
+  Terminal/                   # Hand-drawn ConPTY terminal (no WebView2 / HwndHost)
+    ConPty.cs                 # CreatePseudoConsole / ResizePseudoConsole / Close P/Invoke
+    ConPtyTerminal.cs         # Process + PTY lifecycle, pending command/env buffering
+    TerminalEmulator.cs       # VT/ANSI escape-sequence parsing
+    TerminalSurface.cs        # Hand-drawn text grid (cell metrics)
+    WpfTerminalView.xaml(.cs) # WPF host control
+    TerminalPalette.cs / CharWidth.cs / ITerminalView.cs / Logger.cs
 
-  Links/
-    YoloLinkPatterns.cs      # Regex patterns
-    YoloHyperlink.cs         # Link model
-    FileLinkFilter.cs        # File-path links
-    StackTraceLinkFilter.cs  # Stack-frame links
-    OutputLinkInterceptor.cs # Output interceptor
-
-  Navigation/
-    YoloNavigation.cs         # File/symbol navigation
-    ProjectTypesSnapshot.cs   # Project-type snapshot
+  Links/                      # Terminal output hyperlink detection
+    YoloLinkPatterns.cs       # Regex patterns
+    YoloHyperlink.cs          # Link model (LinkMatch / LinkTarget / LinkKind)
+    FileLinkFilter.cs         # File-path links
+    StackTraceLinkFilter.cs   # Stack-frame / bare file-name links
+    TypeLinkFilter.cs         # Type-name links
+    MemberLinkFilter.cs       # Class.member links
+    UrlLinkFilter.cs          # URL links
+    OutputLinkInterceptor.cs  # Output interceptor entry point
 
   Agents/
-    agents.json              # Agent metadata (separated from code, embedded resource)
-    AgentRegistry.cs         # Loads and queries agents.json
-    InstalledAgents.cs       # Installed Agent list
-    AgentDetector.cs         # Agent detection
-    CommandValidator.cs      # Command validation
-    DefaultSkipEnvs.cs       # Default skip environment variables (from agents.json)
-    ExecutableNames.cs       # Executable names
-    IconResolver.cs          # Icon resolver (icons from agents.json)
+    AgentRegistry.cs           # Loads and queries agents.json
+    AgentDetector.cs           # PATH + --version probing
+    InstalledAgents.cs        # Installed-set cache + background re-scan
+    AgentIconImage.cs          # SVG/PNG icon rendering
+    DefaultSkipEnvs.cs        # env-style bypass (e.g. GOOSE_MODE=auto)
+    ExecutableNames.cs         # Executable-name normalization
 
   Options/
-    YoloOptionsPage.cs       # Settings page
-    YoloSettings.cs          # Persisted settings
+    YoloOptionsPage.cs         # DialogPage (Tools > Options > YOLO > Agents)
+    YoloOptionsControl.xaml(.cs)
+    YoloSettingsDialog.xaml(.cs)
+    YoloSettings.cs            # Persistence (XmlSerializer)
+    AgentModels.cs             # Settings-page data model
+
+  Resources/                  # Brand tile + icons
+    pluginIcon.png / pluginIcon.svg / pluginIcon_dark.svg
+    icons/agents/*             # Per-agent icons (from the IDEA version)
+    icons/skipY*, resume*      # Y/R toggle icon geometry
 ```
 
 ## Build
 
 ```bash
-# Build with the .NET CLI
-dotnet build
+# Build with the .NET CLI (name the csproj explicitly — the repo has several sln/csproj files)
+dotnet build Yolo.csproj -c Debug
 
 # Or use Visual Studio
-# Open YoloVS.sln and press F6 to build
+# Open Yolo.sln and press F6 to build
 ```
 
 ## Debug
 
-1. Open `YoloVS.sln` (or `YoloVS.csproj`) in **Visual Studio 2026**
+1. Open `Yolo.sln` (or `Yolo.csproj`) in **Visual Studio 2026**
 2. Press **F5** to launch the VS2026 extension experimental instance
-3. In the experimental instance, open the tool window via the menu `View > Other Windows > YOLO`
+3. In the experimental instance, open the tool window via the top-level **YOLO** entry on the **View** menu, or press **Ctrl+W, Y**
    - Open the settings page via `Tools > Options > YOLO` (corresponds to `YoloOptionsPage`)
-4. The terminal placeholder area is currently a `TextBox` mock; selecting an Agent triggers a simulated response (the real ConPTY terminal is in the TODO below)
+4. The terminal is a real hand-drawn ConPTY (see `Terminal/`); launching an Agent runs it as a live process inside a new tab.
 
 ## Risks and TODO
 
-### Highest risk: terminal implementation
+### Terminal
 
-The current implementation uses a `TextBox` as a placeholder; the following work remains:
+The hand-drawn ConPTY terminal is implemented (`Terminal/ConPty*` + `TerminalEmulator` + `TerminalSurface` + `WpfTerminalView`); the SPIKE concluded against hosting Windows Terminal's control. Remaining polish:
 
-1. **SPIKE Step 2**: validate the ConPTY terminal approach
-   - Option 1 (preferred): host Windows Terminal's `TerminalControl`
-   - Option 2 (fallback): hand-drawn ConPTY + RichTextBox
+- HiDPI / font-scaling edge cases
+- Selection / copy from the terminal grid
 
-2. **Link filtering**: implement `OutputLinkInterceptor` to intercept the terminal output stream
-   - Match file paths with regex
-   - Generate clickable links
-   - Implement file navigation
+### Link filtering
+
+Terminal output hyperlink detection lives in `Links/` (regex patterns + per-type filters + interceptor). Wiring the painted spans to click navigation is ongoing.
 
 ### Phase 2 features
 
-- Type-name / member links (using `ISymbolSearchService`)
-- URL links (open in the system browser)
 - Full settings page (table, duplicate validation, Validate, icon download)
-- Agent detection cache + background re-scan
-- HiDPI / font-scaling polish
+- Agent detection cache + background re-scan (refresh behaviour)
 - Chinese/English localization
 - Package the `.vsix` + Marketplace publishing
 
