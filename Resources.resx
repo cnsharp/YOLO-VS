@@ -205,6 +205,12 @@
   <data name="Settings_IconPathInvalid" xml:space="preserve">
     <value>Icon path is not a valid local file: {0}</value>
   </data>
+  <data name="Settings_IconNotImage" xml:space="preserve">
+    <value>Icon is not a valid image file: {0}</value>
+  </data>
+  <data name="Settings_IconDownloadFailed" xml:space="preserve">
+    <value>Failed to download icon from: {0}</value>
+  </data>
   <data name="Settings_ValidationPassed" xml:space="preserve">
     <value>Validation passed.</value>
   </data>

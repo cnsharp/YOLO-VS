@@ -122,8 +122,13 @@ namespace CnSharp.VSIX.Yolo
 
         public void SaveToSettings()
         {
-            var settings = YoloSettings.Instance;
+            // Download any still-network (http/https) icon locally before persisting, so the
+            // saved IconPath works offline. Validate already rewrites most rows; this is the
+            // safety net for an OK-without-Validate click.
+            foreach (var row in Rows)
+                row.IconPath = EnsureLocalIconPath(row.IconPath ?? string.Empty, row.Id);
 
+            var settings = YoloSettings.Instance;
             // ① Permission (skip) rules — one per row that has both a command and a flag.
             var rules = new List<PermissionRule>();
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -312,14 +317,17 @@ namespace CnSharp.VSIX.Yolo
                 {
                     var cmd = (row.Command ?? string.Empty).Trim();
                     bool ok = cmd.Length > 0 && AgentDetector.CanExecute(cmd);
-                    bool iconOk = string.IsNullOrWhiteSpace(row.IconPath) || IconPathValid(row.IconPath);
+                    // Validate (and, for network URLs, download) the icon; replaces the row's
+                    // IconPath with a local path when it was a http(s) URL.
+                    bool iconOk = ValidateIcon(row, out var iconMsg);
+
                     Dispatcher.InvokeAsync(() =>
                     {
                         row.IsInstalled = ok;
                         if (!ok)
                             SetStatus(string.Format(CnSharp.VSIX.Yolo.Resources.Settings_CommandNotFoundOnPath, cmd), true);
                         else if (!iconOk)
-                            SetStatus(string.Format(CnSharp.VSIX.Yolo.Resources.Settings_IconPathInvalid, row.IconPath), true);
+                            SetStatus(iconMsg, true);
                         else
                             SetStatus(CnSharp.VSIX.Yolo.Resources.Settings_ValidationPassed, false);
                     });
@@ -327,15 +335,137 @@ namespace CnSharp.VSIX.Yolo
             });
         }
 
-        private static bool IconPathValid(string path)
+        /// <summary>
+        /// Checks an agent row's icon: it must resolve to a real, loadable image. <c>res://</c>
+        /// specs pass by format; a <c>http(s)://</c> URL is downloaded into the local YOLO icon
+        /// folder and the row's <see cref="AgentRow.IconPath"/> is rewritten to that local path
+        /// (so the icon is stored offline and machine-stable). Returns false (and sets
+        /// <paramref name="message"/>) when the icon is missing, not a valid image, or won't download.
+        /// </summary>
+        private bool ValidateIcon(AgentRow row, out string message)
         {
-            if (path.StartsWith("res://", StringComparison.OrdinalIgnoreCase))
-                return true;
-            if (path.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
-                || path.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-                return Uri.TryCreate(path, UriKind.Absolute, out _);
-            return File.Exists(path);
+            message = string.Empty;
+            var path = (row.IconPath ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(path)) return true;
+
+            if (path.StartsWith("res://", StringComparison.OrdinalIgnoreCase)) return true;
+
+            if (IsNetworkIcon(path))
+            {
+                var local = DownloadNetworkIcon(path, row.Id);
+                if (local == null)
+                {
+                    message = string.Format(CnSharp.VSIX.Yolo.Resources.Settings_IconDownloadFailed, path);
+                    return false;
+                }
+                // Rewrite the row (and, if selected, the editor preview) to the local path.
+                Dispatcher.InvokeAsync(() =>
+                {
+                    row.IconPath = local;
+                    if (AgentsGrid.SelectedItem == row)
+                    {
+                        IconPathBox.Text = local;
+                        IconPreview.Source = AgentIconImage.FromPath(local);
+                    }
+                });
+                var decodes = AgentIconImage.FromPath(local) != null;
+                if (!decodes)
+                    message = string.Format(CnSharp.VSIX.Yolo.Resources.Settings_IconNotImage, local);
+                return decodes;
+            }
+
+            // Local file: must exist AND decode as a real image (PNG/JPG/SVG/…).
+            if (!File.Exists(path))
+            {
+                message = string.Format(CnSharp.VSIX.Yolo.Resources.Settings_IconPathInvalid, path);
+                return false;
+            }
+            var ok = AgentIconImage.FromPath(path) != null;
+            if (!ok)
+                message = string.Format(CnSharp.VSIX.Yolo.Resources.Settings_IconNotImage, path);
+            return ok;
         }
+
+        private static bool IsNetworkIcon(string path)
+            => path.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("https://", StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// Returns <paramref name="rawPath"/> unchanged unless it is a network URL, in which case
+        /// it is downloaded (see <see cref="DownloadNetworkIcon"/>) and the local path is returned.
+        /// On failure the original URL is kept so the icon still works online.
+        /// </summary>
+        private static string EnsureLocalIconPath(string rawPath, string toolId)
+        {
+            if (string.IsNullOrWhiteSpace(rawPath) || !IsNetworkIcon(rawPath)) return rawPath;
+            try { return DownloadNetworkIcon(rawPath, toolId) ?? rawPath; }
+            catch { return rawPath; }
+        }
+
+        /// <summary>
+        /// Downloads a network icon (http/https) into <c>%LocalAppData%/YoloVS/Icons</c>, names it
+        /// from the tool id (like <see cref="CopyIconToUserDir"/>), and returns the local path.
+        /// Returns null on any failure (bad URL, network error, unreadable response).
+        /// </summary>
+        private static string? DownloadNetworkIcon(string url, string toolId)
+        {
+            try
+            {
+                var iconsDir = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "YoloVS", "Icons");
+                Directory.CreateDirectory(iconsDir);
+
+                byte[] bytes;
+                using (var client = new System.Net.WebClient())
+                {
+                    client.Headers[System.Net.HttpRequestHeader.UserAgent] = "YoloVS";
+                    bytes = client.DownloadData(url);
+                }
+
+                var ext = GuessImageExtension(url, bytes);
+                var baseName = string.IsNullOrWhiteSpace(toolId)
+                    ? Guid.NewGuid().ToString("N")
+                    : new string(toolId.Where(ch => !Path.GetInvalidFileNameChars().Contains(ch)).ToArray());
+                if (string.IsNullOrEmpty(baseName)) baseName = Guid.NewGuid().ToString("N");
+
+                var dest = Path.Combine(iconsDir, baseName + ext);
+                File.WriteAllBytes(dest, bytes);
+                return dest;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>Pick a file extension from the URL's own path, else sniff the bytes' magic.</summary>
+        private static string GuessImageExtension(string url, byte[] bytes)
+        {
+            try
+            {
+                var urlExt = Path.GetExtension(new Uri(url).LocalPath);
+                if (!string.IsNullOrEmpty(urlExt) && KnownImageExtensions.Contains(urlExt))
+                    return urlExt;
+            }
+            catch { /* fall through to sniffing */ }
+
+            if (bytes.Length >= 4 && bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47) return ".png";
+            if (bytes.Length >= 3 && bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF) return ".jpg";
+            if (bytes.Length >= 6 && bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46) return ".gif";
+            if (bytes.Length >= 12 && bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46
+                && bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50) return ".webp";
+            if (bytes.Length >= 2 && bytes[0] == 0x42 && bytes[1] == 0x4D) return ".bmp";
+            // SVG / XML text payload
+            if (bytes.Length > 0 && (bytes[0] == (byte)'<' || (bytes.Length >= 5 && bytes[1] == (byte)'?')))
+                return ".svg";
+            return ".png";
+        }
+
+        private static readonly HashSet<string> KnownImageExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".svg"
+        };
 
         private void BrowseButton_Click(object sender, RoutedEventArgs e)
         {

@@ -412,6 +412,24 @@ namespace CnSharp.VSIX.Yolo {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Icon is not a valid image file: {0}.
+        /// </summary>
+        public static string Settings_IconNotImage {
+            get {
+                return ResourceManager.GetString("Settings_IconNotImage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to download icon from: {0}.
+        /// </summary>
+        public static string Settings_IconDownloadFailed {
+            get {
+                return ResourceManager.GetString("Settings_IconDownloadFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Image files (*.svg;*.png;*.jpg)|*.svg;*.png;*.jpg|All files (*.*)|*.*.
         /// </summary>
         public static string Settings_ImageFilter {
