@@ -1,0 +1,24 @@
+<Window x:Class="CnSharp.VSIX.Yolo.YoloSettingsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:CnSharp.VSIX.Yolo"
+        Width="780" Height="580"
+        MinWidth="620" MinHeight="440"
+        Title="{x:Static local:Resources.Dialog_Title}"
+        WindowStartupLocation="CenterScreen"
+        ShowInTaskbar="False">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- The same settings UI used by the Tools > Options page, hosted directly. -->
+        <local:YoloOptionsControl x:Name="OptionsControl" Grid.Row="0"/>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="8">
+            <Button Content="{x:Static local:Resources.Dialog_OK}" Width="80" IsDefault="True" Click="Ok_Click"/>
+            <Button Content="{x:Static local:Resources.Dialog_Cancel}" Width="80" Margin="8,0,0,0" IsCancel="True" Click="Cancel_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

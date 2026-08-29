@@ -1,0 +1,41 @@
+# Build output
+bin/
+obj/
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio / VSIX
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+*.vsix
+*.vsixmanifest
+
+# Rider / ReSharper
+.idea/
+*.DotSettings
+
+# NuGet
+*.nupkg
+nuget-packages/
+packages/
+
+# Test results
+TestResults/
+*.trx
+
+# Logs
+*.log
+
+# Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# OSX
+.DS_Store
+
+# Local app data produced at runtime (YOLO user icons, settings)
+AppData/

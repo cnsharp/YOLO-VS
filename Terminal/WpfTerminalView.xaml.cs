@@ -1,0 +1,216 @@
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Threading;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Threading;
+
+#pragma warning disable VSTHRD001 // Dispatcher marshaling from the pty reader thread is intentional
+#pragma warning disable VSTHRD110 // Fire-and-forget dispatcher marshal is intentional
+
+namespace CnSharp.VSIX.Yolo
+{
+    /// <summary>
+    /// The <see cref="ITerminalView"/> implementation used by the tool window: a
+    /// WPF-rendered terminal. It owns the <see cref="TerminalSurface"/> (screen) and
+    /// translates keystrokes into the byte sequences a pty expects.
+    /// </summary>
+    internal partial class WpfTerminalView : UserControl, ITerminalView
+    {
+        private readonly List<byte[]> _pending = new List<byte[]>();
+        private int _flushScheduled;
+        private bool _loggedFirstPaint;
+
+        public event Action<byte[]>? InputReceived;
+        public event Action? Resized;
+
+        public WpfTerminalView()
+        {
+            InitializeComponent();
+            Screen.CellSizeChanged += OnCellSizeChanged;
+            PreviewMouseWheel += OnPreviewMouseWheel;
+            Loaded += (_, __) =>
+            {
+                Log.Write($"WpfTerminalView loaded: {Screen.Columns}x{Screen.Rows}");
+                InputCapture.Focus();
+            };
+        }
+
+        public int Columns => Screen.Columns;
+        public int Rows => Screen.Rows;
+
+        private void OnCellSizeChanged()
+        {
+            Resized?.Invoke();
+        }
+
+        /// <summary>
+        /// Queues pty bytes and coalesces them into a single UI-thread flush per frame,
+        /// so a chatty TUI cannot flood the dispatcher.
+        /// </summary>
+        public void WriteOutput(byte[] data)
+        {
+            if (data == null || data.Length == 0) return;
+            lock (_pending) _pending.Add(data);
+
+            if (Interlocked.Exchange(ref _flushScheduled, 1) == 0)
+                Dispatcher.BeginInvoke(new Action(Flush), DispatcherPriority.Render);
+        }
+
+        private void Flush()
+        {
+            List<byte[]> batch;
+            lock (_pending)
+            {
+                batch = new List<byte[]>(_pending);
+                _pending.Clear();
+            }
+            Interlocked.Exchange(ref _flushScheduled, 0);
+
+            int total = 0;
+            foreach (var chunk in batch)
+            {
+                Screen.Emulator.Write(chunk);
+                total += chunk.Length;
+            }
+            Screen.InvalidateVisual();
+
+            if (!_loggedFirstPaint && total > 0)
+            {
+                _loggedFirstPaint = true;
+                Log.Write($"WpfTerminalView: first paint, {total} bytes into {Screen.Columns}x{Screen.Rows}");
+            }
+        }
+
+        private void OnMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            InputCapture.Focus();
+        }
+
+        private void OnFocusChanged(object sender, KeyboardFocusChangedEventArgs e)
+        {
+            Screen.ShowCursor = InputCapture.IsKeyboardFocused;
+            Screen.InvalidateVisual();
+        }
+
+        private void Send(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return;
+            // Any keystroke snaps the view back to the live prompt instead of typing into
+            // the history that the user happened to be reviewing.
+            if (!Screen.Emulator.AtBottom)
+            {
+                Screen.Emulator.ScrollToBottom();
+                Screen.InvalidateVisual();
+            }
+            InputReceived?.Invoke(Encoding.UTF8.GetBytes(s));
+        }
+
+        private void OnPreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            // Wheel over the terminal reviews scrollback (unless a full-screen app owns it).
+            if (Screen.Emulator.InAltScreen) return;
+            int lines = e.Delta > 0 ? 3 : -3;
+            Screen.Emulator.Scroll(lines);
+            Screen.InvalidateVisual();
+            e.Handled = true;
+        }
+
+        private void OnPreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            // Keep the capture box empty; it exists only to receive input, never to display.
+            InputCapture.Clear();
+            if (string.IsNullOrEmpty(e.Text)) return;
+            Send(e.Text);
+            e.Handled = true;
+        }
+
+        private void OnPreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            var mods = Keyboard.Modifiers;
+            bool ctrl = (mods & ModifierKeys.Control) != 0;
+            bool alt = (mods & ModifierKeys.Alt) != 0;
+
+            // Plain Space is sent directly. Relying on PreviewTextInput alone drops spaces: a
+            // focused TextBox frequently raises PreviewTextInput for Space with an empty/whitespace
+            // Text, so OnPreviewTextInput's IsNullOrEmpty guard silently discards it. Ctrl+Space
+            // still falls through to Translate (it maps to NUL for some TUIs).
+            if (e.Key == Key.Space && !ctrl && !alt)
+            {
+                Send(" ");
+                e.Handled = true;
+                return;
+            }
+
+            string? seq = Translate(e.Key, ctrl, alt, (mods & ModifierKeys.Shift) != 0);
+            if (seq == null) return;
+
+            Send(seq);
+            e.Handled = true;
+        }
+
+        /// <summary>
+        /// Maps a WPF key to the bytes a VT terminal would send. Returns null for keys
+        /// that should fall through to <see cref="OnTextInput"/> (ordinary characters).
+        /// </summary>
+        private static string? Translate(Key key, bool ctrl, bool alt, bool shift)
+        {
+            if (ctrl && !alt)
+            {
+                if (key >= Key.A && key <= Key.Z)
+                    return ((char)(key - Key.A + 1)).ToString();
+                switch (key)
+                {
+                    case Key.OemOpenBrackets: return "\x1b";
+                    case Key.OemCloseBrackets: return "\x1d";
+                    case Key.Oem5: return "\x1c";      // backslash
+                    case Key.Space: return "\0";
+                }
+            }
+
+            switch (key)
+            {
+                case Key.Enter: return "\r";
+                case Key.Back: return "\x7f";
+                case Key.Tab: return shift ? "\x1b[Z" : "\t";
+                case Key.Escape: return "\x1b";
+                case Key.Up: return "\x1b[A";
+                case Key.Down: return "\x1b[B";
+                case Key.Right: return "\x1b[C";
+                case Key.Left: return "\x1b[D";
+                case Key.Home: return "\x1b[H";
+                case Key.End: return "\x1b[F";
+                case Key.Insert: return "\x1b[2~";
+                case Key.Delete: return "\x1b[3~";
+                case Key.PageUp: return "\x1b[5~";
+                case Key.PageDown: return "\x1b[6~";
+                case Key.F1: return "\x1bOP";
+                case Key.F2: return "\x1bOQ";
+                case Key.F3: return "\x1bOR";
+                case Key.F4: return "\x1bOS";
+                case Key.F5: return "\x1b[15~";
+                case Key.F6: return "\x1b[17~";
+                case Key.F7: return "\x1b[18~";
+                case Key.F8: return "\x1b[19~";
+                case Key.F9: return "\x1b[20~";
+                case Key.F10: return "\x1b[21~";
+                case Key.F11: return "\x1b[23~";
+                case Key.F12: return "\x1b[24~";
+            }
+
+            return null;
+        }
+
+        /// <summary>Moves keyboard focus into the terminal (used by the tool window).</summary>
+        public void FocusTerminal()
+        {
+            // Keyboard.Focus moves the focus within the WPF focus scope; the TextBox.Focus()
+            // call also requests Win32 focus so the VS shell hands keystrokes to the box.
+            Keyboard.Focus(InputCapture);
+            InputCapture.Focus();
+            Log.Write($"WpfTerminalView.FocusTerminal: focused={InputCapture.IsKeyboardFocused}");
+        }
+    }
+}

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <Extern href="stdidcmd.h" />
+  <Extern href="vsshlids.h" />
+
+  <!-- Element order is constrained by VSCT.xsd (see %VSINSTALLDIR%\Xml\Schemas\VSCT.xsd):
+         [Extern | Include | Define | Symbols]*  Commands  [CommandPlacements |
+         VisibilityConstraints | KeyBindings | UsedCommands]*
+       So <Symbols> comes BEFORE <Commands> and <KeyBindings> comes after it. Putting
+       <Symbols> last (as several samples do) validates fine at build time but produces a
+       spurious XSD error in the XML editor. -->
+  <Symbols>
+    <GuidSymbol name="guidYoloPackage" value="{6f4e2c1a-8b3d-4e5f-9a7c-1d2e3f4a5b6c}" />
+    <GuidSymbol name="guidYoloCmdSet" value="{2b5e1d4a-3c6f-4a8b-9c2d-7e1f4a5b6c7d}">
+      <IDSymbol name="IDG_YOLO_VIEW" value="0x1020" />
+      <IDSymbol name="cmdidYoloToolWindow" value="0x0100" />
+    </GuidSymbol>
+    <GuidSymbol name="guidImages" value="{9c1a2b3d-4e5f-6a7b-8c9d-0e1f2a3b4c5e}">
+      <IDSymbol name="bmpYolo" value="1" />
+    </GuidSymbol>
+  </Symbols>
+
+  <Commands package="guidYoloPackage">
+    <!-- YOLO is its own top-level entry directly on the View menu (IDM_VS_MENU_VIEW = 0x0082),
+         not inside the "Other Windows" cascade. The group's priority controls where the YOLO
+         section lands among the View menu's own groups: lower sorts earlier (higher up). 0x0100
+         puts it near the top of the View menu, above the windows section that ends in
+         "Other Windows". Raise the priority to move the YOLO section further down. -->
+    <Groups>
+      <Group guid="guidYoloCmdSet" id="IDG_YOLO_VIEW" priority="0x0900">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_VIEW" />
+      </Group>
+    </Groups>
+
+    <Buttons>
+      <Button guid="guidYoloCmdSet" id="cmdidYoloToolWindow" priority="0x0100" type="Button">
+        <Parent guid="guidYoloCmdSet" id="IDG_YOLO_VIEW" />
+        <Icon guid="guidImages" id="bmpYolo" />
+        <Strings>
+          <ButtonText>YOLO</ButtonText>
+          <CommandName>YoloToolWindowCommand</CommandName>
+        </Strings>
+      </Button>
+    </Buttons>
+
+    <Bitmaps>
+      <Bitmap guid="guidImages" href="Resources\YoloCommand.bmp" usedList="bmpYolo" />
+    </Bitmaps>
+  </Commands>
+
+  <!-- Ctrl+W, Y chord to toggle the YOLO window — mirrors VS's own window shortcuts
+       (Ctrl+W, S = Solution Explorer, Ctrl+W, E = Error List, …). editor="guidVSStd97"
+       scopes it globally; key2 "Y" has no modifier, so it is Ctrl+W released, then Y. -->
+  <KeyBindings>
+    <KeyBinding guid="guidYoloCmdSet" id="cmdidYoloToolWindow"
+                editor="guidVSStd97" key1="W" mod1="Control" key2="Y" />
+  </KeyBindings>
+</CommandTable>

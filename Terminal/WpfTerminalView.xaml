@@ -1,0 +1,37 @@
+<UserControl x:Class="CnSharp.VSIX.Yolo.WpfTerminalView"
+             x:ClassModifier="internal"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:CnSharp.VSIX.Yolo"
+             Background="#0C0C0C"
+             Focusable="False"
+             ClipToBounds="True"
+             PreviewKeyDown="OnPreviewKeyDown"
+             PreviewTextInput="OnPreviewTextInput">
+    <!-- Pure-WPF terminal: no WebView2, no HwndHost. WebView2 does not composite inside
+         a VS tool window on this machine (page loads, surface paints black), so the cell
+         grid is drawn by TerminalSurface using WPF drawing primitives instead.
+         InputCapture is an invisible TextBox that exists only to win keyboard focus from
+         VS's command routing and to receive IME/text composition. Key handling is wired at
+         the UserControl root so keystrokes are captured whenever focus sits anywhere in the
+         view (the capture box or the surface), not only on the TextBox itself. -->
+    <Grid Background="#0C0C0C" MouseDown="OnMouseDown">
+        <local:TerminalSurface x:Name="Screen" />
+        <TextBox x:Name="InputCapture"
+                 Background="Transparent"
+                 Foreground="Transparent"
+                 CaretBrush="Transparent"
+                 SelectionBrush="Transparent"
+                 BorderThickness="0"
+                 AcceptsReturn="True"
+                 AcceptsTab="True"
+                 IsUndoEnabled="False"
+                 Focusable="True"
+                 IsTabStop="True"
+                 FocusVisualStyle="{x:Null}"
+                 HorizontalAlignment="Stretch"
+                 VerticalAlignment="Stretch"
+                 GotKeyboardFocus="OnFocusChanged"
+                 LostKeyboardFocus="OnFocusChanged" />
+    </Grid>
+</UserControl>

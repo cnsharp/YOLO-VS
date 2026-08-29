@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- Pre-existing entries (kept) -->
+  <data name="ToolWindowTitle" xml:space="preserve">
+    <value>YOLO</value>
+  </data>
+  <data name="ToolWindowDescription" xml:space="preserve">
+    <value>AI Agent extension for Visual Studio</value>
+  </data>
+  <data name="AgentLabel" xml:space="preserve">
+    <value>Agent</value>
+  </data>
+  <data name="YoloLabel" xml:space="preserve">
+    <value>YOLO</value>
+  </data>
+  <data name="YoloModeOn" xml:space="preserve">
+    <value>On</value>
+  </data>
+  <data name="YoloModeOff" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="SettingsButton" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="StatusReady" xml:space="preserve">
+    <value>Ready</value>
+  </data>
+  <data name="StatusRunning" xml:space="preserve">
+    <value>Running</value>
+  </data>
+  <data name="StatusError" xml:space="preserve">
+    <value>Error</value>
+  </data>
+
+  <!-- Tool window panel -->
+  <data name="Panel_Launch" xml:space="preserve">
+    <value>Launch</value>
+  </data>
+  <data name="Panel_SkipTooltip" xml:space="preserve">
+    <value>Skip permissions (Y)</value>
+  </data>
+  <data name="Panel_ResumeTooltip" xml:space="preserve">
+    <value>Resume session (R)</value>
+  </data>
+  <data name="Panel_SettingsTooltip" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="Panel_SelectAgentFirst" xml:space="preserve">
+    <value>Select an agent first.</value>
+  </data>
+  <data name="Panel_AgentSelected" xml:space="preserve">
+    <value>Selected agent: {0}  (command: {1})</value>
+  </data>
+  <data name="Panel_AgentConfigNotFound" xml:space="preserve">
+    <value>Agent '{0}' configuration not found.</value>
+  </data>
+  <data name="Panel_AgentNotInstalled" xml:space="preserve">
+    <value>Agent '{0}' is not installed or not on PATH: {1}</value>
+  </data>
+  <data name="Panel_SettingsSaved" xml:space="preserve">
+    <value>Settings saved.</value>
+  </data>
+  <data name="Panel_SettingsOpenFailed" xml:space="preserve">
+    <value>Could not open settings dialog.</value>
+  </data>
+  <data name="Panel_Running" xml:space="preserve">
+    <value>Running: {0}  (tab: {1})</value>
+  </data>
+  <data name="Panel_SkipOn" xml:space="preserve">
+    <value>Skip permissions ON (Y) — agent permission prompts auto-approved</value>
+  </data>
+  <data name="Panel_SkipOff" xml:space="preserve">
+    <value>Skip permissions OFF (Y)</value>
+  </data>
+  <data name="Panel_ResumeOn" xml:space="preserve">
+    <value>Resume ON (R) — agents will resume the last session</value>
+  </data>
+  <data name="Panel_ResumeOff" xml:space="preserve">
+    <value>Resume OFF (R)</value>
+  </data>
+
+  <!-- Settings grid (YoloOptionsControl) -->
+  <data name="Settings_AddCustomTool" xml:space="preserve">
+    <value>Add custom tool</value>
+  </data>
+  <data name="Settings_RemoveSelected" xml:space="preserve">
+    <value>Remove selected</value>
+  </data>
+  <data name="Settings_Validate" xml:space="preserve">
+    <value>Validate</value>
+  </data>
+  <data name="Settings_Browse" xml:space="preserve">
+    <value>Browse…</value>
+  </data>
+  <data name="Settings_IconForSelectedTool" xml:space="preserve">
+    <value>Icon for selected tool:</value>
+  </data>
+  <data name="Settings_Col_Icon" xml:space="preserve">
+    <value>Icon</value>
+  </data>
+  <data name="Settings_Col_Id" xml:space="preserve">
+    <value>ID</value>
+  </data>
+  <data name="Settings_Col_DisplayName" xml:space="preserve">
+    <value>Display name</value>
+  </data>
+  <data name="Settings_Col_Command" xml:space="preserve">
+    <value>Command</value>
+  </data>
+  <data name="Settings_Col_BaseArgs" xml:space="preserve">
+    <value>Base args</value>
+  </data>
+  <data name="Settings_Col_SkipFlag" xml:space="preserve">
+    <value>Skip flag</value>
+  </data>
+  <data name="Settings_Col_ResumeFlag" xml:space="preserve">
+    <value>Resume flag</value>
+  </data>
+  <data name="Settings_Col_IconPath" xml:space="preserve">
+    <value>Icon path / URL</value>
+  </data>
+  <data name="Settings_CommandNotFoundTooltip" xml:space="preserve">
+    <value>Command not found on PATH</value>
+  </data>
+  <data name="Settings_AddedCustomTool" xml:space="preserve">
+    <value>Added a blank custom tool — set its ID, Command and Skip flag, then Validate.</value>
+  </data>
+  <data name="Settings_SelectRowToRemove" xml:space="preserve">
+    <value>Select a row to remove.</value>
+  </data>
+  <data name="Settings_CannotRemoveKnownAgent" xml:space="preserve">
+    <value>Cannot remove known agent '{0}'.</value>
+  </data>
+  <data name="Settings_RemovedCustomTool" xml:space="preserve">
+    <value>Removed selected custom tool.</value>
+  </data>
+  <data name="Settings_NoToolToValidate" xml:space="preserve">
+    <value>No tool to validate.</value>
+  </data>
+  <data name="Settings_Validating" xml:space="preserve">
+    <value>Validating…</value>
+  </data>
+  <data name="Settings_CommandNotFoundOnPath" xml:space="preserve">
+    <value>Command not found on PATH: {0}</value>
+  </data>
+  <data name="Settings_IconPathInvalid" xml:space="preserve">
+    <value>Icon path is not a valid local file: {0}</value>
+  </data>
+  <data name="Settings_ValidationPassed" xml:space="preserve">
+    <value>Validation passed.</value>
+  </data>
+  <data name="Settings_SelectCustomToolForIcon" xml:space="preserve">
+    <value>Select a custom tool row to set its icon. The icon of a known agent cannot be changed.</value>
+  </data>
+  <data name="Settings_ChooseIconTitle" xml:space="preserve">
+    <value>Choose icon for selected tool</value>
+  </data>
+  <data name="Settings_ImageFilter" xml:space="preserve">
+    <value>Image files (*.svg;*.png;*.jpg)|*.svg;*.png;*.jpg|All files (*.*)|*.*</value>
+  </data>
+  <data name="Settings_IconCopyFailed" xml:space="preserve">
+    <value>Could not copy icon '{0}' into the YOLO icon folder.</value>
+  </data>
+  <data name="Settings_DupId" xml:space="preserve">
+    <value>Duplicate ID: {0}</value>
+  </data>
+  <data name="Settings_DupCmd" xml:space="preserve">
+    <value>Duplicate command: {0}</value>
+  </data>
+
+  <!-- Settings dialog -->
+  <data name="Dialog_Title" xml:space="preserve">
+    <value>YOLO - AI Agents Extender</value>
+  </data>
+  <data name="Dialog_OK" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="Dialog_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+</root>

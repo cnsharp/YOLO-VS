@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    html, body { margin: 0; padding: 0; height: 100%; background: #0c0c0c; overflow: hidden; }
+    #term { width: 100%; height: 100%; }
+    .xterm-viewport::-webkit-scrollbar { width: 10px; }
+    .xterm-viewport::-webkit-scrollbar-thumb { background: #3e3e42; border-radius: 5px; }
+</style>
+<link rel="stylesheet" href="xterm.css">
+</head>
+<body>
+<div id="term"></div>
+<script src="xterm.js"></script>
+<script src="xterm-addon-fit.js"></script>
+<script>
+(function () {
+    var term = new Terminal({
+        cursorBlink: true,
+        fontFamily: 'Consolas, "Cascadia Code", "Courier New", monospace',
+        fontSize: 13,
+        theme: {
+            background: '#0c0c0c',
+            foreground: '#d4d4d4',
+            cursor: '#d4d4d4',
+            selectionBackground: '#264f78'
+        },
+        allowProposedApi: true,
+        scrollback: 5000,
+        convertEol: false
+    });
+    var fitAddon = new FitAddon.FitAddon();
+    term.loadAddon(fitAddon);
+    term.open(document.getElementById('term'));
+    // If the WebView2 control is 0-sized when this script runs (very common: the
+    // tool window is still laying out), fit() throws. Never let that prevent us
+    // from posting READY, otherwise the C# side would buffer output forever and
+    // the agent TUI would never appear. A real fit happens later via the FIT
+    // message once the control has a real size.
+    try { fitAddon.fit(); } catch (e) {}
+
+    function post(msg) {
+        if (window.chrome && window.chrome.webview) {
+            window.chrome.webview.postMessage(msg);
+        }
+    }
+
+    // User typed something.
+    term.onData(function (data) {
+        // Base64 to safely carry arbitrary bytes through a JSON string.
+        var bytes = new TextEncoder().encode(data);
+        var bin = '';
+        for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+        post('INPUT|' + btoa(bin));
+    });
+
+    // xterm.js resized.
+    term.onResize(function (size) {
+        post('RESIZE|' + size.cols + '|' + size.rows);
+    });
+
+    window.addEventListener('resize', function () {
+        try { fitAddon.fit(); } catch (e) {}
+    });
+
+    // Messages from C#.
+    window.addEventListener('message', function (e) {
+        var msg = e.data;
+        if (typeof msg !== 'string') return;
+        if (msg.indexOf('WRITE|') === 0) {
+            var b64 = msg.substring(6);
+            var bin = atob(b64);
+            var bytes = new Uint8Array(bin.length);
+            for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            term.write(bytes);
+        } else if (msg.indexOf('CLEAR|') === 0) {
+            term.clear();
+        } else if (msg.indexOf('FIT|') === 0) {
+            try { fitAddon.fit(); } catch (e) {}
+        }
+    });
+
+    post('READY|' + term.cols + '|' + term.rows);
+
+    // Belt-and-suspenders: if the WebView2 control was 0-sized at load, the first
+    // fit() produced a tiny terminal. Retry the fit for a few seconds so that once
+    // the control is laid out we report the real dimensions to C#. C# also sends a
+    // FIT message on SizeChanged, so this loop just covers the gap.
+    var _fitRetries = 0;
+    var _fitTimer = setInterval(function () {
+        try { fitAddon.fit(); } catch (e) {}
+        _fitRetries++;
+        if (_fitRetries > 12 || (term.cols > 1 && term.rows > 1)) {
+            clearInterval(_fitTimer);
+        }
+    }, 250);
+
+    window.__term = term;
+    window.__fitAddon = fitAddon;
+})();
+</script>
+</body>
+</html>

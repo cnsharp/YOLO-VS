@@ -1,0 +1,147 @@
+[
+  {
+    "id": "claude",
+    "displayName": "Claude Code",
+    "command": "claude",
+    "skipFlag": "--dangerously-skip-permissions",
+    "resumeFlag": "-r",
+    "icon": "res://agents/claude.png"
+  },
+  {
+    "id": "codex",
+    "displayName": "Codex",
+    "command": "codex",
+    "skipFlag": "--yolo",
+    "resumeFlag": "--resume",
+    "icon": "res://agents/codex.svg"
+  },
+  {
+    "id": "codebuddy",
+    "displayName": "CodeBuddy",
+    "command": "codebuddy",
+    "skipFlag": "-y",
+    "resumeFlag": "-r",
+    "icon": "res://agents/codebuddy.svg"
+  },
+  {
+    "id": "gemini",
+    "displayName": "Gemini",
+    "command": "gemini",
+    "skipFlag": "--yolo",
+    "resumeFlag": "",
+    "icon": "res://agents/gemini.png"
+  },
+  {
+    "id": "copilot",
+    "displayName": "Copilot",
+    "command": "copilot",
+    "skipFlag": "--allow-all",
+    "resumeFlag": "-r",
+    "icon": "res://agents/copilot.svg"
+  },
+  {
+    "id": "cursor",
+    "displayName": "Cursor",
+    "command": "cursor-agent",
+    "skipFlag": "--force",
+    "resumeFlag": "--resume",
+    "icon": "res://agents/cursor.png"
+  },
+  {
+    "id": "kimi",
+    "displayName": "Kimi",
+    "command": "kimi",
+    "skipFlag": "--yolo",
+    "resumeFlag": "-r",
+    "icon": "res://agents/kimi.png"
+  },
+  {
+    "id": "qoder",
+    "displayName": "Qoder",
+    "command": "qoder",
+    "skipFlag": "--dangerously-skip-permissions",
+    "resumeFlag": "",
+    "icon": "res://agents/qoder.svg"
+  },
+  {
+    "id": "hermes",
+    "displayName": "Hermes",
+    "command": "hermes",
+    "skipFlag": "--yolo",
+    "resumeFlag": "-r",
+    "icon": "res://agents/hermes.png"
+  },
+  {
+    "id": "opencode",
+    "displayName": "OpenCode",
+    "command": "opencode",
+    "skipFlag": "--auto",
+    "resumeFlag": "",
+    "icon": "res://agents/opencode.png"
+  },
+  {
+    "id": "continue",
+    "displayName": "Continue",
+    "command": "cn",
+    "skipFlag": "--auto",
+    "resumeFlag": "",
+    "icon": "res://agents/continue.png"
+  },
+  {
+    "id": "cline",
+    "displayName": "Cline",
+    "command": "cline",
+    "skipFlag": "--auto-approve true",
+    "resumeFlag": "--taskId",
+    "icon": "res://agents/cline.png"
+  },
+  {
+    "id": "goose",
+    "displayName": "Goose",
+    "command": "goose",
+    "skipFlag": "",
+    "resumeFlag": "-r",
+    "icon": "res://agents/goose.png",
+    "skipEnv": { "name": "GOOSE_MODE", "value": "auto" }
+  },
+  {
+    "id": "kilo",
+    "displayName": "Kilo Code",
+    "command": "kilo",
+    "skipFlag": "",
+    "resumeFlag": "",
+    "icon": "res://agents/kilo.svg"
+  },
+  {
+    "id": "openclaw",
+    "displayName": "OpenClaw",
+    "command": "openclaw",
+    "skipFlag": "",
+    "resumeFlag": "",
+    "icon": "res://agents/openclaw.svg"
+  },
+  {
+    "id": "pi",
+    "displayName": "Pi",
+    "command": "pi",
+    "skipFlag": "--approve",
+    "resumeFlag": "-r",
+    "icon": "res://agents/pi.svg"
+  },
+  {
+    "id": "trae",
+    "displayName": "TraeCode",
+    "command": "traecli",
+    "skipFlag": "",
+    "resumeFlag": "--resume",
+    "icon": "res://agents/trae.png"
+  },
+  {
+    "id": "zcode",
+    "displayName": "ZCode",
+    "command": "zcode",
+    "skipFlag": "",
+    "resumeFlag": "",
+    "icon": "res://agents/zcode.png"
+  }
+]

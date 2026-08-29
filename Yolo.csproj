@@ -1,0 +1,105 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>14</LangVersion>
+    <!-- 仅这两项 VSIX 必需，其余交给 SDK 默认值 -->
+    <VSSDKBuildToolsAutoSetup>true</VSSDKBuildToolsAutoSetup>
+    <GeneratePkgDefFile>true</GeneratePkgDefFile>
+    <!-- 用到 WPF (XAML) 与 WinForms (DataGridView) -->
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <!-- Properties/AssemblyInfo.cs 已声明程序集特性，禁止 SDK 再自动生成 -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <!-- RootNamespace is load-bearing here: Resources.resx strongly-typed codegen emits
+         CnSharp.VSIX.Yolo.Resources from it, and every file's namespace assumes it. -->
+    <AssemblyName>Yolo</AssemblyName>
+    <AssemblyTitle>Yolo</AssemblyTitle>
+    <RootNamespace>CnSharp.VSIX.Yolo</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectCapability Include="CreateVsixContainer" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.0.31902.203" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.VisualStudio.ImageCatalog" Version="17.0.31902.203" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="18.5.40034" />
+    <!-- JSON parsing for the embedded agents.json (already transitively present via the VS SDK). -->
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <!-- Real SVG renderer: the agent icons (codebuddy, copilot, etc.) use gradients,
+         <circle>/<rect> shapes and fill="url(#…)" references that a hand-rolled <path>
+         parser cannot reproduce, so they collapsed to a single flat color. -->
+    <PackageReference Include="Svg" Version="3.4.4" />
+  </ItemGroup>
+
+  <!-- Agent metadata is kept in a data file, separated from the program (mirrors the
+       IntelliJ plugin's agents.json on the classpath). LogicalName pins the resource name
+       so AgentRegistry can load it deterministically. -->
+  <ItemGroup>
+    <EmbeddedResource Include="agents.json">
+      <LogicalName>CnSharp.VSIX.Yolo.agents.json</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <!-- VSCT command table (View ▸ Other Windows ▸ YOLO) + its icon bitmap. -->
+  <ItemGroup>
+    <VSCTCompile Include="Yolo.vsct">
+      <ResourceName>Menus.ctmenu</ResourceName>
+    </VSCTCompile>
+    <None Include="Resources\YoloCommand.bmp" />
+  </ItemGroup>
+
+  <!-- Plugin brand tile, ported from the IntelliJ version's META-INF/pluginIcon*.
+       The .png is referenced by <Icon>/<PreviewImage> in the manifest; the two SVGs are the
+       light/dark vector originals kept alongside it. Content+IncludeInVSIX ships them in the
+       container (do NOT use <None>, which the skill flags as an anti-pattern here). -->
+  <ItemGroup>
+    <Content Include="Resources\pluginIcon.png">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="Resources\pluginIcon.svg">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="Resources\pluginIcon_dark.svg">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+  </ItemGroup>
+
+  <!-- IDEA icon resources (copied from the IntelliJ plugin) used by the Y/R toggle buttons
+       and the settings-page agent-icon column. WPF Resource build action => pack URI access. -->
+  <ItemGroup>
+    <Resource Include="Resources/icons/skipY.svg" />
+    <Resource Include="Resources/icons/skipYOn.svg" />
+    <Resource Include="Resources/icons/resume.svg" />
+    <Resource Include="Resources/icons/resumeOn.svg" />
+    <Resource Include="Resources/icons/agents/**" />
+  </ItemGroup>
+
+  <!-- The TerminalDemo is a separate headless test app; keep it out of the VSIX build. -->
+  <ItemGroup>
+    <Compile Remove="TerminalDemo\**" />
+    <EmbeddedResource Remove="TerminalDemo\**" />
+    <None Remove="TerminalDemo\**" />
+    <Page Remove="TerminalDemo\**" />
+    <ApplicationDefinition Remove="TerminalDemo\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Resources.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>
