@@ -23,6 +23,12 @@ namespace CnSharp.VSIX.Yolo
         private int _flushScheduled;
         private bool _loggedFirstPaint;
 
+        // Text-selection drag state.
+        private Point _dragStart;
+        private bool _mouseDown;
+        private bool _dragging;
+        private const double DragThreshold = 3.0;
+
         public event Action<byte[]>? InputReceived;
         public event Action? Resized;
 
@@ -86,8 +92,75 @@ namespace CnSharp.VSIX.Yolo
 
         private void OnMouseDown(object sender, MouseButtonEventArgs e)
         {
+            if (e.ChangedButton == MouseButton.Left)
+            {
+                // Begin a (possibly zero-length) selection; we only know click-vs-drag on mouse-up, so defer
+                // focus/activation until then. Capturing on Screen keeps move/up flowing even over the input box.
+                _dragStart = e.GetPosition(Screen);
+                _mouseDown = true;
+                _dragging = false;
+                var hit = Screen.HitTest(_dragStart);
+                if (hit.HasValue) Screen.BeginSelection(hit.Value.virtualRow, hit.Value.col);
+                else Screen.ClearSelection();
+                Screen.CaptureMouse();
+                e.Handled = true;
+                return;
+            }
             InputCapture.Focus();
         }
+
+        private void OnMouseMove(object sender, MouseEventArgs e)
+        {
+            if (!_mouseDown || e.LeftButton != MouseButtonState.Pressed) return;
+            if (!_dragging)
+            {
+                var pos = e.GetPosition(Screen);
+                if (Math.Abs(pos.X - _dragStart.X) > DragThreshold ||
+                    Math.Abs(pos.Y - _dragStart.Y) > DragThreshold)
+                    _dragging = true;
+            }
+            if (_dragging)
+            {
+                var hit = Screen.HitTest(e.GetPosition(Screen));
+                if (hit.HasValue) Screen.UpdateSelection(hit.Value.virtualRow, hit.Value.col);
+                e.Handled = true;
+            }
+        }
+
+        private void OnMouseUp(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton != MouseButton.Left || !_mouseDown) return;
+            _mouseDown = false;
+            Screen.ReleaseMouseCapture();
+            if (_dragging)
+            {
+                // A drag = selection; keep it and focus the terminal. (Copy via Ctrl+C or the context menu.)
+                _dragging = false;
+                InputCapture.Focus();
+                e.Handled = true;
+                return;
+            }
+            // A plain click clears any selection and focuses the terminal.
+            Screen.ClearSelection();
+            InputCapture.Focus();
+            e.Handled = true;
+        }
+
+        private void CopySelection()
+        {
+            string? text = Screen.GetSelectionText();
+            if (string.IsNullOrEmpty(text)) return;
+            try { Clipboard.SetText(text); }
+            catch (Exception ex) { Log.Write("WpfTerminalView copy failed: " + ex.Message); }
+        }
+
+        private void OnContextMenuOpening(object sender, ContextMenuEventArgs e)
+        {
+            if (ContextMenu?.Items[0] is MenuItem copy)
+                copy.IsEnabled = Screen.HasSelection;
+        }
+
+        private void OnCopyMenu(object sender, RoutedEventArgs e) => CopySelection();
 
         private void OnFocusChanged(object sender, KeyboardFocusChangedEventArgs e)
         {
@@ -132,6 +205,14 @@ namespace CnSharp.VSIX.Yolo
             var mods = Keyboard.Modifiers;
             bool ctrl = (mods & ModifierKeys.Control) != 0;
             bool alt = (mods & ModifierKeys.Alt) != 0;
+
+            // Ctrl+C copies the current selection (standard terminal behaviour) instead of sending SIGINT.
+            if (ctrl && !alt && e.Key == Key.C && Screen.HasSelection)
+            {
+                CopySelection();
+                e.Handled = true;
+                return;
+            }
 
             // Plain Space is sent directly. Relying on PreviewTextInput alone drops spaces: a
             // focused TextBox frequently raises PreviewTextInput for Space with an empty/whitespace

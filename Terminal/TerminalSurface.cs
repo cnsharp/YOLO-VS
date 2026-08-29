@@ -21,7 +21,13 @@ namespace CnSharp.VSIX.Yolo
         private readonly Brush _defaultBg;
         private readonly Brush _defaultFg;
         private readonly Brush _cursorBrush;
+        private readonly Brush _selectionBrush;
         private readonly StringBuilder _run = new StringBuilder();
+
+        // Text selection. The grid is drawn (no real text elements), so a selection is tracked per cell in
+        // virtual-row/column coordinates and painted as a semi-transparent highlight; copying reads the row text.
+        private int _selAnchorRow = -1, _selAnchorCol = -1;
+        private int _selEndRow = -1, _selEndCol = -1;
 
         private double _cellWidth;
         private double _cellHeight;
@@ -38,6 +44,99 @@ namespace CnSharp.VSIX.Yolo
         public int Rows => _rows;
         public bool ShowCursor { get; set; }
 
+        // ── Text selection (the grid is drawn, not real text, so selection is tracked per cell) ──
+
+        /// <summary>True when a non-empty selection exists.</summary>
+        public bool HasSelection =>
+            _selAnchorRow >= 0 && (_selAnchorRow != _selEndRow || _selAnchorCol != _selEndCol);
+
+        /// <summary>Begins (or restarts) a selection at the given virtual cell.</summary>
+        public void BeginSelection(int vRow, int col)
+        {
+            _selAnchorRow = vRow; _selAnchorCol = col;
+            _selEndRow = vRow; _selEndCol = col;
+            InvalidateVisual();
+        }
+
+        /// <summary>Extends the active selection to the given virtual cell.</summary>
+        public void UpdateSelection(int vRow, int col)
+        {
+            if (_selAnchorRow < 0) return;
+            _selEndRow = vRow; _selEndCol = col;
+            InvalidateVisual();
+        }
+
+        /// <summary>Clears any active selection.</summary>
+        public void ClearSelection()
+        {
+            if (_selAnchorRow < 0 && _selEndRow < 0) return;
+            _selAnchorRow = _selEndRow = -1;
+            _selAnchorCol = _selEndCol = -1;
+            InvalidateVisual();
+        }
+
+        /// <summary>Maps a client point to (virtual row, column), or null when outside the grid.</summary>
+        public (int virtualRow, int col)? HitTest(Point pt)
+        {
+            int cols = Emulator.Columns;
+            int rows = Emulator.Rows;
+            if (cols <= 0 || rows <= 0) return null;
+            int y = (int)(pt.Y / _cellHeight);
+            int x = (int)(pt.X / _cellWidth);
+            if (y < 0 || y >= rows || x < 0 || x >= cols) return null;
+            return (Emulator.TopVirtualRow + y, x);
+        }
+
+        /// <summary>
+        /// The selected text as a multi-line string (stream selection: top row from its anchor column to the
+        /// end, middle rows fully, bottom row from the start to its column). Trailing spaces per line are
+        /// trimmed, matching common terminal copy behaviour. Returns null when there is no selection.
+        /// </summary>
+        public string? GetSelectionText()
+        {
+            if (!HasSelection) return null;
+            int top = Math.Min(_selAnchorRow, _selEndRow);
+            int bottom = Math.Max(_selAnchorRow, _selEndRow);
+            int leftCol = _selAnchorRow <= _selEndRow ? _selAnchorCol : _selEndCol;
+            int rightCol = _selAnchorRow <= _selEndRow ? _selEndCol : _selAnchorCol;
+            var sb = new StringBuilder();
+            for (int r = top; r <= bottom; r++)
+            {
+                if (r > top) sb.Append('\n');
+                string row = GetRowText(r);
+                int s, e;
+                if (top == bottom) { s = Math.Min(leftCol, rightCol); e = Math.Max(leftCol, rightCol); }
+                else if (r == top) { s = leftCol; e = row.Length; }
+                else if (r == bottom) { s = 0; e = rightCol; }
+                else { s = 0; e = row.Length; }
+                s = Math.Max(0, Math.Min(s, row.Length));
+                e = Math.Max(s, Math.Min(e, row.Length));
+                string line = row.Substring(s, e - s);
+                int t = line.Length;
+                while (t > 0 && line[t - 1] == ' ') t--;
+                sb.Append(line.Substring(0, t));
+            }
+            return sb.ToString();
+        }
+
+        private string BuildRowText(int vRow)
+        {
+            int cols = Emulator.Columns;
+            if (cols <= 0) return string.Empty;
+            var sb = new StringBuilder(cols);
+            for (int x = 0; x < cols; x++)
+            {
+                var cell = Emulator.VirtualCell(vRow, x);
+                // A wide-char trailer occupies a column but carries no glyph; map it to a blank so the
+                // character index stays 1:1 with the screen column.
+                sb.Append((cell.Flags & TerminalEmulator.FlagTrailer) != 0 ? ' ' : cell.Text);
+            }
+            return sb.ToString();
+        }
+
+        /// <summary>Column-indexed text of a virtual row (1 char per column; wide-char trailers become a space).</summary>
+        public string GetRowText(int vRow) => BuildRowText(vRow);
+
         public TerminalSurface()
         {
             var family = PickFontFamily();
@@ -47,6 +146,11 @@ namespace CnSharp.VSIX.Yolo
             _defaultBg = Freeze(TerminalPalette.DefaultBackground);
             _defaultFg = Freeze(TerminalPalette.DefaultForeground);
             _cursorBrush = Freeze(0xAEAFAD);
+
+            // Semi-transparent highlight for the terminal text selection (fixed colour — the terminal surface
+            // is the documented exception to the VS-theme rule, AGENTS.md §5.6).
+            _selectionBrush = new SolidColorBrush(Color.FromArgb(0x40, 0x56, 0x9C, 0xD6));
+            _selectionBrush.Freeze();
 
             MeasureCell();
             ClipToBounds = true;
@@ -184,6 +288,30 @@ namespace CnSharp.VSIX.Yolo
                     }
 
                     x += len;
+                }
+            }
+
+            // Text-selection highlight (stream selection, painted semi-transparent over the glyphs so they
+            // stay readable). Only visible rows that fall inside the selection range are drawn.
+            if (HasSelection)
+            {
+                int top = Math.Min(_selAnchorRow, _selEndRow);
+                int bottom = Math.Max(_selAnchorRow, _selEndRow);
+                int leftCol = _selAnchorRow <= _selEndRow ? _selAnchorCol : _selEndCol;
+                int rightCol = _selAnchorRow <= _selEndRow ? _selEndCol : _selAnchorCol;
+                for (int y = 0; y < rows; y++)
+                {
+                    int vRow = topRow + y;
+                    if (vRow < top || vRow > bottom) continue;
+                    double topY = y * _cellHeight;
+                    int s, e;
+                    if (top == bottom) { s = Math.Min(leftCol, rightCol); e = Math.Max(leftCol, rightCol); }
+                    else if (vRow == top) { s = leftCol; e = cols; }
+                    else if (vRow == bottom) { s = 0; e = rightCol; }
+                    else { s = 0; e = cols; }
+                    if (e <= s) continue;
+                    dc.DrawRectangle(_selectionBrush, null,
+                        new Rect(s * _cellWidth, topY, (e - s) * _cellWidth + 0.5, _cellHeight));
                 }
             }
 

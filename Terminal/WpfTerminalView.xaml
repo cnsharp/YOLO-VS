@@ -15,7 +15,12 @@
          VS's command routing and to receive IME/text composition. Key handling is wired at
          the UserControl root so keystrokes are captured whenever focus sits anywhere in the
          view (the capture box or the surface), not only on the TextBox itself. -->
-    <Grid Background="#0C0C0C" MouseDown="OnMouseDown">
+    <Grid Background="#0C0C0C" MouseDown="OnMouseDown" MouseMove="OnMouseMove" MouseUp="OnMouseUp" ContextMenuOpening="OnContextMenuOpening">
+        <Grid.ContextMenu>
+            <ContextMenu>
+                <MenuItem Header="Copy" Click="OnCopyMenu" />
+            </ContextMenu>
+        </Grid.ContextMenu>
         <local:TerminalSurface x:Name="Screen" />
         <TextBox x:Name="InputCapture"
                  Background="Transparent"
