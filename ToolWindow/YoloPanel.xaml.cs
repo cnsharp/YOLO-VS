@@ -138,6 +138,10 @@ namespace CnSharp.VSIX.Yolo
             RToggle.IsChecked = YoloSettings.Instance.ResumeEnabled;
             ApplyToggleVisuals();
 
+            // Restore the last-used agent so the dropdown opens on it (falls back to the first
+            // installed agent in LoadAgentsAsync when it is no longer available).
+            _selectedAgent = YoloSettings.Instance.LastAgent ?? string.Empty;
+
             // No terminal is opened on startup — the panel starts empty and a tab is created
             // only when the user launches an agent (Launch / the dropdown).
 
@@ -406,6 +410,10 @@ namespace CnSharp.VSIX.Yolo
                 SetStatus(string.Format(CnSharp.VSIX.Yolo.Resources.Panel_AgentNotInstalled, cfg.DisplayName, cfg.Command), true);
                 return;
             }
+
+            // Remember the launched agent so the dropdown re-opens on it next session.
+            YoloSettings.Instance.LastAgent = cfg.Name;
+            YoloSettings.Instance.Save();
 
             // This creates a brand-new tab + terminal for the run (IDEA opens a new terminal).
             var session = CreateSession(cfg.Name, cfg);

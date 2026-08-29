@@ -50,6 +50,9 @@ namespace CnSharp.VSIX.Yolo
         /// <summary>Global R (resume) toggle, persisted across sessions (mirrors IDEA's resumeEnabled).</summary>
         public bool ResumeEnabled { get; set; }
 
+        /// <summary>ID of the last agent the user launched; restored as the dropdown default on the next session.</summary>
+        public string? LastAgent { get; set; }
+
         public bool AutoRefreshAgents { get; set; } = true;
 
         /// <summary>
