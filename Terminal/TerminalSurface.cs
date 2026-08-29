@@ -21,13 +21,23 @@ namespace CnSharp.VSIX.Yolo
         private readonly Brush _defaultBg;
         private readonly Brush _defaultFg;
         private readonly Brush _cursorBrush;
-        private readonly Brush _selectionBrush;
-        private readonly StringBuilder _run = new StringBuilder();
-
         // Text selection. The grid is drawn (no real text elements), so a selection is tracked per cell in
         // virtual-row/column coordinates and painted as a semi-transparent highlight; copying reads the row text.
+        private readonly Brush _selectionBrush;
         private int _selAnchorRow = -1, _selAnchorCol = -1;
         private int _selEndRow = -1, _selEndCol = -1;
+
+        // Link detection + render cache. The link filter is supplied by the tool window; painted
+        // links and clicked links both come from it, so they can never disagree. Results are cached
+        // per emulator version so a chatty TUI does not re-run the regexes on every repaint.
+        private readonly Brush _linkBrush;
+        private readonly Pen _linkPen;
+        private YoloLinkFilters? _linkFilter;
+        private int _linkCacheVersion = -1;
+        private readonly Dictionary<int, string?> _rowTextCache = new Dictionary<int, string?>();
+        private readonly Dictionary<int, List<LinkMatch>?> _rowLinkCache = new Dictionary<int, List<LinkMatch>?>();
+
+        private readonly StringBuilder _run = new StringBuilder();
 
         private double _cellWidth;
         private double _cellHeight;
@@ -151,6 +161,13 @@ namespace CnSharp.VSIX.Yolo
             // is the documented exception to the VS-theme rule, AGENTS.md §5.6).
             _selectionBrush = new SolidColorBrush(Color.FromArgb(0x40, 0x56, 0x9C, 0xD6));
             _selectionBrush.Freeze();
+
+            // Fixed console-style link colour. The terminal surface is the documented exception to the
+            // VS-theme rule (AGENTS.md §5.6), so links are intentionally NOT themed — they must stay
+            // legible regardless of the surrounding chrome theme.
+            _linkBrush = Freeze(0x4FC1FF);
+            _linkPen = new Pen(_linkBrush, 1);
+            _linkPen.Freeze();
 
             MeasureCell();
             ClipToBounds = true;
@@ -315,6 +332,32 @@ namespace CnSharp.VSIX.Yolo
                 }
             }
 
+            // Hyperlink overlay: re-paint matched spans in the link colour + underline. The underlying
+            // (terminal-coloured) glyphs were already drawn in the loop above; drawing the same glyphs on
+            // top swaps only the colour and adds the rule. Detection here is exactly what the click handler
+            // uses, and the per-version cache keeps a fast TUI cheap.
+            if (_linkFilter != null)
+            {
+                for (int y = 0; y < rows; y++)
+                {
+                    int vRow = topRow + y;
+                    var links = GetRowLinks(vRow);
+                    if (links == null) continue;
+                    double top = y * _cellHeight;
+                    string rowText = GetRowText(vRow);
+                    foreach (var m in links)
+                    {
+                        int s = m.Start < 0 ? 0 : m.Start;
+                        int e = m.End > cols ? cols : m.End;
+                        if (e <= s) continue;
+                        var ft = MakeText(rowText.Substring(s, e - s), _regular, _linkBrush);
+                        dc.DrawText(ft, new Point(s * _cellWidth, top));
+                        double uy = top + _cellHeight - 1.5;
+                        dc.DrawLine(_linkPen, new Point(s * _cellWidth, uy), new Point(e * _cellWidth, uy));
+                    }
+                }
+            }
+
             if (ShowCursor && em.AtBottom && em.CursorVisible && em.CursorX < cols && em.CursorY < rows)
             {
                 var cell = em.VirtualCell(em.TopVirtualRow + em.CursorY, em.CursorX);
@@ -340,6 +383,90 @@ namespace CnSharp.VSIX.Yolo
             for (int i = 0; i < s.Length; i++)
                 if (s[i] != ' ' && s[i] != '\0') return false;
             return true;
+        }
+
+        // ── Terminal hyperlinks ─────────────────────────────────────────────────────
+        // Clickable spans (file paths, stack frames, type/member names, URLs) painted over the
+        // terminal text. Detection is shared with the click handler via YoloLinkFilters.FindLinks,
+        // which also takes the row above for hard-wrapped-path reconstruction.
+
+        /// <summary>The link filter used to paint + hit-test clickable spans. Set by the tool window.</summary>
+        public YoloLinkFilters? LinkFilter
+        {
+            get => _linkFilter;
+            set
+            {
+                if (ReferenceEquals(_linkFilter, value)) return;
+                _linkFilter = value;
+                InvalidateLinkCache();
+                InvalidateVisual();
+            }
+        }
+
+        /// <summary>Column-indexed text of a virtual row (1 char per column; wide-char trailers become a space).</summary>
+        public string GetRowText(int vRow)
+        {
+            InvalidateLinkCacheIfNeeded();
+            if (_rowTextCache.TryGetValue(vRow, out var cached)) return cached ?? string.Empty;
+            string text = BuildRowText(vRow);
+            _rowTextCache[vRow] = text;
+            return text;
+        }
+
+        /// <summary>Clickable spans on a virtual row, or null. Cached per emulator version.</summary>
+        public List<LinkMatch>? GetRowLinks(int vRow)
+        {
+            InvalidateLinkCacheIfNeeded();
+            if (_rowLinkCache.TryGetValue(vRow, out var cached)) return cached;
+            List<LinkMatch>? links = null;
+            if (_linkFilter != null)
+            {
+                string text = GetRowText(vRow);
+                string? prev = vRow > 0 ? GetRowText(vRow - 1) : null;
+                links = _linkFilter.FindLinks(text, prev);
+            }
+            _rowLinkCache[vRow] = links;
+            return links;
+        }
+
+        /// <summary>Maps a client point to (virtual row, column), or null when outside the grid.</summary>
+        public (int virtualRow, int col)? HitTest(Point pt)
+        {
+            int cols = Emulator.Columns;
+            int rows = Emulator.Rows;
+            if (cols <= 0 || rows <= 0) return null;
+            int y = (int)(pt.Y / _cellHeight);
+            int x = (int)(pt.X / _cellWidth);
+            if (y < 0 || y >= rows || x < 0 || x >= cols) return null;
+            return (Emulator.TopVirtualRow + y, x);
+        }
+
+        private void InvalidateLinkCache() => _linkCacheVersion = -1;
+
+        private void InvalidateLinkCacheIfNeeded()
+        {
+            if (Emulator.Version != _linkCacheVersion)
+            {
+                _rowTextCache.Clear();
+                _rowLinkCache.Clear();
+                _linkCacheVersion = Emulator.Version;
+            }
+        }
+
+        private string BuildRowText(int vRow)
+        {
+            int cols = Emulator.Columns;
+            if (cols <= 0) return string.Empty;
+            var sb = new StringBuilder(cols);
+            for (int x = 0; x < cols; x++)
+            {
+                var cell = Emulator.VirtualCell(vRow, x);
+                // A wide-char trailer occupies a column but carries no glyph; map it to a blank so the
+                // character index stays 1:1 with the screen column (links are ASCII, so this never matters
+                // for a match, but keeps hit-testing accurate in the rare CJK-adjacent case).
+                sb.Append((cell.Flags & TerminalEmulator.FlagTrailer) != 0 ? ' ' : cell.Text);
+            }
+            return sb.ToString();
         }
 
         private FormattedText MakeText(string text, Typeface typeface, Brush brush)

@@ -46,6 +46,17 @@ namespace CnSharp.VSIX.Yolo
         /// </summary>
         private bool _restoringToggles;
 
+        /// <summary>Current solution directory, cached (off the UI thread the link filter must not call DTE).</summary>
+        private string? _solutionDir;
+
+        /// <summary>
+        /// Single shared link filter for every terminal tab. Paints spans AND hit-tests clicks, so a painted
+        /// link can never disagree with a click. The type/member gate reads the solution file-name snapshot,
+        /// which must be queried off the UI thread — hence the lazy <c>() => YoloProjectTypes.For(_solutionDir)</c>.
+        /// Assigned in the constructor because a field initializer cannot capture another instance field.
+        /// </summary>
+        private readonly YoloLinkFilters _linkFilters;
+
         private string _selectedAgent = string.Empty;
         /// <summary>Re-entrancy guard while programmatically syncing the tab switcher / tab strip.</summary>
         private bool _tabSwitchSyncing;
@@ -172,6 +183,7 @@ namespace CnSharp.VSIX.Yolo
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             InitializeComponent();
+            _linkFilters = new YoloLinkFilters(() => YoloProjectTypes.For(_solutionDir));
             // Paint the chrome with the active VS theme before any agent/terminal work,
             // and keep it in sync when the user switches themes (dark/light/blue) at runtime.
             ApplyVsTheme();
@@ -342,7 +354,19 @@ namespace CnSharp.VSIX.Yolo
             ThreadHelper.ThrowIfNotOnUIThread();
             var view = new WpfTerminalView();
             var terminal = new ConPtyTerminal(view);
-            terminal.WorkingDirectory = GetSolutionDirectory();
+            string? solutionDir = GetSolutionDirectory();
+            terminal.WorkingDirectory = solutionDir;
+
+            // Hyperlink support: paint + hit-test spans via the shared filter; resolve relative paths in
+            // clicked links against the agent's CWD (the solution directory at launch time).
+            view.LinkFilter = _linkFilters;
+            view.BaseDirectory = solutionDir;
+            if (!string.IsNullOrEmpty(solutionDir) &&
+                !string.Equals(solutionDir, _solutionDir, StringComparison.OrdinalIgnoreCase))
+            {
+                _solutionDir = solutionDir;
+                YoloProjectTypes.Invalidate();
+            }
 
             var session = new Session
             {
@@ -705,6 +729,14 @@ namespace CnSharp.VSIX.Yolo
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             var dir = GetSolutionDirectory();
+            if (!string.IsNullOrEmpty(dir) &&
+                !string.Equals(dir, _solutionDir, StringComparison.OrdinalIgnoreCase))
+            {
+                // Solution root changed: drop the stale type/index snapshot so the link gate rebuilds for
+                // the new solution. For() rebuilds on a background thread and never blocks the render path.
+                _solutionDir = dir;
+                YoloProjectTypes.Invalidate();
+            }
             if (string.IsNullOrEmpty(dir)) return;
             foreach (var s in _sessions)
             {

@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
+using Microsoft.VisualStudio.Shell;
 
 #pragma warning disable VSTHRD001 // Dispatcher marshaling from the pty reader thread is intentional
 #pragma warning disable VSTHRD110 // Fire-and-forget dispatcher marshal is intentional
@@ -58,6 +59,16 @@ namespace CnSharp.VSIX.Yolo
 
         public int Columns => Screen.Columns;
         public int Rows => Screen.Rows;
+
+        /// <summary>The link filter that paints + hit-tests clickable spans on the screen.</summary>
+        public YoloLinkFilters? LinkFilter
+        {
+            get => Screen.LinkFilter;
+            set => Screen.LinkFilter = value;
+        }
+
+        /// <summary>The agent's working directory; resolves relative paths in clicked links.</summary>
+        public string? BaseDirectory { get; set; }
 
         private void OnCellSizeChanged()
         {
@@ -113,12 +124,38 @@ namespace CnSharp.VSIX.Yolo
         private void OnMouseDown(object sender, MouseButtonEventArgs e)
         {
             if (IsOnScrollBar(e)) return;
+
+            // The click lands on the UI thread, but the vs-threading analyzer cannot see through WPF's
+            // event dispatch — assert it so VSTHRD010 stays quiet and Navigate's own thread contract holds.
+            ThreadHelper.ThrowIfNotOnUIThread();
+
+            // A left-click on a painted link navigates to it; otherwise the click just focuses the
+            // terminal (and, on the next drag, begins a text selection) as before.
+            if (e.ChangedButton == MouseButton.Left && LinkFilter != null)
+            {
+                var hit = Screen.HitTest(e.GetPosition(Screen));
+                if (hit.HasValue)
+                {
+                    var links = Screen.GetRowLinks(hit.Value.virtualRow);
+                    if (links != null)
+                    {
+                        foreach (var m in links)
+                        {
+                            if (hit.Value.col >= m.Start && hit.Value.col < m.End)
+                            {
+                                e.Handled = true;
+                                YoloLinkNavigator.Navigate(m.Target, BaseDirectory);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
             if (e.ChangedButton == MouseButton.Left)
             {
-                // Begin a (possibly zero-length) selection; we only know click-vs-drag on mouse-up, so defer
-                // focus/activation until then. Capturing on Screen keeps move/up flowing even over the input box.
-                // Grab keyboard focus immediately so the terminal keeps capturing keystrokes even before the
-                // mouse is released (a click must not leave focus stranded).
+                // Begin a (possibly zero-length) selection; we only know click-vs-drag on mouse-up.
+                // Grabbing keyboard focus immediately keeps the terminal capturing keystrokes even
+                // before the mouse is released (a click must not leave focus stranded).
                 _dragStart = e.GetPosition(Screen);
                 _mouseDown = true;
                 _dragging = false;

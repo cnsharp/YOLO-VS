@@ -1,30 +1,38 @@
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace CnSharp.VSIX.Yolo
 {
     /// <summary>
-    /// URL link filter (Phase 2)
-    /// Corresponds to the IntelliJ version UrlLinkFilter.kt
+    /// Makes <c>http(s)://</c> URLs printed by agents clickable, opening them in the system browser.
+    /// Faithful port of IntelliJ <c>UrlLinkFilter</c> (this does NOT hide the YOLO pane, since a URL
+    /// opens an external browser rather than the IDE editor).
     /// </summary>
-    public class UrlLinkFilter
+    internal sealed class UrlLinkFilter
     {
-        private readonly Regex _urlRegex = new Regex(
-            @"(https?://[^\s]+)",
-            RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        
-        public YoloHyperlink? TryMatch(string text)
+        public List<LinkMatch>? Apply(string text)
         {
-            var match = _urlRegex.Match(text);
-            if (match.Success)
+            if (string.IsNullOrWhiteSpace(text) || YoloLinkPatterns.IsDiffLine(text)) return null;
+
+            var items = new List<LinkMatch>();
+            var matches = YoloLinkPatterns.UrlPattern.Matches(text);
+            int guard = 0;
+            foreach (Match m in matches)
             {
-                return new YoloHyperlink
+                if (guard++ >= YoloLinkPatterns.MaxMatchesPerLine) break;
+                items.Add(new LinkMatch
                 {
-                    Text = text,
-                    Url = match.Groups[1].Value
-                };
+                    Start = m.Groups[0].Index,
+                    End = m.Groups[0].Index + m.Groups[0].Length,
+                    Target = new LinkTarget
+                    {
+                        Kind = LinkKind.Url,
+                        Raw = m.Groups[0].Value,
+                        Url = m.Groups[0].Value
+                    }
+                });
             }
-            
-            return null;
+            return items.Count == 0 ? null : items;
         }
     }
 }
