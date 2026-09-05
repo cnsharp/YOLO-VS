@@ -96,12 +96,15 @@ namespace CnSharp.VSIX.Yolo
             {
                 // Begin a (possibly zero-length) selection; we only know click-vs-drag on mouse-up, so defer
                 // focus/activation until then. Capturing on Screen keeps move/up flowing even over the input box.
+                // Grab keyboard focus immediately so the terminal keeps capturing keystrokes even before the
+                // mouse is released (a click must not leave focus stranded).
                 _dragStart = e.GetPosition(Screen);
                 _mouseDown = true;
                 _dragging = false;
                 var hit = Screen.HitTest(_dragStart);
                 if (hit.HasValue) Screen.BeginSelection(hit.Value.virtualRow, hit.Value.col);
                 else Screen.ClearSelection();
+                InputCapture.Focus();
                 Screen.CaptureMouse();
                 e.Handled = true;
                 return;
