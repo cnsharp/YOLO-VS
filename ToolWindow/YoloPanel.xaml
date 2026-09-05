@@ -21,6 +21,14 @@
         <SolidColorBrush x:Key="ComboBg" Color="#3c3c3c"/>
         <SolidColorBrush x:Key="ComboFg" Color="#cccccc"/>
         <SolidColorBrush x:Key="TabBg" Color="#2d2d2d"/>
+        <!-- Active / inactive terminal-tab chrome, driven by the VS theme in ApplyVsTheme.
+             Defaults match the legacy dark theme; the white active-tab background that the
+             stock TabItem template forces is replaced by TabActiveBg (see the TabItem style). -->
+        <SolidColorBrush x:Key="TabActiveBg" Color="#1e1e1e"/>
+        <SolidColorBrush x:Key="TabInactiveBg" Color="#2d2d2d"/>
+        <SolidColorBrush x:Key="TabFgActive" Color="#f1f1f1"/>
+        <SolidColorBrush x:Key="TabFgInactive" Color="#9b9b9b"/>
+        <SolidColorBrush x:Key="TabAccent" Color="#007acc"/>
 
         <!-- WPF's stock ComboBox template (Aero2) paints the collapsed selection box from a
              hard-coded light resource (ComboBox.Static.Background), ignoring the Background we
@@ -193,10 +201,43 @@
                     BorderBrush="{DynamicResource PanelBorder}"
                     BorderThickness="0">
             <TabControl.Resources>
-                <!-- Closes the tab via the header's × button -->
+                <!-- The stock Aero2 TabItem template paints the SELECTED tab white and ignores our
+                     Background setter, so the active tab's title was white-on-white in the dark theme.
+                     This template honours TabActiveBg / TabInactiveBg / TabFgActive / TabFgInactive
+                     (set per VS theme in ApplyVsTheme) for both states, and an accent underline. -->
                 <Style TargetType="TabItem">
-                    <Setter Property="Foreground" Value="{DynamicResource PanelFg}"/>
-                    <Setter Property="Background" Value="{DynamicResource TabBg}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource TabFgInactive}"/>
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="Padding" Value="8,4"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="TabItem">
+                                <Border x:Name="Bd"
+                                        Background="{TemplateBinding Background}"
+                                        BorderBrush="{DynamicResource PanelBorder}"
+                                        BorderThickness="0,0,1,0"
+                                        Margin="0">
+                                    <ContentPresenter x:Name="Cp"
+                                                      ContentSource="Header"
+                                                      HorizontalAlignment="Stretch"
+                                                      VerticalAlignment="Center"
+                                                      Margin="{TemplateBinding Padding}"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource TabInactiveBg}"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource TabFgActive}"/>
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource TabActiveBg}"/>
+                                        <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource TabAccent}"/>
+                                        <Setter TargetName="Bd" Property="BorderThickness" Value="0,0,0,2"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource TabFgActive}"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
                 </Style>
             </TabControl.Resources>
         </TabControl>

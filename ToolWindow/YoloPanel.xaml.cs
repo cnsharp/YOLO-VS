@@ -87,6 +87,14 @@ namespace CnSharp.VSIX.Yolo
                 SetBrush("PanelBorder", border);
                 SetBrush("ComboBg", combo);
 
+                // Terminal-tab chrome. Derive a dark/light palette from the panel background
+                // luminance so the active tab is never white-on-white (or black-on-black).
+                bool isDark = (bg.R + bg.G + bg.B) / 3 < 128;
+                SetBrush("TabActiveBg", isDark ? Color.FromRgb(0x1e, 0x1e, 0x1e) : Colors.White);
+                SetBrush("TabInactiveBg", isDark ? Color.FromRgb(0x2d, 0x2d, 0x2d) : Color.FromRgb(0xe6, 0xe6, 0xe6));
+                SetBrush("TabFgActive", fg);
+                SetBrush("TabFgInactive", isDark ? Color.FromRgb(0x9b, 0x9b, 0x9b) : Color.FromRgb(0x59, 0x59, 0x59));
+
                 // Re-point the SystemColors keys that WPF's ComboBox template uses for the
                 // drop-down popup. They are replaced (not mutated) so DynamicResource in the
                 // template picks up the change immediately when the theme switches.
@@ -250,11 +258,12 @@ namespace CnSharp.VSIX.Yolo
         private StackPanel BuildTabHeader(string title, Action onClose)
         {
             var panel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(4, 2, 4, 2) };
-            var fg = Resources["PanelFg"] as Brush ?? Brushes.Silver;
+            // NB: do NOT set Foreground here — the title (and ×) inherit the TabItem's Foreground,
+            // which the TabItem template sets per state (TabFgActive / TabFgInactive) so the title
+            // stays readable in both dark and light themes.
             panel.Children.Add(new TextBlock
             {
                 Text = title,
-                Foreground = fg,
                 FontSize = 12,
                 VerticalAlignment = VerticalAlignment.Center
             });
@@ -267,7 +276,6 @@ namespace CnSharp.VSIX.Yolo
                 Padding = new Thickness(0),
                 Background = Brushes.Transparent,
                 BorderThickness = new Thickness(0),
-                Foreground = fg,
                 FontSize = 12,
                 VerticalAlignment = VerticalAlignment.Center,
                 Cursor = System.Windows.Input.Cursors.Hand
