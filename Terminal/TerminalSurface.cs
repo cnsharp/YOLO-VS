@@ -85,18 +85,6 @@ namespace CnSharp.VSIX.Yolo
             InvalidateVisual();
         }
 
-        /// <summary>Maps a client point to (virtual row, column), or null when outside the grid.</summary>
-        public (int virtualRow, int col)? HitTest(Point pt)
-        {
-            int cols = Emulator.Columns;
-            int rows = Emulator.Rows;
-            if (cols <= 0 || rows <= 0) return null;
-            int y = (int)(pt.Y / _cellHeight);
-            int x = (int)(pt.X / _cellWidth);
-            if (y < 0 || y >= rows || x < 0 || x >= cols) return null;
-            return (Emulator.TopVirtualRow + y, x);
-        }
-
         /// <summary>
         /// The selected text as a multi-line string (stream selection: top row from its anchor column to the
         /// end, middle rows fully, bottom row from the start to its column). Trailing spaces per line are
@@ -128,24 +116,6 @@ namespace CnSharp.VSIX.Yolo
             }
             return sb.ToString();
         }
-
-        private string BuildRowText(int vRow)
-        {
-            int cols = Emulator.Columns;
-            if (cols <= 0) return string.Empty;
-            var sb = new StringBuilder(cols);
-            for (int x = 0; x < cols; x++)
-            {
-                var cell = Emulator.VirtualCell(vRow, x);
-                // A wide-char trailer occupies a column but carries no glyph; map it to a blank so the
-                // character index stays 1:1 with the screen column.
-                sb.Append((cell.Flags & TerminalEmulator.FlagTrailer) != 0 ? ' ' : cell.Text);
-            }
-            return sb.ToString();
-        }
-
-        /// <summary>Column-indexed text of a virtual row (1 char per column; wide-char trailers become a space).</summary>
-        public string GetRowText(int vRow) => BuildRowText(vRow);
 
         public TerminalSurface()
         {

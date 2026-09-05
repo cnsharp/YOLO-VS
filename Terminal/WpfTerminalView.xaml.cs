@@ -145,6 +145,9 @@ namespace CnSharp.VSIX.Yolo
                             {
                                 e.Handled = true;
                                 YoloLinkNavigator.Navigate(m.Target, BaseDirectory);
+                                // Navigating may have moved focus to the opened document/browser; return
+                                // keyboard focus to the terminal so it keeps capturing keystrokes.
+                                InputCapture.Focus();
                                 return;
                             }
                         }
