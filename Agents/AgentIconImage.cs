@@ -25,35 +25,41 @@ namespace CnSharp.VSIX.Yolo
         /// <summary>Resolve an agent's icon by id (reads the agents.json icon spec).</summary>
         public static ImageSource? GetIcon(string agentId) => Resolve(AgentRegistry.IconFor(agentId));
 
-        /// <summary>Resolve an icon from an explicit spec — <c>res://…</c> or a filesystem path.</summary>
+        /// <summary>
+        /// Resolve an icon from an explicit spec. A rooted filesystem path (an absolute path or a
+        /// downloaded network icon) loads from disk; otherwise the spec is the resource's physical
+        /// path (e.g. <c>Resources/icons/agents/claude.png</c>) and is addressed through a WPF pack
+        /// URI — the standard .NET resource convention. The logical path always matches the on-disk
+        /// location, so there is no hidden base directory.
+        /// </summary>
         public static ImageSource? FromPath(string? icon) => Resolve(icon);
 
         private static ImageSource? Resolve(string? icon)
         {
-            if (string.IsNullOrEmpty(icon)) return null;
+            if (icon is null or "") return null;
             try
             {
-                if (icon.StartsWith("res://", StringComparison.OrdinalIgnoreCase))
-                {
-                    var pack = $"pack://application:,,,/{AssemblyName};component/Resources/icons/{icon.Substring("res://".Length)}";
-                    if (pack.EndsWith(".svg", StringComparison.OrdinalIgnoreCase))
-                    {
-                        var rs = Application.GetResourceStream(new Uri(pack, UriKind.Absolute));
-                        if (rs != null)
-                            using (var r = new StreamReader(rs.Stream))
-                                return SvgToImage(r.ReadToEnd());
-                        return null;
-                    }
-                    return new BitmapImage(new Uri(pack, UriKind.Absolute));
-                }
-
-                if (File.Exists(icon))
+                // A rooted filesystem path (absolute, or a downloaded network icon) loads from disk.
+                if (Path.IsPathRooted(icon) && File.Exists(icon))
                 {
                     if (icon.EndsWith(".svg", StringComparison.OrdinalIgnoreCase))
                         using (var r = new StreamReader(icon))
                             return SvgToImage(r.ReadToEnd());
                     return new BitmapImage(new Uri(icon, UriKind.Absolute));
                 }
+
+                // Otherwise treat `icon` as a path that matches the embedded resource's physical
+                // location (e.g. Resources/icons/agents/claude.png), addressed through a WPF pack URI.
+                var pack = $"pack://application:,,,/{AssemblyName};component/{icon.TrimStart('/')}";
+                if (pack.EndsWith(".svg", StringComparison.OrdinalIgnoreCase))
+                {
+                    var rs = Application.GetResourceStream(new Uri(pack, UriKind.Absolute));
+                    if (rs != null)
+                        using (var r = new StreamReader(rs.Stream))
+                            return SvgToImage(r.ReadToEnd());
+                    return null;
+                }
+                return new BitmapImage(new Uri(pack, UriKind.Absolute));
             }
             catch
             {
@@ -98,7 +104,7 @@ namespace CnSharp.VSIX.Yolo
         }
     }
 
-    /// <summary>Binds an icon spec (res://… or filesystem path) to a WPF <see cref="Image"/> Source.</summary>
+    /// <summary>Binds an icon spec (relative embedded resource or filesystem path) to a WPF <see cref="Image"/> Source.</summary>
     internal sealed class AgentIconConverter : IValueConverter
     {
         public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)

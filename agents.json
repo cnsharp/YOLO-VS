@@ -5,7 +5,7 @@
     "command": "claude",
     "skipFlag": "--dangerously-skip-permissions",
     "resumeFlag": "-r",
-    "icon": "res://agents/claude.png"
+    "icon": "Resources/icons/agents/claude.png"
   },
   {
     "id": "codex",
@@ -13,7 +13,7 @@
     "command": "codex",
     "skipFlag": "--yolo",
     "resumeFlag": "--resume",
-    "icon": "res://agents/codex.svg"
+    "icon": "Resources/icons/agents/codex.svg"
   },
   {
     "id": "codebuddy",
@@ -21,7 +21,7 @@
     "command": "codebuddy",
     "skipFlag": "-y",
     "resumeFlag": "-r",
-    "icon": "res://agents/codebuddy.svg"
+    "icon": "Resources/icons/agents/codebuddy.svg"
   },
   {
     "id": "gemini",
@@ -29,7 +29,7 @@
     "command": "gemini",
     "skipFlag": "--yolo",
     "resumeFlag": "",
-    "icon": "res://agents/gemini.png"
+    "icon": "Resources/icons/agents/gemini.png"
   },
   {
     "id": "copilot",
@@ -37,7 +37,7 @@
     "command": "copilot",
     "skipFlag": "--allow-all",
     "resumeFlag": "-r",
-    "icon": "res://agents/copilot.svg"
+    "icon": "Resources/icons/agents/copilot.svg"
   },
   {
     "id": "cursor",
@@ -45,7 +45,7 @@
     "command": "cursor-agent",
     "skipFlag": "--force",
     "resumeFlag": "--resume",
-    "icon": "res://agents/cursor.png"
+    "icon": "Resources/icons/agents/cursor.png"
   },
   {
     "id": "kimi",
@@ -53,7 +53,7 @@
     "command": "kimi",
     "skipFlag": "--yolo",
     "resumeFlag": "-r",
-    "icon": "res://agents/kimi.png"
+    "icon": "Resources/icons/agents/kimi.png"
   },
   {
     "id": "qoder",
@@ -61,7 +61,7 @@
     "command": "qoder",
     "skipFlag": "--dangerously-skip-permissions",
     "resumeFlag": "",
-    "icon": "res://agents/qoder.svg"
+    "icon": "Resources/icons/agents/qoder.svg"
   },
   {
     "id": "hermes",
@@ -69,7 +69,7 @@
     "command": "hermes",
     "skipFlag": "--yolo",
     "resumeFlag": "-r",
-    "icon": "res://agents/hermes.png"
+    "icon": "Resources/icons/agents/hermes.png"
   },
   {
     "id": "opencode",
@@ -77,7 +77,7 @@
     "command": "opencode",
     "skipFlag": "--auto",
     "resumeFlag": "",
-    "icon": "res://agents/opencode.png"
+    "icon": "Resources/icons/agents/opencode.png"
   },
   {
     "id": "continue",
@@ -85,7 +85,7 @@
     "command": "cn",
     "skipFlag": "--auto",
     "resumeFlag": "",
-    "icon": "res://agents/continue.png"
+    "icon": "Resources/icons/agents/continue.png"
   },
   {
     "id": "cline",
@@ -93,7 +93,7 @@
     "command": "cline",
     "skipFlag": "--auto-approve true",
     "resumeFlag": "--taskId",
-    "icon": "res://agents/cline.png"
+    "icon": "Resources/icons/agents/cline.png"
   },
   {
     "id": "goose",
@@ -101,7 +101,7 @@
     "command": "goose",
     "skipFlag": "",
     "resumeFlag": "-r",
-    "icon": "res://agents/goose.png",
+    "icon": "Resources/icons/agents/goose.png",
     "skipEnv": { "name": "GOOSE_MODE", "value": "auto" }
   },
   {
@@ -110,7 +110,7 @@
     "command": "kilo",
     "skipFlag": "",
     "resumeFlag": "",
-    "icon": "res://agents/kilo.svg"
+    "icon": "Resources/icons/agents/kilo.svg"
   },
   {
     "id": "openclaw",
@@ -118,7 +118,7 @@
     "command": "openclaw",
     "skipFlag": "",
     "resumeFlag": "",
-    "icon": "res://agents/openclaw.svg"
+    "icon": "Resources/icons/agents/openclaw.svg"
   },
   {
     "id": "pi",
@@ -126,7 +126,7 @@
     "command": "pi",
     "skipFlag": "--approve",
     "resumeFlag": "-r",
-    "icon": "res://agents/pi.svg"
+    "icon": "Resources/icons/agents/pi.svg"
   },
   {
     "id": "trae",
@@ -134,7 +134,7 @@
     "command": "traecli",
     "skipFlag": "",
     "resumeFlag": "--resume",
-    "icon": "res://agents/trae.png"
+    "icon": "Resources/icons/agents/trae.png"
   },
   {
     "id": "zcode",
@@ -142,6 +142,6 @@
     "command": "zcode",
     "skipFlag": "",
     "resumeFlag": "",
-    "icon": "res://agents/zcode.png"
+    "icon": "Resources/icons/agents/zcode.png"
   }
 ]

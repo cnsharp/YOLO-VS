@@ -7,6 +7,7 @@ using System.Windows.Threading;
 using System.Windows.Media;
 using EnvDTE;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.PlatformUI;
 
 // Intentional fire-and-forget marshaling: these BeginInvoke calls marshal work back onto the
@@ -354,7 +355,12 @@ namespace CnSharp.VSIX.Yolo
                 VerticalAlignment = VerticalAlignment.Center,
                 Cursor = System.Windows.Input.Cursors.Hand
             };
-            close.Click += (_, __) => onClose();
+            close.Click += (_, __) =>
+            {
+                ThreadHelper.ThrowIfNotOnUIThread();
+                if (ConfirmCloseTab())
+                    onClose();
+            };
             panel.Children.Add(close);
             return panel;
         }
@@ -368,6 +374,33 @@ namespace CnSharp.VSIX.Yolo
             SessionTabs.Items.Remove(session.Tab);
             _sessions.Remove(session);
             RefreshTabSwitcher();
+        }
+
+        /// <summary>
+        /// Mirror IDEA's confirmCloseTab(): ask before tearing down a terminal, since closing it
+        /// kills the running PTY process. Returns true only when the user picks Yes.
+        /// </summary>
+        private bool ConfirmCloseTab()
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            try
+            {
+                int result = VsShellUtilities.ShowMessageBox(
+                    Microsoft.VisualStudio.Shell.ServiceProvider.GlobalProvider,
+                    CnSharp.VSIX.Yolo.Resources.Panel_CloseTabConfirm,
+                    CnSharp.VSIX.Yolo.Resources.Panel_CloseTabConfirmTitle,
+                    OLEMSGICON.OLEMSGICON_QUERY,
+                    OLEMSGBUTTON.OLEMSGBUTTON_YESNO,
+                    OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_SECOND);
+                return result == 6; // IDYES
+            }
+            catch (Exception ex)
+            {
+                // If the shell dialog can't be shown, fail safe to closing (the exception is
+                // logged rather than crashing the close handler).
+                Log.Write("ConfirmCloseTab failed: " + ex.Message);
+                return true;
+            }
         }
 
         /// <summary>
