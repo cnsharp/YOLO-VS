@@ -1,0 +1,12 @@
+# Normalize all text files to LF on checkout/commit. This makes the working-tree
+# line endings match what Git stores, eliminating the spurious
+# "LF will be replaced by CRLF" status noise caused by core.autocrlf.
+* text=auto eol=lf
+
+# Binary assets — never normalize line endings.
+*.png  binary
+*.jpg  binary
+*.ico  binary
+*.vsix binary
+*.dll  binary
+*.exe  binary
