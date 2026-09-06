@@ -15,6 +15,10 @@ Install range is `[17.0, 19.0)`, so it covers both **Visual Studio 2022** and **
 - **Settings page** (`Tools > Options > YOLO`): edit agent flags, custom tools, and icons. Icons are validated as real images, and network icon URLs are downloaded to a local cache.
 - **Installed-agent cache**: the detected agent set is persisted and only re-scanned in the background when it changes.
 
+## Screenshot
+
+![YOLO tool window with a running agent terminal](Screenshots/yolo-panel.png)
+
 ## Tech stack
 
 - **Extension skeleton**: `Microsoft.VisualStudio.SDK` `17.0.31902.203` (`AsyncPackage`)
