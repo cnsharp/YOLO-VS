@@ -40,6 +40,8 @@ namespace CnSharp.VSIX.Yolo
         private DTE? _dte;
 
         private string _selectedAgent = string.Empty;
+        /// <summary>Re-entrancy guard while programmatically syncing the tab switcher / tab strip.</summary>
+        private bool _tabSwitchSyncing;
 
         /// <summary>Combo-box row: agent id + display name + rendered icon.</summary>
         private sealed class AgentComboItem
@@ -47,6 +49,13 @@ namespace CnSharp.VSIX.Yolo
             public string Id { get; set; } = string.Empty;
             public string Name { get; set; } = string.Empty;
             public System.Windows.Media.ImageSource? Icon { get; set; }
+        }
+
+        /// <summary>Right-hand tab-switcher row: session index + display name.</summary>
+        private sealed class TabSwitchItem
+        {
+            public int Index { get; set; }
+            public string Name { get; set; } = string.Empty;
         }
 
         // Icon colours mirror IDEA's toggle states exactly.
@@ -200,7 +209,71 @@ namespace CnSharp.VSIX.Yolo
             if (SessionTabs.SelectedItem is not TabItem tab) return;
             var session = _sessions.Find(s => s.Tab == tab);
             if (session == null) return;
+
+            // Keep the tab switcher's selected entry in step with the strip (without re-selecting
+            // the tab, which would loop). Detaching the handler avoids the re-entrant callback.
+            if (!_tabSwitchSyncing && TabSwitchButton.Visibility == Visibility.Visible && SessionTabs.SelectedIndex >= 0)
+            {
+                TabSwitchList.SelectionChanged -= OnTabSwitchSelected;
+                TabSwitchList.SelectedIndex = SessionTabs.SelectedIndex;
+                TabSwitchList.SelectionChanged += OnTabSwitchSelected;
+            }
+
             Dispatcher.BeginInvoke(new Action(() => session.View?.FocusTerminal()), DispatcherPriority.Input);
+        }
+
+        /// <summary>
+        /// Rebuilds the right-hand tab-switcher list from the current sessions. The chevron button
+        /// is only shown once there is more than one tab open (so a single terminal needs no
+        /// switcher); selecting an entry in the popup flips the active tab.
+        /// </summary>
+        private void RefreshTabSwitcher()
+        {
+            TabSwitchList.SelectionChanged -= OnTabSwitchSelected;
+            TabSwitchList.Items.Clear();
+            for (int i = 0; i < _sessions.Count; i++)
+            {
+                TabSwitchList.Items.Add(new TabSwitchItem
+                {
+                    Index = i,
+                    Name = _sessions[i].DisplayName
+                });
+            }
+            TabSwitchButton.Visibility = _sessions.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+            if (_sessions.Count <= 1)
+                TabSwitchButton.IsChecked = false; // collapse the popup if we just dropped below two tabs
+            if (SessionTabs.SelectedIndex >= 0)
+                TabSwitchList.SelectedIndex = SessionTabs.SelectedIndex;
+            TabSwitchList.SelectionChanged += OnTabSwitchSelected;
+        }
+
+        /// <summary>When the chevron opens (IsChecked -> true binds Popup.IsOpen), highlight the
+        /// currently active tab in the list and focus it for keyboard navigation.</summary>
+        private void OnTabSwitchOpened(object sender, RoutedEventArgs e)
+        {
+            if (SessionTabs.SelectedIndex >= 0)
+                TabSwitchList.SelectedIndex = SessionTabs.SelectedIndex;
+            TabSwitchList.Focus();
+        }
+
+        /// <summary>Keep the chevron in sync when the popup is dismissed by an outside click
+        /// (StaysOpen=False closes it, but IsChecked would otherwise stay true).</summary>
+        private void OnTabSwitchPopupClosed(object sender, EventArgs e)
+        {
+            TabSwitchButton.IsChecked = false;
+        }
+
+        private void OnTabSwitchSelected(object sender, SelectionChangedEventArgs e)
+        {
+            if (_tabSwitchSyncing) return;
+            if (TabSwitchList.SelectedItem is TabSwitchItem item && item.Index >= 0 && item.Index < _sessions.Count)
+            {
+                _tabSwitchSyncing = true;
+                SessionTabs.SelectedIndex = item.Index;
+                _tabSwitchSyncing = false;
+            }
+            // Dismiss the popup after a choice (IsChecked=false -> Popup.IsOpen=false via binding).
+            TabSwitchButton.IsChecked = false;
         }
 
         private void OnAgentCacheChanged()
@@ -240,6 +313,7 @@ namespace CnSharp.VSIX.Yolo
             session.Tab = tab;
 
             _sessions.Add(session);
+            RefreshTabSwitcher();
 
             // Launch the shell on a background thread; the pty starts once the view reports
             // a real cell grid (deferred internally). For agent sessions the agent command is
@@ -293,6 +367,7 @@ namespace CnSharp.VSIX.Yolo
             try { session.Terminal?.Dispose(); } catch { /* ignore */ }
             SessionTabs.Items.Remove(session.Tab);
             _sessions.Remove(session);
+            RefreshTabSwitcher();
         }
 
         /// <summary>

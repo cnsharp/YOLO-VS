@@ -104,6 +104,9 @@
   <data name="Panel_SettingsTooltip" xml:space="preserve">
     <value>Settings</value>
   </data>
+  <data name="Panel_TabSwitchTooltip" xml:space="preserve">
+    <value>Switch terminal tab</value>
+  </data>
   <data name="Panel_SelectAgentFirst" xml:space="preserve">
     <value>Select an agent first.</value>
   </data>

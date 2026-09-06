@@ -105,7 +105,12 @@
 
         <!-- Control panel: agent dropdown + Y/R toggles + actions, all on one row -->
         <Border Grid.Row="0" Background="{DynamicResource ToolbarBg}" BorderBrush="{DynamicResource PanelBorder}" BorderThickness="0,0,0,1">
-            <WrapPanel Margin="10" Orientation="Horizontal" VerticalAlignment="Center">
+            <Grid Margin="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <WrapPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                 <ComboBox x:Name="AgentComboBox"
                           Width="160"
                           Style="{StaticResource DarkAgentComboBox}"
@@ -191,7 +196,104 @@
                         Click="OnSettingsClicked">
                     <imaging:CrispImage Width="16" Height="16" Moniker="{x:Static interop:KnownMonikers.Settings}" IsHitTestVisible="False"/>
                 </Button>
-            </WrapPanel>
+                </WrapPanel>
+
+                <!-- Right-aligned tab switcher: a compact chevron button (no text) that opens a
+                     tab-list popup. Only shown when more than one terminal tab is open. -->
+                <ToggleButton x:Name="TabSwitchButton"
+                              Grid.Column="1"
+                              Width="24" Height="24"
+                              Margin="8,0,0,0"
+                              Visibility="Collapsed"
+                              Background="Transparent"
+                              BorderBrush="{DynamicResource PanelBorder}"
+                              BorderThickness="1"
+                              ToolTip="{x:Static local:Resources.Panel_TabSwitchTooltip}"
+                              Checked="OnTabSwitchOpened">
+                    <ToggleButton.Template>
+                        <ControlTemplate TargetType="ToggleButton">
+                            <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}">
+                                <Path Data="M0,0 L5,5 L10,0 Z"
+                                      Stretch="Uniform"
+                                      Width="10" Height="6"
+                                      Fill="{DynamicResource PanelFg}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </ToggleButton.Template>
+                </ToggleButton>
+
+                <Popup x:Name="TabSwitchPopup"
+                       PlacementTarget="{Binding ElementName=TabSwitchButton}"
+                       Placement="Bottom"
+                       StaysOpen="False"
+                       IsOpen="{Binding IsChecked, ElementName=TabSwitchButton, Mode=OneWay}"
+                       Closed="OnTabSwitchPopupClosed"
+                       AllowsTransparency="True"
+                       PopupAnimation="Slide">
+                    <Border Background="{DynamicResource ComboBg}"
+                            BorderBrush="{DynamicResource PanelBorder}"
+                            BorderThickness="1"
+                            MinWidth="160">
+                        <ListBox x:Name="TabSwitchList"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 Foreground="{DynamicResource ComboFg}"
+                                 SelectionChanged="OnTabSwitchSelected"
+                                 KeyboardNavigation.TabNavigation="Once">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource ComboFg}"/>
+                                    <Setter Property="Padding" Value="0"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource TabInactiveBg}"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource TabActiveBg}"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource TabFgActive}"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="18"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock x:Name="Check"
+                                                   Grid.Column="0"
+                                                   Text="✓"
+                                                   Foreground="{DynamicResource TabAccent}"
+                                                   FontWeight="Bold"
+                                                   Visibility="Collapsed"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding Name}"
+                                                   Padding="2,4"
+                                                   VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <DataTemplate.Triggers>
+                                        <!-- Mark the currently active tab with an accent check so it
+                                             is obvious which session the popup will keep selected. -->
+                                        <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}"
+                                                     Value="True">
+                                            <Setter TargetName="Check" Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Border>
+                </Popup>
+            </Grid>
         </Border>
 
         <!-- Multi-tab terminal: one tab per agent session (or plain shell) -->

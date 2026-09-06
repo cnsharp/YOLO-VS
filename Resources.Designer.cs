@@ -205,6 +205,15 @@ namespace CnSharp.VSIX.Yolo {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Switch terminal tab.
+        /// </summary>
+        public static string Panel_TabSwitchTooltip {
+            get {
+                return ResourceManager.GetString("Panel_TabSwitchTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Skip permissions OFF (Y).
         /// </summary>
         public static string Panel_SkipOff {
