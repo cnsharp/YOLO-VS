@@ -44,7 +44,6 @@
                             <Style.Triggers>
                             <DataTrigger Binding="{Binding IsInstalled}" Value="False">
                                 <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"/>
-                                <Setter Property="ToolTip" Value="{x:Static local:Resources.Settings_CommandNotFoundTooltip}"/>
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>

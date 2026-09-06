@@ -324,9 +324,7 @@ namespace CnSharp.VSIX.Yolo
                     Dispatcher.InvokeAsync(() =>
                     {
                         row.IsInstalled = ok;
-                        if (!ok)
-                            SetStatus(string.Format(CnSharp.VSIX.Yolo.Resources.Settings_CommandNotFoundOnPath, cmd), true);
-                        else if (!iconOk)
+                        if (!iconOk)
                             SetStatus(iconMsg, true);
                         else
                             SetStatus(CnSharp.VSIX.Yolo.Resources.Settings_ValidationPassed, false);
@@ -336,19 +334,19 @@ namespace CnSharp.VSIX.Yolo
         }
 
         /// <summary>
-        /// Checks an agent row's icon: it must resolve to a real, loadable image. <c>res://</c>
-        /// specs pass by format; a <c>http(s)://</c> URL is downloaded into the local YOLO icon
-        /// folder and the row's <see cref="AgentRow.IconPath"/> is rewritten to that local path
-        /// (so the icon is stored offline and machine-stable). Returns false (and sets
-        /// <paramref name="message"/>) when the icon is missing, not a valid image, or won't download.
+        /// Checks an agent row's icon: it must resolve to a real, loadable image. A
+        /// <c>http(s)://</c> URL is downloaded into the local YOLO icon folder and the row's
+        /// <see cref="AgentRow.IconPath"/> is rewritten to that local path (so the icon is stored
+        /// offline and machine-stable). A rooted filesystem path or an embedded-resource path that
+        /// matches the physical location (e.g. <c>Resources/icons/agents/claude.png</c>) is validated
+        /// by attempting to decode it. Returns false (and sets <paramref name="message"/>) when the
+        /// icon is missing, not a valid image, or won't download.
         /// </summary>
         private bool ValidateIcon(AgentRow row, out string message)
         {
             message = string.Empty;
             var path = (row.IconPath ?? string.Empty).Trim();
             if (string.IsNullOrWhiteSpace(path)) return true;
-
-            if (path.StartsWith("res://", StringComparison.OrdinalIgnoreCase)) return true;
 
             if (IsNetworkIcon(path))
             {
@@ -374,12 +372,7 @@ namespace CnSharp.VSIX.Yolo
                 return decodes;
             }
 
-            // Local file: must exist AND decode as a real image (PNG/JPG/SVG/…).
-            if (!File.Exists(path))
-            {
-                message = string.Format(CnSharp.VSIX.Yolo.Resources.Settings_IconPathInvalid, path);
-                return false;
-            }
+            // Rooted filesystem path or relative embedded resource: must decode as a real image.
             var ok = AgentIconImage.FromPath(path) != null;
             if (!ok)
                 message = string.Format(CnSharp.VSIX.Yolo.Resources.Settings_IconNotImage, path);

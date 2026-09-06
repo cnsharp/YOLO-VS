@@ -107,6 +107,12 @@
   <data name="Panel_TabSwitchTooltip" xml:space="preserve">
     <value>Switch terminal tab</value>
   </data>
+  <data name="Panel_CloseTabConfirm" xml:space="preserve">
+    <value>Close this terminal? The running process will be terminated.</value>
+  </data>
+  <data name="Panel_CloseTabConfirmTitle" xml:space="preserve">
+    <value>Close Terminal</value>
+  </data>
   <data name="Panel_SelectAgentFirst" xml:space="preserve">
     <value>Select an agent first.</value>
   </data>
@@ -181,9 +187,6 @@
   <data name="Settings_Col_IconPath" xml:space="preserve">
     <value>Icon path / URL</value>
   </data>
-  <data name="Settings_CommandNotFoundTooltip" xml:space="preserve">
-    <value>Command not found on PATH</value>
-  </data>
   <data name="Settings_AddedCustomTool" xml:space="preserve">
     <value>Added a blank custom tool — set its ID, Command and Skip flag, then Validate.</value>
   </data>
@@ -201,9 +204,6 @@
   </data>
   <data name="Settings_Validating" xml:space="preserve">
     <value>Validating…</value>
-  </data>
-  <data name="Settings_CommandNotFoundOnPath" xml:space="preserve">
-    <value>Command not found on PATH: {0}</value>
   </data>
   <data name="Settings_IconPathInvalid" xml:space="preserve">
     <value>Icon path is not a valid local file: {0}</value>

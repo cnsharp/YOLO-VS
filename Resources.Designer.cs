@@ -214,6 +214,24 @@ namespace CnSharp.VSIX.Yolo {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Close this terminal? The running process will be terminated.
+        /// </summary>
+        public static string Panel_CloseTabConfirm {
+            get {
+                return ResourceManager.GetString("Panel_CloseTabConfirm", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Close Terminal.
+        /// </summary>
+        public static string Panel_CloseTabConfirmTitle {
+            get {
+                return ResourceManager.GetString("Panel_CloseTabConfirmTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Skip permissions OFF (Y).
         /// </summary>
         public static string Panel_SkipOff {
@@ -354,24 +372,6 @@ namespace CnSharp.VSIX.Yolo {
         public static string Settings_Col_SkipFlag {
             get {
                 return ResourceManager.GetString("Settings_Col_SkipFlag", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Command not found on PATH: {0}.
-        /// </summary>
-        public static string Settings_CommandNotFoundOnPath {
-            get {
-                return ResourceManager.GetString("Settings_CommandNotFoundOnPath", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Command not found on PATH.
-        /// </summary>
-        public static string Settings_CommandNotFoundTooltip {
-            get {
-                return ResourceManager.GetString("Settings_CommandNotFoundTooltip", resourceCulture);
             }
         }
         
