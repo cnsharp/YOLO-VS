@@ -1,13 +1,13 @@
 # Agent YOLO for Visual Studio
 
-YOLO is a Visual Studio extension that acts as a bridge between the IDE and your AI coding agents. From a docked tool window you launch agents such as Claude, Copilot, Gemini, or Cursor directly inside a real terminal, and steer them with Y (skip permission) / R (resume session) toggles — so the agent runs where your code already lives, with its output and working directory rooted in the current solution.
+YOLO is a Visual Studio extension that acts as a bridge between the IDE and your AI coding agents. From a docked tool window you launch agents such as Claude, Codex, Copilot, or Cursor directly inside a real terminal, and steer them with Y (skip permission) / R (resume session) toggles — so the agent runs where your code already lives, with its output and working directory rooted in the current solution.
 
 Install range is `[17.0, 19.0)`, so it covers both **Visual Studio 2022** and **Visual Studio 2026**. It is developed and debugged against VS2026 Community.
 
 ## Features
 
 - **Right-side tool window**: a YOLO window docked next to the Solution Explorer. Open it from the top-level **Agent YOLO** entry on the **View** menu, or press **Ctrl+W, Y**.
-- **Data-driven agent dropdown**: lists the agents found in `agents.json` (Claude, Copilot, Gemini, Cursor, etc.), kept separate from code — add an agent by editing the JSON, not the source.
+- **Data-driven agent dropdown**: lists the agents found in `agents.json` (Claude, Codex, Copilot, Cursor, OpenCode, etc. — 34 built-ins), kept separate from code — add an agent by editing the JSON, not the source.
 - **Y (skip permission) / R (resume session) global toggles**: sticky, persisted across sessions. At launch they append the agent's skip/resume flag (or inject a skip env var, e.g. `GOOSE_MODE=auto`) — they never touch already-running sessions.
 - **Real multi-tab ConPTY terminal**: each Agent launch opens a fresh tab backed by a hand-drawn ConPTY (not WebView2 / Windows Terminal control). Multiple Agent sessions run concurrently; every tab has a close button, and text selection / copy work inside the TUI.
 - **Tab switcher**: when more than one terminal tab is open, a compact chevron button appears at the right end of the toolbar and opens a tab-list popup to jump between sessions.

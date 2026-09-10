@@ -5,7 +5,8 @@
     "command": "claude",
     "skipFlag": "--dangerously-skip-permissions",
     "resumeFlag": "-r",
-    "icon": "Resources/icons/agents/claude.png"
+    "icon": "Resources/icons/agents/claude.svg",
+    "url": "https://claude.ai/"
   },
   {
     "id": "codex",
@@ -13,31 +14,8 @@
     "command": "codex",
     "skipFlag": "--yolo",
     "resumeFlag": "--resume",
-    "icon": "Resources/icons/agents/codex.svg"
-  },
-  {
-    "id": "codebuddy",
-    "displayName": "CodeBuddy",
-    "command": "codebuddy",
-    "skipFlag": "-y",
-    "resumeFlag": "-r",
-    "icon": "Resources/icons/agents/codebuddy.svg"
-  },
-  {
-    "id": "gemini",
-    "displayName": "Gemini",
-    "command": "gemini",
-    "skipFlag": "--yolo",
-    "resumeFlag": "",
-    "icon": "Resources/icons/agents/gemini.png"
-  },
-  {
-    "id": "copilot",
-    "displayName": "Copilot",
-    "command": "copilot",
-    "skipFlag": "--allow-all",
-    "resumeFlag": "-r",
-    "icon": "Resources/icons/agents/copilot.svg"
+    "icon": "Resources/icons/agents/codex.svg",
+    "url": "https://openai.com/codex"
   },
   {
     "id": "cursor",
@@ -45,31 +23,17 @@
     "command": "cursor-agent",
     "skipFlag": "--force",
     "resumeFlag": "--resume",
-    "icon": "Resources/icons/agents/cursor.png"
+    "icon": "Resources/icons/agents/cursor.svg",
+    "url": "https://cursor.com/"
   },
   {
-    "id": "kimi",
-    "displayName": "Kimi",
-    "command": "kimi",
-    "skipFlag": "--yolo",
+    "id": "copilot",
+    "displayName": "GitHub Copilot",
+    "command": "copilot",
+    "skipFlag": "--allow-all",
     "resumeFlag": "-r",
-    "icon": "Resources/icons/agents/kimi.png"
-  },
-  {
-    "id": "qoder",
-    "displayName": "Qoder",
-    "command": "qoder",
-    "skipFlag": "--dangerously-skip-permissions",
-    "resumeFlag": "",
-    "icon": "Resources/icons/agents/qoder.svg"
-  },
-  {
-    "id": "hermes",
-    "displayName": "Hermes",
-    "command": "hermes",
-    "skipFlag": "--yolo",
-    "resumeFlag": "-r",
-    "icon": "Resources/icons/agents/hermes.png"
+    "icon": "Resources/icons/agents/copilot.svg",
+    "url": "https://github.com/features/copilot"
   },
   {
     "id": "opencode",
@@ -77,15 +41,17 @@
     "command": "opencode",
     "skipFlag": "--auto",
     "resumeFlag": "",
-    "icon": "Resources/icons/agents/opencode.png"
+    "icon": "Resources/icons/agents/opencode.svg",
+    "url": "https://opencode.ai/"
   },
   {
-    "id": "continue",
-    "displayName": "Continue",
-    "command": "cn",
-    "skipFlag": "--auto",
+    "id": "aider",
+    "displayName": "Aider",
+    "command": "aider",
+    "skipFlag": "--yes",
     "resumeFlag": "",
-    "icon": "Resources/icons/agents/continue.png"
+    "icon": "Resources/icons/agents/aider.svg",
+    "url": "https://aider.chat/"
   },
   {
     "id": "cline",
@@ -93,24 +59,17 @@
     "command": "cline",
     "skipFlag": "--auto-approve true",
     "resumeFlag": "--taskId",
-    "icon": "Resources/icons/agents/cline.png"
+    "icon": "Resources/icons/agents/cline.svg",
+    "url": "https://cline.bot/"
   },
   {
-    "id": "goose",
-    "displayName": "Goose",
-    "command": "goose",
-    "skipFlag": "",
-    "resumeFlag": "-r",
-    "icon": "Resources/icons/agents/goose.png",
-    "skipEnv": { "name": "GOOSE_MODE", "value": "auto" }
-  },
-  {
-    "id": "kilo",
-    "displayName": "Kilo Code",
-    "command": "kilo",
-    "skipFlag": "",
+    "id": "continue",
+    "displayName": "Continue",
+    "command": "cn",
+    "skipFlag": "--auto",
     "resumeFlag": "",
-    "icon": "Resources/icons/agents/kilo.svg"
+    "icon": "Resources/icons/agents/continue.svg",
+    "url": "https://continue.dev/"
   },
   {
     "id": "openclaw",
@@ -118,15 +77,66 @@
     "command": "openclaw",
     "skipFlag": "",
     "resumeFlag": "",
-    "icon": "Resources/icons/agents/openclaw.svg"
+    "icon": "Resources/icons/agents/openclaw.svg",
+    "url": "https://openclaw.ai/"
   },
   {
-    "id": "pi",
-    "displayName": "Pi",
-    "command": "pi",
-    "skipFlag": "--approve",
+    "id": "kiro",
+    "displayName": "Kiro",
+    "command": "kiro-cli",
+    "skipFlag": "--trust-all-tools",
+    "resumeFlag": "",
+    "icon": "Resources/icons/agents/kiro.svg",
+    "url": "https://kiro.dev/"
+  },
+  {
+    "id": "goose",
+    "displayName": "Goose",
+    "command": "goose",
+    "skipFlag": "",
     "resumeFlag": "-r",
-    "icon": "Resources/icons/agents/pi.svg"
+    "skipEnv": {
+      "name": "GOOSE_MODE",
+      "value": "auto"
+    },
+    "icon": "Resources/icons/agents/goose.svg",
+    "url": "https://block.github.io/goose/"
+  },
+  {
+    "id": "crush",
+    "displayName": "Charm Crush",
+    "command": "crush",
+    "skipFlag": "--yolo",
+    "resumeFlag": "",
+    "icon": "Resources/icons/agents/crush.png",
+    "url": "https://charm.sh/crush"
+  },
+  {
+    "id": "amp",
+    "displayName": "Amp",
+    "command": "amp",
+    "skipFlag": "--dangerously-allow-all",
+    "resumeFlag": "",
+    "icon": "Resources/icons/agents/amp.svg",
+    "url": "https://ampcode.com/"
+  },
+  {
+    "id": "kimi",
+    "displayName": "Kimi",
+    "command": "kimi",
+    "skipFlag": "--yolo",
+    "resumeFlag": "-r",
+    "icon": "Resources/icons/agents/kimi.svg",
+    "url": "https://kimi.moonshot.cn/"
+  },
+  {
+    "id": "qwen-code",
+    "displayName": "Qwen Code",
+    "command": "qwen",
+    "skipFlag": "--approval-mode yolo",
+    "resumeFlag": "",
+    "icon": "Resources/icons/agents/qwen-code.png",
+    "url": "https://qwen.ai/qwencode"
   },
   {
     "id": "trae",
@@ -134,14 +144,169 @@
     "command": "traecli",
     "skipFlag": "",
     "resumeFlag": "--resume",
-    "icon": "Resources/icons/agents/trae.png"
+    "icon": "Resources/icons/agents/trae.svg",
+    "url": "https://www.trae.ai/"
   },
   {
-    "id": "zcode",
-    "displayName": "ZCode",
-    "command": "zcode",
+    "id": "codebuddy",
+    "displayName": "CodeBuddy",
+    "command": "codebuddy",
+    "skipFlag": "-y",
+    "resumeFlag": "-r",
+    "icon": "Resources/icons/agents/codebuddy.svg",
+    "url": "https://www.codebuddy.ai/"
+  },
+  {
+    "id": "qoder",
+    "displayName": "Qoder",
+    "command": "qoder",
+    "skipFlag": "--dangerously-skip-permissions",
+    "resumeFlag": "",
+    "icon": "Resources/icons/agents/qoder.svg",
+    "url": "https://qoder.com/"
+  },
+  {
+    "id": "devin",
+    "displayName": "Devin",
+    "command": "devin",
+    "skipFlag": "--permission-mode bypass",
+    "resumeFlag": "--resume",
+    "icon": "Resources/icons/agents/devin.svg",
+    "url": "https://devin.ai/"
+  },
+  {
+    "id": "grok",
+    "displayName": "Grok",
+    "command": "grok",
+    "skipFlag": "--permission-mode bypassPermissions",
+    "resumeFlag": "--resume",
+    "icon": "Resources/icons/agents/grok.svg",
+    "url": "https://grok.com/"
+  },
+  {
+    "id": "antigravity",
+    "displayName": "Antigravity",
+    "command": "agy",
+    "skipFlag": "--dangerously-skip-permissions",
+    "resumeFlag": "--conversation",
+    "icon": "Resources/icons/agents/antigravity.png",
+    "url": "https://antigravity.google/"
+  },
+  {
+    "id": "mistral-vibe",
+    "displayName": "Mistral Vibe",
+    "command": "vibe",
+    "skipFlag": "--agent auto-approve",
+    "resumeFlag": "",
+    "icon": "Resources/icons/agents/mistral-vibe.svg",
+    "url": "https://mistral.ai/"
+  },
+  {
+    "id": "kilo",
+    "displayName": "Kilo Code",
+    "command": "kilo",
     "skipFlag": "",
     "resumeFlag": "",
-    "icon": "Resources/icons/agents/zcode.png"
+    "icon": "Resources/icons/agents/kilo.svg",
+    "url": "https://kilocode.ai/"
+  },
+  {
+    "id": "hermes",
+    "displayName": "Hermes",
+    "command": "hermes",
+    "skipFlag": "--yolo",
+    "resumeFlag": "-r",
+    "icon": "Resources/icons/agents/hermes.png",
+    "url": "https://hermes-agent.nousresearch.com/"
+  },
+  {
+    "id": "pi",
+    "displayName": "Pi",
+    "command": "pi",
+    "skipFlag": "--approve",
+    "resumeFlag": "-r",
+    "icon": "Resources/icons/agents/pi.svg",
+    "url": "https://pi.ai/"
+  },
+  {
+    "id": "droid",
+    "displayName": "Droid",
+    "command": "droid",
+    "skipFlag": "--auto high",
+    "resumeFlag": "--resume",
+    "icon": "Resources/icons/agents/droid.svg",
+    "url": "https://factory.ai/"
+  },
+  {
+    "id": "aug",
+    "displayName": "Auggie",
+    "command": "auggie",
+    "skipFlag": "",
+    "resumeFlag": "",
+    "icon": "Resources/icons/agents/aug.svg",
+    "url": "https://augmentcode.com/"
+  },
+  {
+    "id": "rovo",
+    "displayName": "Rovo Dev",
+    "command": "rovo",
+    "skipFlag": "--yolo",
+    "resumeFlag": "",
+    "icon": "Resources/icons/agents/rovo.svg",
+    "url": "https://rovo.atlassian.com/"
+  },
+  {
+    "id": "prime-agent",
+    "displayName": "Prime Agent",
+    "command": "prime-agent",
+    "skipFlag": "",
+    "resumeFlag": "--resume",
+    "icon": "Resources/icons/agents/prime-agent.png",
+    "url": "https://www.primeintellect.ai/"
+  },
+  {
+    "id": "autohand",
+    "displayName": "Autohand",
+    "command": "autohand",
+    "skipFlag": "--unrestricted",
+    "resumeFlag": "",
+    "icon": "Resources/icons/agents/autohand.svg",
+    "url": "https://autohand.ai/"
+  },
+  {
+    "id": "command-code",
+    "displayName": "Command Code",
+    "command": "command-code",
+    "skipFlag": "--yolo",
+    "resumeFlag": "",
+    "icon": "Resources/icons/agents/command-code.svg",
+    "url": "https://commandcode.ai/"
+  },
+  {
+    "id": "ante",
+    "displayName": "Ante",
+    "command": "ante",
+    "skipFlag": "--yolo",
+    "resumeFlag": "",
+    "icon": "Resources/icons/agents/ante.svg",
+    "url": "https://antigma.ai/"
+  },
+  {
+    "id": "codebuff",
+    "displayName": "Codebuff",
+    "command": "codebuff",
+    "skipFlag": "",
+    "resumeFlag": "",
+    "icon": "Resources/icons/agents/codebuff.png",
+    "url": "https://codebuff.com/"
+  },
+  {
+    "id": "omp",
+    "displayName": "OMP",
+    "command": "omp",
+    "skipFlag": "",
+    "resumeFlag": "--resume",
+    "icon": "Resources/icons/agents/omp.svg",
+    "url": "https://ohmyposh.dev/"
   }
 ]
