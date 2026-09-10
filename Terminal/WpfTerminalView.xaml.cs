@@ -121,19 +121,28 @@ namespace CnSharp.VSIX.Yolo
             return src != null && ScrollBar.IsAncestorOf(src);
         }
 
-        private void OnMouseDown(object sender, MouseButtonEventArgs e)
+        private void OnPreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
+            // Tunneling handler: kept (rather than the Grid's bubbling MouseDown) so the link
+            // hit-test and the selection start both run before InputCapture sees the press.
             if (IsOnScrollBar(e)) return;
 
             // The click lands on the UI thread, but the vs-threading analyzer cannot see through WPF's
             // event dispatch — assert it so VSTHRD010 stays quiet and Navigate's own thread contract holds.
             ThreadHelper.ThrowIfNotOnUIThread();
-
-            // A left-click on a painted link navigates to it; otherwise the click just focuses the
-            // terminal (and, on the next drag, begins a text selection) as before.
-            if (e.ChangedButton == MouseButton.Left && LinkFilter != null)
+            if (e.ChangedButton != MouseButton.Left)
             {
-                var hit = Screen.HitTest(e.GetPosition(Screen));
+                // Right/middle click still focuses the terminal (so the context menu acts on it).
+                InputCapture.Focus();
+                return;
+            }
+
+            var pos = e.GetPosition(Screen);
+
+            // A left-click on a painted link navigates to it.
+            if (LinkFilter != null)
+            {
+                var hit = Screen.HitTest(pos);
                 if (hit.HasValue)
                 {
                     var links = Screen.GetRowLinks(hit.Value.virtualRow);
@@ -141,7 +150,7 @@ namespace CnSharp.VSIX.Yolo
                     {
                         foreach (var m in links)
                         {
-                            if (hit.Value.col >= m.Start && hit.Value.col < m.End)
+                            if (m.Target != null && hit.Value.col >= m.Start && hit.Value.col < m.End)
                             {
                                 e.Handled = true;
                                 YoloLinkNavigator.Navigate(m.Target, BaseDirectory);
@@ -154,29 +163,33 @@ namespace CnSharp.VSIX.Yolo
                     }
                 }
             }
-            if (e.ChangedButton == MouseButton.Left)
-            {
-                // Begin a (possibly zero-length) selection; we only know click-vs-drag on mouse-up.
-                // Grabbing keyboard focus immediately keeps the terminal capturing keystrokes even
-                // before the mouse is released (a click must not leave focus stranded).
-                _dragStart = e.GetPosition(Screen);
-                _mouseDown = true;
-                _dragging = false;
-                var hit = Screen.HitTest(_dragStart);
-                if (hit.HasValue) Screen.BeginSelection(hit.Value.virtualRow, hit.Value.col);
-                else Screen.ClearSelection();
-                InputCapture.Focus();
-                Screen.CaptureMouse();
-                e.Handled = true;
-                return;
-            }
+
+            // Not a link: begin a (possibly zero-length) selection and focus the terminal, exactly as the
+            // old bubbling MouseDown did — but handled here in the tunneling phase so the TextBox never
+            // starts its own selection over our drawn grid.
+            _dragStart = pos;
+            _mouseDown = true;
+            _dragging = false;
+            var hit2 = Screen.HitTest(pos);
+            if (hit2.HasValue) Screen.BeginSelection(hit2.Value.virtualRow, hit2.Value.col);
+            else Screen.ClearSelection();
             InputCapture.Focus();
+            Screen.CaptureMouse();
+            e.Handled = true;
         }
 
         private void OnMouseMove(object sender, MouseEventArgs e)
         {
             if (IsOnScrollBar(e)) return;
-            if (!_mouseDown || e.LeftButton != MouseButtonState.Pressed) return;
+            // Hover feedback: show a hand cursor over a clickable link. This runs on plain
+            // hover (no button held) and is independent of the drag-selection path below.
+            if (e.LeftButton != MouseButtonState.Pressed)
+            {
+                UpdateHoverCursor(e);
+                return;
+            }
+
+            if (!_mouseDown) return;
             if (!_dragging)
             {
                 var pos = e.GetPosition(Screen);
@@ -190,6 +203,42 @@ namespace CnSharp.VSIX.Yolo
                 if (hit.HasValue) Screen.UpdateSelection(hit.Value.virtualRow, hit.Value.col);
                 e.Handled = true;
             }
+        }
+
+        /// <summary>
+        /// Sets the hand cursor when the pointer is over a painted link, otherwise the text
+        /// (I-beam) cursor. <see cref="InputCapture"/> is the topmost element, so its cursor is
+        /// what the user actually sees — set it there directly.
+        /// </summary>
+        private void UpdateHoverCursor(MouseEventArgs e)
+        {
+            bool overLink = false;
+            if (LinkFilter != null)
+            {
+                var hit = Screen.HitTest(e.GetPosition(Screen));
+                if (hit.HasValue)
+                {
+                    var links = Screen.GetRowLinks(hit.Value.virtualRow);
+                    if (links != null)
+                    {
+                        foreach (var m in links)
+                        {
+                            if (hit.Value.col >= m.Start && hit.Value.col < m.End)
+                            {
+                                overLink = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            InputCapture.Cursor = overLink ? Cursors.Hand : Cursors.IBeam;
+        }
+
+        private void OnMouseLeave(object sender, MouseEventArgs e)
+        {
+            // Drop the hand cursor when the pointer leaves the terminal.
+            InputCapture.Cursor = Cursors.IBeam;
         }
 
         private void OnMouseUp(object sender, MouseButtonEventArgs e)
