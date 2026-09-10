@@ -136,7 +136,37 @@ namespace CnSharp.VSIX.Yolo
             System.Windows.Media.Color.FromArgb(c.A, c.R, c.G, c.B);
 
         private void OnVsThemeChanged(ThemeChangedEventArgs e) =>
-            Dispatcher.BeginInvoke(new Action(ApplyVsTheme));
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                ApplyVsTheme();
+                RefreshAgentIcons();
+            }));
+
+        /// <summary>
+        /// Re-renders the agent icons after a theme switch. A bundled icon can ship a dark twin
+        /// (<c>codex.svg</c> / <c>codex_dark.svg</c>, see <see cref="AgentIconImage"/>), and both the
+        /// dropdown rows and the tab switcher hold an already-rendered ImageSource, so they must be
+        /// rebuilt — mutating one in place would not notify the binding.
+        /// </summary>
+        private void RefreshAgentIcons()
+        {
+            var selectedId = (AgentComboBox.SelectedItem as AgentComboItem)?.Id;
+            for (int i = 0; i < AgentComboBox.Items.Count; i++)
+            {
+                if (!(AgentComboBox.Items[i] is AgentComboItem item)) continue;
+                AgentComboBox.Items[i] = new AgentComboItem
+                {
+                    Id = item.Id,
+                    Name = item.Name,
+                    Icon = AgentIconImage.GetIcon(item.Id, darkVariant: true)
+                };
+            }
+            if (selectedId != null)
+                foreach (AgentComboItem item in AgentComboBox.Items)
+                    if (item.Id == selectedId) { AgentComboBox.SelectedItem = item; break; }
+
+            RefreshTabSwitcher();
+        }
 
         public YoloPanel()
         {
@@ -255,7 +285,7 @@ namespace CnSharp.VSIX.Yolo
                     Index = i,
                     Name = _sessions[i].DisplayName,
                     Icon = agentName != null
-                        ? AgentIconImage.GetIcon(agentName)
+                        ? AgentIconImage.GetIcon(agentName, darkVariant: true)
                         : AgentIconImage.GetTerminalFallback()
                 });
             }
@@ -446,7 +476,7 @@ namespace CnSharp.VSIX.Yolo
                 {
                     Id = agent.Name,
                     Name = agent.DisplayName,
-                    Icon = AgentIconImage.GetIcon(agent.Name)
+                    Icon = AgentIconImage.GetIcon(agent.Name, darkVariant: true)
                 });
             }
 

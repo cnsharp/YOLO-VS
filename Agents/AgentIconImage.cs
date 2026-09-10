@@ -6,6 +6,8 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Resources;
+using Microsoft.VisualStudio.PlatformUI;
 using Svg;
 
 namespace CnSharp.VSIX.Yolo
@@ -22,8 +24,14 @@ namespace CnSharp.VSIX.Yolo
         // hard-coded name drifting from <AssemblyName> in the csproj, which breaks icon loading).
         private static string AssemblyName => typeof(AgentIconImage).Assembly.GetName().Name ?? "Yolo";
 
-        /// <summary>Resolve an agent's icon by id (reads the agents.json icon spec).</summary>
-        public static ImageSource? GetIcon(string agentId) => Resolve(AgentRegistry.IconFor(agentId));
+        /// <summary>
+        /// Resolve an agent's icon by id (reads the agents.json icon spec).
+        /// <paramref name="darkVariant"/> opts in to the theme-specific <c>_dark</c> twin, and is only
+        /// correct for chrome that follows the VS theme (the tool-window panel). The Options page is a
+        /// plain WPF control on a light background, so it must keep the light icon.
+        /// </summary>
+        public static ImageSource? GetIcon(string agentId, bool darkVariant = false) =>
+            Resolve(AgentRegistry.IconFor(agentId), darkVariant);
 
         /// <summary>
         /// Generic terminal glyph used for plain-shell sessions (no agent). Drawn as a vector
@@ -65,11 +73,12 @@ namespace CnSharp.VSIX.Yolo
         /// downloaded network icon) loads from disk; otherwise the spec is the resource's physical
         /// path (e.g. <c>Resources/icons/agents/claude.png</c>) and is addressed through a WPF pack
         /// URI — the standard .NET resource convention. The logical path always matches the on-disk
-        /// location, so there is no hidden base directory.
+        /// location, so there is no hidden base directory. <paramref name="darkVariant"/> is as in
+        /// <see cref="GetIcon(string, bool)"/>: off for the light Options page, on for the panel.
         /// </summary>
-        public static ImageSource? FromPath(string? icon) => Resolve(icon);
+        public static ImageSource? FromPath(string? icon, bool darkVariant = false) => Resolve(icon, darkVariant);
 
-        private static ImageSource? Resolve(string? icon)
+        private static ImageSource? Resolve(string? icon, bool darkVariant)
         {
             if (icon is null or "") return null;
             try
@@ -83,9 +92,15 @@ namespace CnSharp.VSIX.Yolo
                     return new BitmapImage(new Uri(icon, UriKind.Absolute));
                 }
 
+                // Bundled icons may ship a dark-theme variant; prefer it when VS is dark and
+                // fall back to the plain asset otherwise. Opt-in only: the light Options page
+                // keeps the plain icon even while VS itself is dark.
+                var isDark = darkVariant && IsDarkTheme();
+                var spec = isDark ? DarkVariant(icon) ?? icon : icon;
+
                 // Otherwise treat `icon` as a path that matches the embedded resource's physical
                 // location (e.g. Resources/icons/agents/claude.png), addressed through a WPF pack URI.
-                var pack = $"pack://application:,,,/{AssemblyName};component/{icon.TrimStart('/')}";
+                var pack = PackUri(spec);
                 if (pack.EndsWith(".svg", StringComparison.OrdinalIgnoreCase))
                 {
                     var rs = Application.GetResourceStream(new Uri(pack, UriKind.Absolute));
@@ -101,6 +116,58 @@ namespace CnSharp.VSIX.Yolo
                 // Any parse/load failure just shows no icon rather than crashing the UI.
             }
             return null;
+        }
+
+        private static string PackUri(string icon) =>
+            $"pack://application:,,,/{AssemblyName};component/{icon.TrimStart('/')}";
+
+        /// <summary>
+        /// True when VS is running a dark theme — same test the panel chrome uses
+        /// (<see cref="ToolWindow.YoloPanel"/> derives its tab palette from it), read from the
+        /// tool-window background VS itself paints.
+        /// </summary>
+        private static bool IsDarkTheme()
+        {
+            try
+            {
+                var bg = VSColorTheme.GetThemedColor(EnvironmentColors.ToolWindowBackgroundColorKey);
+                return (bg.R + bg.G + bg.B) / 3 < 128;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// The dark-theme twin of an embedded icon (<c>codex.svg</c> → <c>codex_dark.svg</c>), but only
+        /// when that asset really ships in this assembly; null otherwise, so the caller keeps the plain
+        /// icon. IntelliJ gets this for free from <c>IconLoader</c>; here it is explicit. Only a few
+        /// bundled icons have a twin today (e.g. codex), and adding one is just dropping the file in.
+        /// </summary>
+        private static string? DarkVariant(string icon)
+        {
+            int dot = icon.LastIndexOf('.');
+            if (dot <= 0) return null;
+            string name = icon.Substring(0, dot);
+            if (name.EndsWith("_dark", StringComparison.OrdinalIgnoreCase)) return null;
+
+            var candidate = name + "_dark" + icon.Substring(dot);
+
+            // Probe-only: the stream is opened just to learn whether the asset exists. A missing
+            // resource makes GetResourceStream throw (not return null), hence the catch.
+            StreamResourceInfo? info = null;
+            try
+            {
+                info = Application.GetResourceStream(new Uri(PackUri(candidate), UriKind.Absolute));
+                info?.Stream?.Dispose();
+            }
+            catch
+            {
+                // Fall through: no twin, keep the plain icon.
+            }
+
+            return info == null ? null : candidate;
         }
 
         // Rasterise the SVG at a higher resolution than its 16x16 design size so the icon
