@@ -14,7 +14,7 @@ namespace CnSharp.VSIX.Yolo
     {
         public YoloToolWindowPane() : base(null)
         {
-            this.Caption = "YOLO";
+            this.Caption = Constants.ProductName;
 
             // Create and set the pane content
             var panel = new YoloPanel();

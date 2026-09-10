@@ -1,7 +1,20 @@
+using System.Reflection;
+
 namespace CnSharp.VSIX.Yolo
 {
     public static class Constants
     {
+        // Branded product name. Sourced from AssemblyInfo's [AssemblyTitle] so there is a single
+        // source of truth; read at runtime (not a const) because attribute arguments cannot.
+        public static string ProductName
+        {
+            get
+            {
+                var attr = typeof(Constants).Assembly.GetCustomAttribute<AssemblyTitleAttribute>();
+                return attr?.Title ?? "Agent YOLO";
+            }
+        }
+
         public const string PackageGuid = "6f4e2c1a-8b3d-4e5f-9a7c-1d2e3f4a5b6c";
         public const string ToolWindowGuid = "7a5b3c2d-1e4f-5a6b-8c9d-0e1f2a3b4c5d";
 

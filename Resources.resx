@@ -60,9 +60,6 @@
   </resheader>
 
   <!-- Pre-existing entries (kept) -->
-  <data name="ToolWindowTitle" xml:space="preserve">
-    <value>YOLO</value>
-  </data>
   <data name="ToolWindowDescription" xml:space="preserve">
     <value>AI Agent extension for Visual Studio</value>
   </data>
@@ -109,9 +106,6 @@
   </data>
   <data name="Panel_CloseTabConfirm" xml:space="preserve">
     <value>Close this terminal? The running process will be terminated.</value>
-  </data>
-  <data name="Panel_CloseTabConfirmTitle" xml:space="preserve">
-    <value>Close Terminal</value>
   </data>
   <data name="Panel_SelectAgentFirst" xml:space="preserve">
     <value>Select an agent first.</value>
@@ -220,9 +214,6 @@
   <data name="Settings_SelectCustomToolForIcon" xml:space="preserve">
     <value>Select a custom tool row to set its icon. The icon of a known agent cannot be changed.</value>
   </data>
-  <data name="Settings_ChooseIconTitle" xml:space="preserve">
-    <value>Choose icon for selected tool</value>
-  </data>
   <data name="Settings_ImageFilter" xml:space="preserve">
     <value>Image files (*.svg;*.png;*.jpg)|*.svg;*.png;*.jpg|All files (*.*)|*.*</value>
   </data>
@@ -237,9 +228,6 @@
   </data>
 
   <!-- Settings dialog -->
-  <data name="Dialog_Title" xml:space="preserve">
-    <value>YOLO - AI Agents Extender</value>
-  </data>
   <data name="Dialog_OK" xml:space="preserve">
     <value>OK</value>
   </data>

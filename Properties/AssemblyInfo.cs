@@ -1,7 +1,7 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyTitle("YOLO: AI Agents Extender")]
+[assembly: AssemblyTitle("Agent YOLO")]
 [assembly: AssemblyDescription("AI Agent extension for Visual Studio")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("CnSharp Studio")]

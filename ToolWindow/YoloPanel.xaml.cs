@@ -388,7 +388,7 @@ namespace CnSharp.VSIX.Yolo
                 int result = VsShellUtilities.ShowMessageBox(
                     Microsoft.VisualStudio.Shell.ServiceProvider.GlobalProvider,
                     CnSharp.VSIX.Yolo.Resources.Panel_CloseTabConfirm,
-                    CnSharp.VSIX.Yolo.Resources.Panel_CloseTabConfirmTitle,
+                    Constants.ProductName,
                     OLEMSGICON.OLEMSGICON_QUERY,
                     OLEMSGBUTTON.OLEMSGBUTTON_YESNO,
                     OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_SECOND);

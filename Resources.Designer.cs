@@ -88,15 +88,6 @@ namespace CnSharp.VSIX.Yolo {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to YOLO - AI Agents Extender.
-        /// </summary>
-        public static string Dialog_Title {
-            get {
-                return ResourceManager.GetString("Dialog_Title", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Agent &apos;{0}&apos; configuration not found..
         /// </summary>
         public static string Panel_AgentConfigNotFound {
@@ -223,15 +214,6 @@ namespace CnSharp.VSIX.Yolo {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Close Terminal.
-        /// </summary>
-        public static string Panel_CloseTabConfirmTitle {
-            get {
-                return ResourceManager.GetString("Panel_CloseTabConfirmTitle", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Skip permissions OFF (Y).
         /// </summary>
         public static string Panel_SkipOff {
@@ -291,15 +273,6 @@ namespace CnSharp.VSIX.Yolo {
         public static string Settings_CannotRemoveKnownAgent {
             get {
                 return ResourceManager.GetString("Settings_CannotRemoveKnownAgent", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Choose icon for selected tool.
-        /// </summary>
-        public static string Settings_ChooseIconTitle {
-            get {
-                return ResourceManager.GetString("Settings_ChooseIconTitle", resourceCulture);
             }
         }
         
@@ -561,15 +534,6 @@ namespace CnSharp.VSIX.Yolo {
         public static string ToolWindowDescription {
             get {
                 return ResourceManager.GetString("ToolWindowDescription", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to YOLO.
-        /// </summary>
-        public static string ToolWindowTitle {
-            get {
-                return ResourceManager.GetString("ToolWindowTitle", resourceCulture);
             }
         }
         

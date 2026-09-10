@@ -470,7 +470,7 @@ namespace CnSharp.VSIX.Yolo
             var dlg = new OpenFileDialog
             {
                 Filter = CnSharp.VSIX.Yolo.Resources.Settings_ImageFilter,
-                Title = CnSharp.VSIX.Yolo.Resources.Settings_ChooseIconTitle
+                Title = Constants.ProductName
             };
             if (dlg.ShowDialog() != true) return;
 

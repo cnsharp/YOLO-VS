@@ -4,7 +4,7 @@
         xmlns:local="clr-namespace:CnSharp.VSIX.Yolo"
         Width="780" Height="580"
         MinWidth="620" MinHeight="440"
-        Title="{x:Static local:Resources.Dialog_Title}"
+        Title="{x:Static local:Constants.ProductName}"
         WindowStartupLocation="CenterScreen"
         ShowInTaskbar="False">
     <Grid>

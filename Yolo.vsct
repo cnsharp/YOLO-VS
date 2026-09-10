@@ -38,7 +38,7 @@
         <Parent guid="guidYoloCmdSet" id="IDG_YOLO_VIEW" />
         <Icon guid="guidImages" id="bmpYolo" />
         <Strings>
-          <ButtonText>YOLO</ButtonText>
+          <ButtonText>Agent YOLO</ButtonText>
           <CommandName>YoloToolWindowCommand</CommandName>
         </Strings>
       </Button>

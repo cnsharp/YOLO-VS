@@ -10,7 +10,7 @@
 
 | Item | Value |
 |---|---|
-| Shape | A VSIX extension porting the IntelliJ **YOLO (AI Agents Extender)** to full Visual Studio |
+| Shape | A VSIX extension porting the IntelliJ **YOLO (AI Agents Extender)** — branded as **Agent YOLO** — to full Visual Studio |
 | Nature | A **cross-platform rewrite** of Kotlin/JVM/Swing → C#/.NET/WPF, not a code lift |
 | Assembly / namespace | `Yolo` / `CnSharp.VSIX.Yolo` |
 | Target framework | `net472` |
@@ -96,7 +96,7 @@ Agents/
   ExecutableNames.cs               # Executable-name normalization
 
 Options/
-  YoloOptionsPage.cs               # DialogPage (Tools > Options > YOLO > Agents)
+  YoloOptionsPage.cs               # DialogPage (Tools > Options > Agent YOLO > Agents)
   YoloOptionsControl.xaml(.cs)     # Settings-page UI
   YoloSettingsDialog.xaml(.cs)     # Custom settings dialog
   YoloSettings.cs                  # Persistence (XmlSerializer)
@@ -120,7 +120,7 @@ TerminalDemo/                      # Standalone headless test program, excluded 
 - **Size sync**: panel `SizeChanged` → `ResizePseudoConsole`, otherwise the TUI misaligns / ghosts.
 - **Agent metadata is data-driven**: `agents.json` is an embedded resource (`LogicalName=CnSharp.VSIX.Yolo.agents.json`), loaded by `AgentRegistry`. **To add a new Agent, edit the JSON — do not edit code.**
 - **Y / R global toggles**: sticky, persisted to `YoloSettings`. They affect **launch time only** — append `skipFlag` / `resumeFlag` to the command per current state, and when Y is on also inject an env-style bypass. They do not patch already-running sessions. Default off; never auto-start.
-- **Menu / shortcut**: a top-level `YOLO` entry on the View menu + `Ctrl+W, Y` (mirrors VS's own `Ctrl+W, S/E` window shortcuts).
+- **Menu / shortcut**: a top-level `Agent YOLO` entry on the View menu + `Ctrl+W, Y` (mirrors VS's own `Ctrl+W, S/E` window shortcuts).
 
 ---
 

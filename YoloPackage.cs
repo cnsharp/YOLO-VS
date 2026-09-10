@@ -12,7 +12,7 @@ namespace CnSharp.VSIX.Yolo
     [Guid(Constants.PackageGuid)]
     [ProvideToolWindow(typeof(YoloToolWindowPane), Style = VsDockStyle.Tabbed,
                        Window = ToolWindowGuids80.SolutionExplorer)]
-    [ProvideOptionPage(typeof(YoloOptionsPage), "YOLO", "Agents", 0, 0, true)]
+    [ProvideOptionPage(typeof(YoloOptionsPage), "Agent YOLO", "Agents", 0, 0, true)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
     // Auto-load the package once the VS shell is initialized so the tool window can be shown
     [ProvideAutoLoad(Microsoft.VisualStudio.VSConstants.UICONTEXT.ShellInitialized_string, PackageAutoLoadFlags.BackgroundLoad)]
