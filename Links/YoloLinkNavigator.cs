@@ -51,11 +51,11 @@ namespace CnSharp.VSIX.Yolo
                         OpenUrl(target.Url);
                         break;
                     case LinkKind.File:
-                        if (NavigateToFile(target, baseDirectory)) HideYoloWindow();
+                        NavigateToFile(target, baseDirectory);
                         break;
                     case LinkKind.Type:
                     case LinkKind.Member:
-                        if (NavigateToSymbol(target, baseDirectory)) HideYoloWindow();
+                        NavigateToSymbol(target, baseDirectory);
                         break;
                 }
             }
@@ -253,26 +253,6 @@ namespace CnSharp.VSIX.Yolo
 
             try { System.Diagnostics.Process.Start(uri.AbsoluteUri); }
             catch (Exception ex) { Log.Write($"YoloLinkNavigator.OpenUrl('{url}') failed: {ex.Message}"); }
-        }
-
-        /// <summary>
-        /// Hides the YOLO pane after navigation, so the editor the user just jumped to is not covered.
-        /// Mirrors IntelliJ's <c>yoloHyperlink</c>.
-        /// </summary>
-        private static void HideYoloWindow()
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            try
-            {
-                if (!(Package.GetGlobalService(typeof(SVsUIShell)) is IVsUIShell shell)) return;
-                var guid = new Guid(Constants.ToolWindowGuid);
-                shell.FindToolWindow(0, ref guid, out IVsWindowFrame frame);
-                frame?.Hide();
-            }
-            catch (Exception ex)
-            {
-                Log.Write("YoloLinkNavigator.HideYoloWindow failed: " + ex.Message);
-            }
         }
 
         private static string? GetSolutionDirectory()
