@@ -223,6 +223,24 @@ namespace CnSharp.VSIX.Yolo {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to You are enabling Y (skip permissions)....
+        /// </summary>
+        public static string Panel_SkipWarningText {
+            get {
+                return ResourceManager.GetString("Panel_SkipWarningText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Don't show this warning again.
+        /// </summary>
+        public static string Panel_DontShowAgain {
+            get {
+                return ResourceManager.GetString("Panel_DontShowAgain", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Skip permissions ON (Y) — agent permission prompts auto-approved.
         /// </summary>
         public static string Panel_SkipOn {
@@ -354,6 +372,15 @@ namespace CnSharp.VSIX.Yolo {
         public static string Settings_DupCmd {
             get {
                 return ResourceManager.GetString("Settings_DupCmd", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Don't warn me when enabling Y (skip permissions).
+        /// </summary>
+        public static string Settings_SuppressSkipWarning {
+            get {
+                return ResourceManager.GetString("Settings_SuppressSkipWarning", resourceCulture);
             }
         }
         

@@ -134,6 +134,12 @@
   <data name="Panel_SkipOff" xml:space="preserve">
     <value>Skip permissions OFF (Y)</value>
   </data>
+  <data name="Panel_SkipWarningText" xml:space="preserve">
+    <value>You are enabling Y (skip permissions). The agent's permission prompts will be auto-approved, which may let it run commands or modify files without asking. Only enable this if you trust the agent and the session.</value>
+  </data>
+  <data name="Panel_DontShowAgain" xml:space="preserve">
+    <value>Don't show this warning again</value>
+  </data>
   <data name="Panel_ResumeOn" xml:space="preserve">
     <value>Resume ON (R) — agents will resume the last session</value>
   </data>
@@ -225,6 +231,9 @@
   </data>
   <data name="Settings_DupCmd" xml:space="preserve">
     <value>Duplicate command: {0}</value>
+  </data>
+  <data name="Settings_SuppressSkipWarning" xml:space="preserve">
+    <value>Don't warn me when enabling Y (skip permissions)</value>
   </data>
 
   <!-- Settings dialog -->

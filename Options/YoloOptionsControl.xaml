@@ -31,6 +31,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Agents grid -->
@@ -74,15 +75,20 @@
             </DataGrid>
         </Border>
 
+        <!-- General options -->
+        <CheckBox Grid.Row="1" x:Name="SuppressSkipWarningBox" Margin="0,8,0,0"
+                  Content="{x:Static local:Resources.Settings_SuppressSkipWarning}"
+                  Checked="SuppressSkipWarningBox_Changed" Unchecked="SuppressSkipWarningBox_Changed"/>
+
         <!-- Action buttons -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,8,0,0">
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0">
             <Button x:Name="AddButton" Content="{x:Static local:Resources.Settings_AddCustomTool}" Width="120" Click="AddButton_Click"/>
             <Button x:Name="RemoveButton" Content="{x:Static local:Resources.Settings_RemoveSelected}" Width="120" Margin="8,0,0,0" Click="RemoveButton_Click"/>
             <Button x:Name="ValidateButton" Content="{x:Static local:Resources.Settings_Validate}" Width="90" Margin="8,0,0,0" Click="ValidateButton_Click"/>
         </StackPanel>
 
         <!-- Icon chooser for the selected custom tool -->
-        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0">
+        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,8,0,0">
             <Label Content="{x:Static local:Resources.Settings_IconForSelectedTool}" VerticalAlignment="Center"/>
             <TextBox x:Name="IconPathBox" Width="320" VerticalAlignment="Center" IsReadOnly="True"/>
             <Button x:Name="BrowseButton" Content="{x:Static local:Resources.Settings_Browse}" Width="80" Margin="8,0,0,0" Click="BrowseButton_Click"/>
@@ -91,6 +97,6 @@
         </StackPanel>
 
         <!-- Status -->
-        <TextBlock Grid.Row="3" x:Name="StatusText" Margin="0,8,0,0" TextWrapping="Wrap"/>
+        <TextBlock Grid.Row="4" x:Name="StatusText" Margin="0,8,0,0" TextWrapping="Wrap"/>
     </Grid>
 </UserControl>

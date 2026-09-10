@@ -111,6 +111,7 @@ namespace CnSharp.VSIX.Yolo
                 }
 
                 // Default agent selection removed: not part of the reference design.
+                SuppressSkipWarningBox.IsChecked = settings.SuppressSkipWarning;
                 SetStatus(string.Empty, false);
                 _ = RefreshInstalledAsync();
             }
@@ -170,6 +171,8 @@ namespace CnSharp.VSIX.Yolo
                     IconPath = r.IconPath ?? string.Empty
                 })
                 .ToList();
+
+            settings.SuppressSkipWarning = SuppressSkipWarningBox.IsChecked == true;
 
             settings.Save();
         }
@@ -270,6 +273,13 @@ namespace CnSharp.VSIX.Yolo
                 SetStatus(string.Join("; ", problems), true);
             else if (!string.IsNullOrEmpty(StatusText.Text) && StatusText.Foreground == Brushes.Red)
                 SetStatus(string.Empty, false);
+        }
+
+        // ── General options ─────────────────────────────────────────
+
+        private void SuppressSkipWarningBox_Changed(object sender, RoutedEventArgs e)
+        {
+            if (!_loading) Page?.MarkDirty();
         }
 
         // ── Buttons ─────────────────────────────────────────────────

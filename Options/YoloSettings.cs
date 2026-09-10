@@ -50,6 +50,12 @@ namespace CnSharp.VSIX.Yolo
         /// <summary>Global R (resume) toggle, persisted across sessions (mirrors IDEA's resumeEnabled).</summary>
         public bool ResumeEnabled { get; set; }
 
+        /// <summary>
+        /// When true, enabling the Y (skip-permissions) toggle no longer shows the caution warning.
+        /// Set from the warning dialog's "don't show again" box or the Options page; persisted to disk.
+        /// </summary>
+        public bool SuppressSkipWarning { get; set; }
+
         /// <summary>ID of the last agent the user launched; restored as the dropdown default on the next session.</summary>
         public string? LastAgent { get; set; }
 

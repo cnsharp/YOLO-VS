@@ -40,6 +40,12 @@ namespace CnSharp.VSIX.Yolo
         private readonly List<Session> _sessions = new List<Session>();
         private DTE? _dte;
 
+        /// <summary>
+        /// Set while the Y/R toggles are being restored from settings at startup, so restoring a
+        /// previously-enabled Y does not pop the caution dialog (the dialog only shows on a real user action).
+        /// </summary>
+        private bool _restoringToggles;
+
         private string _selectedAgent = string.Empty;
         /// <summary>Re-entrancy guard while programmatically syncing the tab switcher / tab strip.</summary>
         private bool _tabSwitchSyncing;
@@ -152,8 +158,16 @@ namespace CnSharp.VSIX.Yolo
             _installedAgents = new InstalledAgents();
 
             // Restore the global Y / R toggles from settings (IDEA persists these too).
-            YToggle.IsChecked = YoloSettings.Instance.SkipEnabled;
-            RToggle.IsChecked = YoloSettings.Instance.ResumeEnabled;
+            _restoringToggles = true;
+            try
+            {
+                YToggle.IsChecked = YoloSettings.Instance.SkipEnabled;
+                RToggle.IsChecked = YoloSettings.Instance.ResumeEnabled;
+            }
+            finally
+            {
+                _restoringToggles = false;
+            }
             ApplyToggleVisuals();
 
             // Restore the last-used agent so the dropdown opens on it (falls back to the first
@@ -462,6 +476,28 @@ namespace CnSharp.VSIX.Yolo
 
         private void OnYToggleChecked(object sender, RoutedEventArgs e)
         {
+            // Caution the user the first time they enable Y (skip permissions). If they tick
+            // "don't show again", persist the suppression so the warning is skipped thereafter.
+            if (!_restoringToggles && !YoloSettings.Instance.SuppressSkipWarning)
+            {
+                var dlg = new SkipWarningDialog
+                {
+                    Owner = System.Windows.Application.Current?.MainWindow
+                };
+                bool proceed = dlg.ShowDialog() == true;
+                if (dlg.Suppress)
+                {
+                    YoloSettings.Instance.SuppressSkipWarning = true;
+                    YoloSettings.Instance.Save();
+                }
+                if (!proceed)
+                {
+                    // Revert the toggle without re-prompting; the Unchecked handler persists false.
+                    YToggle.IsChecked = false;
+                    return;
+                }
+            }
+
             YoloSettings.Instance.SkipEnabled = true;
             YoloSettings.Instance.Save();
             ApplyToggleVisuals();
