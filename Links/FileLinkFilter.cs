@@ -18,7 +18,7 @@ namespace CnSharp.VSIX.Yolo
         /// dangling path fragment (if any); on exit the continuation span is recorded for
         /// <see cref="StackTraceLinkFilter"/>. May be null to disable wrap handling.
         /// </param>
-        public List<LinkMatch>? Apply(string text, PathWrapState? wrap = null)
+        public List<LinkMatch>? Apply(string text, PathWrapState? wrap = null, int virtualRow = -1)
         {
             if (string.IsNullOrWhiteSpace(text) || YoloLinkPatterns.IsDiffLine(text))
             {
@@ -27,6 +27,9 @@ namespace CnSharp.VSIX.Yolo
                 {
                     wrap.PendingPrefix = string.Empty;
                     wrap.ContinuationStart = wrap.ContinuationEnd = -1;
+                    wrap.WrapActive = false;
+                    wrap.HeadRows.Clear();
+                    wrap.CompletedTarget = null;
                 }
                 return null;
             }
@@ -35,13 +38,16 @@ namespace CnSharp.VSIX.Yolo
 
             // --- Hard-wrap path reconstruction ---
             // When a long path wraps at the terminal width, the head row ends with a path fragment that has
-            // no extension and no :line (kept in PendingPrefix). Here we prepend that prefix, re-match
-            // PathPattern on the joined text, and link only the tail portion that is visible on this row —
-            // but the link target is the FULL reconstructed path, so navigation is still correct.
+            // no extension and no :line (kept in PendingPrefix by the row above). Here we prepend that prefix,
+            // re-match PathPattern on the joined text, and link only the tail portion that is visible on this
+            // row — but the link target is the FULL reconstructed path, so navigation is still correct. The
+            // prefix ACCUMULATES across every wrapped row (see WrapActive) so a path split across 3+ rows also
+            // resolves, which the naive "store only the previous row's head" approach cannot do.
             string prefix = wrap?.PendingPrefix ?? string.Empty;
             if (wrap != null)
             {
-                wrap.PendingPrefix = string.Empty;
+                // Keep wrap.PendingPrefix/WrapActive: they are threaded from the row above. Only the
+                // continuation span is reset here; a blank/diff row (handled above) clears everything.
                 wrap.ContinuationStart = wrap.ContinuationEnd = -1;
             }
 
@@ -50,19 +56,38 @@ namespace CnSharp.VSIX.Yolo
                 string trimmed = text.TrimStart();
                 int leading = text.Length - trimmed.Length;
                 string combined = prefix + trimmed;
+                bool sawStraddle = false;
                 foreach (Match cm in YoloLinkPatterns.PathPattern.Matches(combined))
                 {
                     int matchStart = cm.Groups[1].Index;
                     int matchEnd = cm.Index + cm.Length;
                     // Only matches that straddle the prefix/continuation boundary are reconstructions.
                     if (matchStart >= prefix.Length || matchEnd <= prefix.Length) continue;
+                    sawStraddle = true;
 
                     string rawC = cm.Groups[1].Value;
                     bool hasExtC = cm.Groups[2].Success;
                     bool hasLineC = cm.Groups[3].Success;
-                    // Still no extension / line: the path wraps again. Chained (3+ row) wraps are out of
-                    // scope here — see PathWrapState for why.
-                    if (!hasExtC && !hasLineC) continue;
+                    if (!hasLineC && !HasFileExtension(rawC))
+                    {
+                        // Still no extension / line: the path wraps again — accumulate the full reconstructed
+                        // path and keep WrapActive so the NEXT row extends it.
+                        if (combined.Substring(matchEnd).Trim().Length == 0 && wrap != null)
+                        {
+                            wrap.PendingPrefix = rawC;
+                            wrap.WrapActive = true;
+                            // Make this continuation fragment clickable too; it is upgraded to the full file
+                            // target when the path finally completes (see CompletedTarget).
+                            int cStart = leading;
+                            int cEnd = leading + (matchEnd - prefix.Length);
+                            if (cEnd > cStart && cEnd <= text.Length)
+                            {
+                                items.Add(Make(cStart, cEnd, rawC, 0, 0));
+                                if (virtualRow >= 0) wrap.HeadRows.Add(virtualRow);
+                            }
+                        }
+                        continue;
+                    }
                     if (rawC.Contains("…") || rawC.Contains("...") ||
                         YoloLinkPatterns.IsTruncatedPath(combined, cm.Groups[1].Index + cm.Groups[1].Length))
                         continue;
@@ -79,7 +104,22 @@ namespace CnSharp.VSIX.Yolo
                     {
                         wrap.ContinuationStart = tailStart;
                         wrap.ContinuationEnd = tailEnd;
+                        // Path completed: clear the prefix so a following row cannot pick up a stale fragment.
+                        wrap.PendingPrefix = string.Empty;
+                        wrap.WrapActive = false;
+                        // The whole multi-row path is now resolved; publish it so every fragment link
+                        // (head + continuation rows) can be upgraded to navigate to the full file.
+                        wrap.CompletedTarget = items[items.Count - 1].Target;
                     }
+                }
+                // A pending prefix that was NOT continued on this row was a false head (e.g. a lone directory
+                // name) — drop it so it cannot poison the next row's reconstruction.
+                if (wrap != null && !sawStraddle && wrap.PendingPrefix.Length > 0)
+                {
+                    wrap.PendingPrefix = string.Empty;
+                    wrap.WrapActive = false;
+                    wrap.HeadRows.Clear();
+                    wrap.CompletedTarget = null;
                 }
             }
             // --- End hard-wrap reconstruction ---
@@ -122,14 +162,31 @@ namespace CnSharp.VSIX.Yolo
                 string raw = m.Groups[1].Value;
                 bool hasExt = m.Groups[2].Success;
                 bool hasLine = m.Groups[3].Success;
-                if (!hasExt && !hasLine)
+                if (!hasLine && !HasFileExtension(raw))
                 {
                     // Extension-less, line-less: either a directory reference (not openable) or the head
                     // fragment of a hard-wrapped path. When it reaches the end of the row content, remember
                     // it so the NEXT row can reconstruct the full path.
-                    // Guard: only when the last segment has no dot. A dot there means the wrap split inside
-                    // the extension (e.g. `build.gradl` for `.gradle`) and the continuation row would carry
-                    // only the remaining extension chars, producing a 1-2 character phantom link.
+                    // Guard: only when the last segment has no dot (a dot means the wrap split inside the
+                    // extension, e.g. `build.gradl` for `.gradle`), and do NOT overwrite a prefix that is
+                    // already mid-reconstruction (wrap.WrapActive) — otherwise a continuation row would reset
+                    // the accumulated path back to its own segment and break 3+ row wraps.
+                    if (wrap != null && !wrap.WrapActive &&
+                        text.Substring(m.Index + m.Length).Trim().Length == 0)
+                    {
+                        string rawH = m.Groups[1].Value;
+                        int lastSep = rawH.LastIndexOfAny(new[] { '/', '\\' });
+                        string lastSeg = lastSep >= 0 ? rawH.Substring(lastSep + 1) : rawH;
+                        if (lastSeg.IndexOf('.') < 0)
+                        {
+                            wrap.PendingPrefix = rawH;
+                            wrap.WrapActive = true;
+                            // Make the visible head fragment itself clickable (as a directory for now); the
+                            // row where the wrapped path completes will upgrade it to the full file target.
+                            items.Add(Make(start, end, rawH, 0, 0));
+                            if (virtualRow >= 0) wrap.HeadRows.Add(virtualRow);
+                        }
+                    }
                     continue;
                 }
                 if (raw.Contains("…") || raw.Contains("...") ||
@@ -160,7 +217,7 @@ namespace CnSharp.VSIX.Yolo
 
             foreach (Match m in YoloLinkPatterns.PathPattern.Matches(previousLine))
             {
-                if (m.Groups[2].Success || m.Groups[3].Success) continue;  // complete reference, not a head
+                if (HasFileExtension(m.Groups[1].Value) || m.Groups[3].Success) continue;  // complete reference, not a head
                 int end = m.Index + m.Length;
                 if (end < previousLine.Length && previousLine.Substring(end).Trim().Length > 0) continue;
 
@@ -188,5 +245,22 @@ namespace CnSharp.VSIX.Yolo
         };
 
         private static int ParseInt(string? s) => int.TryParse(s, out int v) ? v : 0;
+
+        /// <summary>
+        /// True when <paramref name="path"/> ends in a real file extension (a dot in the last path segment,
+        /// not at its start and followed by at least one character). Used to decide whether a wrapped path is
+        /// complete: any extension counts (not just the <see cref="YoloLinkPatterns.ProgrammingExt"/> allowlist,
+        /// which exists only to avoid false-positive bare-name matches), so project files like <c>.csproj</c> /
+        /// <c>.slnx</c> complete the wrap and reset the shared <see cref="PathWrapState"/> instead of
+        /// accumulating forever and poisoning later paths.
+        /// </summary>
+        private static bool HasFileExtension(string path)
+        {
+            if (string.IsNullOrEmpty(path)) return false;
+            int sep = path.LastIndexOfAny(new[] { '/', '\\' });
+            string name = sep >= 0 ? path.Substring(sep + 1) : path;
+            int dot = name.LastIndexOf('.');
+            return dot > 0 && dot < name.Length - 1;
+        }
     }
 }

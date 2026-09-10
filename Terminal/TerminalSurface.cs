@@ -308,13 +308,32 @@ namespace CnSharp.VSIX.Yolo
             // uses, and the per-version cache keeps a fast TUI cheap.
             if (_linkFilter != null)
             {
+                // Evaluate every visible row top-to-bottom, threading ONE PathWrapState so a path hard-wrapped
+                // across 3+ rows reconstructs correctly (the accumulated prefix is carried from the row above,
+                // exactly like IDEA's JediTerm). Results are cached per row for the click handler.
+                var wrap = new PathWrapState();
                 for (int y = 0; y < rows; y++)
                 {
                     int vRow = topRow + y;
-                    var links = GetRowLinks(vRow);
+                    string rowText = GetRowText(vRow);
+                    var links = _linkFilter.FindLinks(rowText, wrap, vRow);
+                    _rowLinkCache[vRow] = links;
+                    // When a hard-wrapped path just completed, upgrade every fragment link recorded on its
+                    // earlier rows (head + continuations) so the WHOLE multi-row reference navigates to the
+                    // full file, not just the visible tail row.
+                    if (wrap.CompletedTarget != null && wrap.HeadRows.Count > 0)
+                    {
+                        foreach (int hr in wrap.HeadRows)
+                        {
+                            if (_rowLinkCache.TryGetValue(hr, out var hl) && hl != null)
+                                foreach (var hm in hl)
+                                    hm.Target = wrap.CompletedTarget;
+                        }
+                        wrap.HeadRows.Clear();
+                        wrap.CompletedTarget = null;
+                    }
                     if (links == null) continue;
                     double top = y * _cellHeight;
-                    string rowText = GetRowText(vRow);
                     foreach (var m in links)
                     {
                         int s = m.Start < 0 ? 0 : m.Start;

@@ -32,7 +32,9 @@ namespace CnSharp.VSIX.Yolo
             "ex|exs|clj|cljs|cljc|erl|hs|ml|mli|fs|fsx|fsi|jl|r|proto|sol|graphql|gql|" +
             "xml|xsd|xsl|xslt|wsdl|json|json5|jsonc|yaml|yml|toml|ini|cfg|conf|config|properties|env|lock|csv|tsv|log|" +
             "md|markdown|rst|txt|text|diff|patch|editorconfig|gitignore|dockerignore|tf|tfvars|feature|bnf|avsc|edn|" +
-            "iml|ipr|iws";
+            "iml|ipr|iws|" +
+            "csproj|sln|slnx|props|targets|vcxproj|vcxitems|user|ruleset|publishproj|" +
+            "vsix|nuspec|appxmanifest|manifest|resx|settings|dbml|edmx|dll|exe";
 
         /// <summary>
         /// Path references: <c>path</c>, <c>path:line</c>, <c>path:line:column</c>,
@@ -103,13 +105,11 @@ namespace CnSharp.VSIX.Yolo
         /// <c>myapp.models.User.save</c> and Go <c>http.Client.Get</c> are recognized too.
         /// Named groups: <c>class</c>, <c>member</c>.
         /// <para>
-        /// DELIBERATE DEVIATION from IntelliJ <c>MEMBER_REF_PATTERN</c>: upstream spells the member group
-        /// <c>(?&lt;member&gt;(?&lt;![.\w])[A-Za-z_]\w*)</c>. That lookbehind is evaluated at the position right
-        /// after the <c>[.#]</c> separator, so it can only ever succeed when the separator is <c>#</c> — the
-        /// dot form is rejected unconditionally and <c>UserService.Save</c> / <c>com.foo.Bar.baz</c> never
-        /// match at all, even though upstream's own docs list them as the primary examples. The lookbehind is
-        /// dropped here; <c>[.#]</c> already guarantees the boundary it was meant to enforce. Verified: all of
-        /// upstream's documented examples now match, and the <c>#</c> form is unaffected.
+        /// Aligned with IntelliJ <c>MEMBER_REF_PATTERN</c>. The member group has no
+        /// <c>(?&lt;![.\w])</c> lookbehind: that anchor would be evaluated right after the <c>[.#]</c>
+        /// separator (where the preceding char is always <c>.</c> or <c>#</c>), so it could only ever succeed
+        /// for the <c>#</c> form and silently rejected the <c>.</c> form — the primary case. The bug was fixed
+        /// in the upstream Kotlin source as well, so this is no longer a divergence.
         /// </para>
         /// </summary>
         internal static readonly Regex MemberRefPattern = new Regex(

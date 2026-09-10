@@ -42,16 +42,33 @@ namespace CnSharp.VSIX.Yolo
         /// </param>
         public List<LinkMatch>? FindLinks(string text, string? previousLine = null)
         {
-            if (string.IsNullOrWhiteSpace(text)) return null;
-
             var wrap = new PathWrapState();
             if (!string.IsNullOrEmpty(previousLine))
                 wrap.PendingPrefix = FileLinkFilter.ComputePendingPrefix(previousLine!);
+            return FindLinks(text, wrap);
+        }
+
+        /// <summary>
+        /// Detect all links on a single terminal row, threading <paramref name="wrap"/> so a path hard-wrapped
+        /// across several consecutive rows reconstructs correctly. The caller owns <paramref name="wrap"/> and
+        /// passes the SAME instance for each successive row, top to bottom — matching IDEA's JediTerm, which
+        /// carries one mutable <c>PathWrapState</c> per session. (Our terminal re-evaluates visible rows per
+        /// repaint rather than streaming lines, so the caller threads the state instead of a long-lived field.)
+        /// </summary>
+        public List<LinkMatch>? FindLinks(string text, PathWrapState wrap, int virtualRow = -1)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                // A blank row breaks any pending wrap sequence.
+                wrap.PendingPrefix = string.Empty;
+                wrap.ContinuationStart = wrap.ContinuationEnd = -1;
+                return null;
+            }
 
             var types = _types() ?? YoloProjectTypes.Snapshot.Empty;
 
             var all = new List<LinkMatch>();
-            Collect(_file.Apply(text, wrap), all);
+            Collect(_file.Apply(text, wrap, virtualRow), all);
             Collect(_stack.Apply(text, wrap), all);
             Collect(_type.Apply(text, types), all);
             Collect(_member.Apply(text, types), all);
