@@ -58,11 +58,12 @@ namespace CnSharp.VSIX.Yolo
             public System.Windows.Media.ImageSource? Icon { get; set; }
         }
 
-        /// <summary>Right-hand tab-switcher row: session index + display name.</summary>
+        /// <summary>Right-hand tab-switcher row: session index + display name + icon.</summary>
         private sealed class TabSwitchItem
         {
             public int Index { get; set; }
             public string Name { get; set; } = string.Empty;
+            public System.Windows.Media.ImageSource? Icon { get; set; }
         }
 
         // Icon colours mirror IDEA's toggle states exactly.
@@ -248,10 +249,14 @@ namespace CnSharp.VSIX.Yolo
             TabSwitchList.Items.Clear();
             for (int i = 0; i < _sessions.Count; i++)
             {
+                var agentName = _sessions[i].AgentName;
                 TabSwitchList.Items.Add(new TabSwitchItem
                 {
                     Index = i,
-                    Name = _sessions[i].DisplayName
+                    Name = _sessions[i].DisplayName,
+                    Icon = agentName != null
+                        ? AgentIconImage.GetIcon(agentName)
+                        : AgentIconImage.GetTerminalFallback()
                 });
             }
             TabSwitchButton.Visibility = _sessions.Count > 1 ? Visibility.Visible : Visibility.Collapsed;

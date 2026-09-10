@@ -26,6 +26,41 @@ namespace CnSharp.VSIX.Yolo
         public static ImageSource? GetIcon(string agentId) => Resolve(AgentRegistry.IconFor(agentId));
 
         /// <summary>
+        /// Generic terminal glyph used for plain-shell sessions (no agent). Drawn as a vector
+        /// <see cref="DrawingImage"/> so it needs no embedded asset and stays crisp at any DPI.
+        /// A rounded frame with a <c>&gt;</c> prompt and a cursor — mirrors the look of a shell tab.
+        /// </summary>
+        public static ImageSource? GetTerminalFallback()
+        {
+            try
+            {
+                var stroke = new SolidColorBrush(Color.FromRgb(0x6C, 0x70, 0x7E));
+                stroke.Freeze();
+                var frame = new RectangleGeometry(new Rect(1.5, 1.5, 13, 13), 3, 3);
+                var border = new GeometryDrawing(null, new Pen(stroke, 1.25), frame);
+
+                var prompt = Geometry.Parse("M4.5,5.5 L8,9 L4.5,12.5 M10,12 L12.5,12");
+                var promptDraw = new GeometryDrawing(null, new Pen(stroke, 1.25)
+                {
+                    StartLineCap = PenLineCap.Round,
+                    EndLineCap = PenLineCap.Round
+                }, prompt);
+
+                var group = new DrawingGroup();
+                group.Children.Add(border);
+                group.Children.Add(promptDraw);
+
+                var img = new DrawingImage(group);
+                img.Freeze();
+                return img;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Resolve an icon from an explicit spec. A rooted filesystem path (an absolute path or a
         /// downloaded network icon) loads from disk; otherwise the spec is the resource's physical
         /// path (e.g. <c>Resources/icons/agents/claude.png</c>) and is addressed through a WPF pack
