@@ -122,6 +122,28 @@ namespace CnSharp.VSIX.Yolo
             $"pack://application:,,,/{AssemblyName};component/{icon.TrimStart('/')}";
 
         /// <summary>
+        /// Current monitor DPI scale (1.0 at 100%, 2.0 at 200%, …). Used to rasterise SVGs at the
+        /// device's real pixel density. Falls back to 1.0 when no presentation source is available.
+        /// </summary>
+        private static double GetDpiScale()
+        {
+            try
+            {
+                if (Application.Current?.MainWindow is Visual v)
+                {
+                    var source = PresentationSource.FromVisual(v);
+                    if (source?.CompositionTarget != null)
+                        return source.CompositionTarget.TransformToDevice.M22;
+                }
+            }
+            catch
+            {
+                // fall through to 1.0
+            }
+            return 1.0;
+        }
+
+        /// <summary>
         /// True when VS is running a dark theme — same test the panel chrome uses
         /// (<see cref="ToolWindow.YoloPanel"/> derives its tab palette from it), read from the
         /// tool-window background VS itself paints.
@@ -170,9 +192,12 @@ namespace CnSharp.VSIX.Yolo
             return info == null ? null : candidate;
         }
 
-        // Rasterise the SVG at a higher resolution than its 16x16 design size so the icon
-        // stays crisp on HiDPI displays; WPF downscales it to the displayed size.
-        private const int SvgRenderSize = 64;
+        // Rasterise the SVG at the device's pixel resolution (not the 16x16 design size) so the
+        // icon stays crisp on HiDPI displays. WPF then downscales this large bitmap to the displayed
+        // size with Fant resampling, which is far sharper than stretching a tiny 64px raster.
+        private const int SvgBaseSize = 32;   // generous upper bound on the displayed size (DIP)
+        private const int SvgSupersample = 8; // extra oversampling for clean downscaling
+        private const int SvgMinSize = 256;   // floor so very small / unscaled displays still look sharp
 
         private static ImageSource? SvgToImage(string svg)
         {
@@ -182,8 +207,10 @@ namespace CnSharp.VSIX.Yolo
                 var doc = SvgDocument.Open<SvgDocument>(ms);
                 // The agent SVGs use a viewBox, so overriding the pixel size just rescales the
                 // vector artwork (gradients, circles, rects, url(#…) fills) without distortion.
-                doc.Width = new SvgUnit(SvgUnitType.User, SvgRenderSize);
-                doc.Height = new SvgUnit(SvgUnitType.User, SvgRenderSize);
+                int size = (int)(SvgBaseSize * SvgSupersample * GetDpiScale());
+                if (size < SvgMinSize) size = SvgMinSize;
+                doc.Width = new SvgUnit(SvgUnitType.User, size);
+                doc.Height = new SvgUnit(SvgUnitType.User, size);
 
                 using var bitmap = doc.Draw();
                 using var png = new MemoryStream();

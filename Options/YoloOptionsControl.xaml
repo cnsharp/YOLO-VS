@@ -53,7 +53,8 @@
                     <DataGridTemplateColumn Header="{x:Static local:Resources.Settings_Col_Icon}" Width="48" IsReadOnly="True">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <Image Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Image Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       RenderOptions.BitmapScalingMode="HighQuality">
                                     <Image.Source>
                                         <MultiBinding Converter="{StaticResource AgentIconInstalled}">
                                             <Binding Path="IconPath"/>
@@ -93,7 +94,8 @@
             <TextBox x:Name="IconPathBox" Width="320" VerticalAlignment="Center" IsReadOnly="True"/>
             <Button x:Name="BrowseButton" Content="{x:Static local:Resources.Settings_Browse}" Width="80" Margin="8,0,0,0" Click="BrowseButton_Click"/>
             <Image x:Name="IconPreview" Width="20" Height="20" Margin="8,0,0,0"
-                   VerticalAlignment="Center" Stretch="Uniform"/>
+                   VerticalAlignment="Center" Stretch="Uniform"
+                   RenderOptions.BitmapScalingMode="HighQuality"/>
         </StackPanel>
 
         <!-- Status -->
