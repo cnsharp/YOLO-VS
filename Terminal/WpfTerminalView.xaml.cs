@@ -29,6 +29,10 @@ namespace CnSharp.VSIX.Yolo
         private bool _dragging;
         private const double DragThreshold = 3.0;
 
+        // Double-Esc detection: a quick second Esc clears the current input line (Ctrl+U).
+        private DateTime _lastEscTime = DateTime.MinValue;
+        private static readonly TimeSpan DoubleEscWindow = TimeSpan.FromMilliseconds(400);
+
         // Scrollbar overlay: reflects scrollback position and fades out when idle.
         private readonly DispatcherTimer _scrollFade = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1500) };
         private bool _scrollSyncing;
@@ -41,6 +45,9 @@ namespace CnSharp.VSIX.Yolo
             InitializeComponent();
             Screen.CellSizeChanged += OnCellSizeChanged;
             PreviewMouseWheel += OnPreviewMouseWheel;
+            // The capture box is invisible and holds no real text; suppress its built-in
+            // editing commands so they never swallow the terminal's Ctrl+C / Ctrl+V etc.
+            CommandManager.AddPreviewCanExecuteHandler(InputCapture, OnCaptureCanExecute);
             _scrollFade.Tick += OnScrollFadeTick;
             Loaded += (_, __) =>
             {
@@ -295,16 +302,80 @@ namespace CnSharp.VSIX.Yolo
             e.Handled = true;
         }
 
+        /// <summary>
+        /// Stops the invisible capture box from acting on its built-in editing commands
+        /// (Copy / Paste / Cut / SelectAll), which would otherwise hijack the terminal's
+        /// own key bindings on Ctrl+C / Ctrl+V / Ctrl+A.
+        /// </summary>
+        private static void OnCaptureCanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            if (e.Command == ApplicationCommands.Copy ||
+                e.Command == ApplicationCommands.Paste ||
+                e.Command == ApplicationCommands.Cut ||
+                e.Command == ApplicationCommands.SelectAll)
+            {
+                e.CanExecute = false;
+                e.Handled = true;
+            }
+        }
+
         private void OnPreviewKeyDown(object sender, KeyEventArgs e)
         {
             var mods = Keyboard.Modifiers;
             bool ctrl = (mods & ModifierKeys.Control) != 0;
             bool alt = (mods & ModifierKeys.Alt) != 0;
+            bool shift = (mods & ModifierKeys.Shift) != 0;
 
-            // Ctrl+C copies the current selection (standard terminal behaviour) instead of sending SIGINT.
-            if (ctrl && !alt && e.Key == Key.C && Screen.HasSelection)
+            // Ctrl+C ALWAYS sends SIGINT so a running TUI can always be interrupted — it must
+            // never be swallowed by selection-copy (that used to make Ctrl+C copy instead of
+            // killing the process). Copy lives on Ctrl+Shift+C / Ctrl+Insert / the context menu.
+            if (ctrl && !alt && e.Key == Key.C)
+            {
+                Send("\x03");
+                e.Handled = true;
+                return;
+            }
+
+            // Copy the current selection: Ctrl+Shift+C or Ctrl+Insert.
+            if ((ctrl && shift && !alt && e.Key == Key.C) ||
+                (ctrl && !alt && e.Key == Key.Insert))
             {
                 CopySelection();
+                e.Handled = true;
+                return;
+            }
+
+            // Paste from the clipboard: Ctrl+V / Ctrl+Shift+V / Shift+Insert.
+            if ((ctrl && !alt && e.Key == Key.V) ||
+                (ctrl && shift && !alt && e.Key == Key.V) ||
+                (shift && !ctrl && !alt && e.Key == Key.Insert))
+            {
+                if (Clipboard.ContainsText())
+                {
+                    try { Send(Clipboard.GetText()); }
+                    catch (Exception ex) { Log.Write("WpfTerminalView paste failed: " + ex.Message); }
+                }
+                e.Handled = true;
+                return;
+            }
+
+            // Esc: a quick second press clears the current input line (Ctrl+U, \x15). A
+            // single Esc still sends the normal ESC byte so TUIs that depend on it work.
+            if (e.Key == Key.Escape && !ctrl && !alt && !shift)
+            {
+                if (!e.IsRepeat)
+                {
+                    var now = DateTime.UtcNow;
+                    if (now - _lastEscTime <= DoubleEscWindow)
+                    {
+                        _lastEscTime = DateTime.MinValue;
+                        Send("\x15");
+                        e.Handled = true;
+                        return;
+                    }
+                    _lastEscTime = now;
+                }
+                Send("\x1b");
                 e.Handled = true;
                 return;
             }
@@ -320,7 +391,7 @@ namespace CnSharp.VSIX.Yolo
                 return;
             }
 
-            string? seq = Translate(e.Key, ctrl, alt, (mods & ModifierKeys.Shift) != 0, Screen.Emulator.ApplicationCursor);
+            string? seq = Translate(e.Key, ctrl, alt, shift, Screen.Emulator.ApplicationCursor);
             if (seq == null) return;
 
             Send(seq);
