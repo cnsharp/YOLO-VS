@@ -159,11 +159,21 @@ namespace CnSharp.VSIX.Yolo
 
         private void OnContextMenuOpening(object sender, ContextMenuEventArgs e)
         {
-            if (ContextMenu?.Items[0] is MenuItem copy)
-                copy.IsEnabled = Screen.HasSelection;
+            CopyMenuItem.IsEnabled = Screen.HasSelection;
+            PasteMenuItem.IsEnabled = Clipboard.ContainsText();
         }
 
         private void OnCopyMenu(object sender, RoutedEventArgs e) => CopySelection();
+
+        private void OnPasteMenu(object sender, RoutedEventArgs e)
+        {
+            if (Clipboard.ContainsText())
+            {
+                try { Send(Clipboard.GetText()); }
+                catch (Exception ex) { Log.Write("WpfTerminalView paste failed: " + ex.Message); }
+            }
+            e.Handled = true;
+        }
 
         private void OnFocusChanged(object sender, KeyboardFocusChangedEventArgs e)
         {

@@ -18,7 +18,8 @@
     <Grid Background="#0C0C0C" MouseDown="OnMouseDown" MouseMove="OnMouseMove" MouseUp="OnMouseUp" ContextMenuOpening="OnContextMenuOpening">
         <Grid.ContextMenu>
             <ContextMenu>
-                <MenuItem Header="Copy" Click="OnCopyMenu" />
+                <MenuItem x:Name="CopyMenuItem" Header="Copy" Click="OnCopyMenu" />
+                <MenuItem x:Name="PasteMenuItem" Header="Paste" Click="OnPasteMenu" IsEnabled="False" />
             </ContextMenu>
         </Grid.ContextMenu>
         <local:TerminalSurface x:Name="Screen" />
