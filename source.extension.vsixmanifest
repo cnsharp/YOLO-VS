@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
+  <Metadata>
+    <Identity Language="en-US" Id="CnSharp.Yolo" Version="1.0.2" Publisher="CnSharp Studio" />
+    <DisplayName>Agent YOLO</DisplayName>
+    <Description>AI Agent extension for Visual Studio - bridge between IDE and AI agents</Description>
+    <Locale>en-US</Locale>
+    <Icon>Resources\pluginIcon.png</Icon>
+    <Tags>AI;Agent;Claude;Codex;Copilot;Gemini;Cursor</Tags>
+    <Categories>Microsoft.VisualStudio.Services</Categories>
+  </Metadata>
+  <Installation>
+    <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[17.0,19.0)">
+      <ProductArchitecture>amd64</ProductArchitecture>
+    </InstallationTarget>
+    <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[17.0,19.0)">
+      <ProductArchitecture>arm64</ProductArchitecture>
+    </InstallationTarget>
+  </Installation>
+  <Dependencies>
+    <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" Version="[4.7.2,)" d:Source="Manual" />
+  </Dependencies>
+  <Prerequisites>
+    <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" DisplayName="Visual Studio core editor" Version="[17.0,)" />
+  </Prerequisites>
+  <Assets>
+    <!-- Assets must be a top-level sibling of Metadata, NOT nested inside it. When nested,
+         VS never sees the VsPackage asset, so the package/command table is not properly
+         registered and its menu commands never appear. -->
+    <Asset Type="Microsoft.VisualStudio.VsPackage" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" d:Source="Project" d:ProjectName="%CurrentProject%" />
+  </Assets>
+</PackageManifest>

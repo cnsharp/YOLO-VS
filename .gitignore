@@ -1,4 +1,4 @@
-# Build output
+﻿# Build output
 bin/
 obj/
 [Bb]in/
@@ -11,7 +11,6 @@ obj/
 *.sln.docstates
 .vs/
 *.vsix
-*.vsixmanifest
 
 # Rider / ReSharper
 .idea/
