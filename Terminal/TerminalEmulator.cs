@@ -783,6 +783,19 @@ namespace CnSharp.VSIX.Yolo
             }
         }
 
+        /// <summary>Sets the scrollback offset directly (rows scrolled up from the bottom),
+        /// clamped to [0, HistoryCount]. Used by the terminal's scrollbar drag.</summary>
+        public void SetViewOffset(int offset)
+        {
+            if (_altCells != null) return; // no scrollback while a full-screen app owns the view
+            int next = Clamp(offset, 0, _history.Count);
+            if (next != _viewOffset)
+            {
+                _viewOffset = next;
+                Version++;
+            }
+        }
+
         /// <summary>Reads a single cell by absolute virtual row (history + live concatenated).</summary>
         public TerminalCell VirtualCell(int vRow, int x)
         {

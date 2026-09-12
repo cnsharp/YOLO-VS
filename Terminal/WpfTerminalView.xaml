@@ -40,5 +40,19 @@
                  VerticalAlignment="Stretch"
                  GotKeyboardFocus="OnFocusChanged"
                  LostKeyboardFocus="OnFocusChanged" />
+
+        <!-- Overlay scrollbar: reflects scrollback position and appears on scroll.
+             Focusable=false keeps keyboard focus in the terminal while it is dragged.
+             The terminal's mouse handlers guard against scrollbar-origin events. -->
+        <ScrollBar x:Name="ScrollBar"
+                   Orientation="Vertical"
+                   HorizontalAlignment="Right"
+                   VerticalAlignment="Stretch"
+                   Width="10"
+                   Margin="0,0,1,0"
+                   Focusable="False"
+                   Visibility="Collapsed"
+                   Opacity="0"
+                   ValueChanged="OnScrollBarValueChanged" />
     </Grid>
 </UserControl>

@@ -29,6 +29,10 @@ namespace CnSharp.VSIX.Yolo
         private bool _dragging;
         private const double DragThreshold = 3.0;
 
+        // Scrollbar overlay: reflects scrollback position and fades out when idle.
+        private readonly DispatcherTimer _scrollFade = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1500) };
+        private bool _scrollSyncing;
+
         public event Action<byte[]>? InputReceived;
         public event Action? Resized;
 
@@ -37,6 +41,7 @@ namespace CnSharp.VSIX.Yolo
             InitializeComponent();
             Screen.CellSizeChanged += OnCellSizeChanged;
             PreviewMouseWheel += OnPreviewMouseWheel;
+            _scrollFade.Tick += OnScrollFadeTick;
             Loaded += (_, __) =>
             {
                 Log.Write($"WpfTerminalView loaded: {Screen.Columns}x{Screen.Rows}");
@@ -50,6 +55,7 @@ namespace CnSharp.VSIX.Yolo
         private void OnCellSizeChanged()
         {
             Resized?.Invoke();
+            UpdateScrollBarValues();
         }
 
         /// <summary>
@@ -82,6 +88,7 @@ namespace CnSharp.VSIX.Yolo
                 total += chunk.Length;
             }
             Screen.InvalidateVisual();
+            UpdateScrollBarValues();
 
             if (!_loggedFirstPaint && total > 0)
             {
@@ -90,8 +97,15 @@ namespace CnSharp.VSIX.Yolo
             }
         }
 
+        private bool IsOnScrollBar(MouseEventArgs e)
+        {
+            var src = e.OriginalSource as DependencyObject;
+            return src != null && ScrollBar.IsAncestorOf(src);
+        }
+
         private void OnMouseDown(object sender, MouseButtonEventArgs e)
         {
+            if (IsOnScrollBar(e)) return;
             if (e.ChangedButton == MouseButton.Left)
             {
                 // Begin a (possibly zero-length) selection; we only know click-vs-drag on mouse-up, so defer
@@ -114,6 +128,7 @@ namespace CnSharp.VSIX.Yolo
 
         private void OnMouseMove(object sender, MouseEventArgs e)
         {
+            if (IsOnScrollBar(e)) return;
             if (!_mouseDown || e.LeftButton != MouseButtonState.Pressed) return;
             if (!_dragging)
             {
@@ -132,6 +147,7 @@ namespace CnSharp.VSIX.Yolo
 
         private void OnMouseUp(object sender, MouseButtonEventArgs e)
         {
+            if (IsOnScrollBar(e)) return;
             if (e.ChangedButton != MouseButton.Left || !_mouseDown) return;
             _mouseDown = false;
             Screen.ReleaseMouseCapture();
@@ -201,7 +217,73 @@ namespace CnSharp.VSIX.Yolo
             int lines = e.Delta > 0 ? 3 : -3;
             Screen.Emulator.Scroll(lines);
             Screen.InvalidateVisual();
+            ShowScrollBar();
             e.Handled = true;
+        }
+
+        /// <summary>
+        /// Syncs the overlay scrollbar to the emulator's scrollback state. WPF's thumb
+        /// size/position are derived from Minimum/Maximum/ViewportSize/Value:
+        ///   Maximum = scrollable rows (HistoryCount), ViewportSize = visible rows,
+        ///   Value = HistoryCount - viewOffset  (0 = top, Maximum = bottom/live).
+        /// </summary>
+        private void UpdateScrollBarValues()
+        {
+            int history = Screen.Emulator.HistoryCount;
+            if (history <= 0)
+            {
+                ScrollBar.Visibility = Visibility.Collapsed;
+                return;
+            }
+            _scrollSyncing = true;
+            try
+            {
+                ScrollBar.Minimum = 0;
+                ScrollBar.Maximum = history;
+                ScrollBar.ViewportSize = Screen.Rows;
+                ScrollBar.Value = history - Screen.Emulator.ViewOffset;
+            }
+            finally
+            {
+                _scrollSyncing = false;
+            }
+        }
+
+        /// <summary>
+        /// Shows the scrollbar (flashing it to full opacity) and (re)starts the idle fade.
+        /// Called whenever the user scrolls or drags, so the thumb "appears on scroll".
+        /// </summary>
+        private void ShowScrollBar()
+        {
+            if (Screen.Emulator.HistoryCount <= 0) return;
+            ScrollBar.Visibility = Visibility.Visible;
+            ScrollBar.Opacity = 1.0;
+            UpdateScrollBarValues();
+            _scrollFade.Stop();
+            _scrollFade.Start();
+        }
+
+        private void OnScrollFadeTick(object sender, EventArgs e)
+        {
+            _scrollFade.Stop();
+            // Keep the thumb visible (dimmed) while scrolled back so its position shows;
+            // only fully hide once the view returns to the live bottom.
+            if (Screen.Emulator.AtBottom)
+                ScrollBar.Visibility = Visibility.Collapsed;
+            else
+                ScrollBar.Opacity = 0.5;
+        }
+
+        private void OnScrollBarValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (_scrollSyncing) return;
+            int history = Screen.Emulator.HistoryCount;
+            if (history <= 0) return;
+            int offset = history - (int)Math.Round(ScrollBar.Value);
+            offset = Math.Max(0, Math.Min(history, offset));
+            Screen.Emulator.SetViewOffset(offset);
+            Screen.InvalidateVisual();
+            ShowScrollBar();
         }
 
         private void OnPreviewTextInput(object sender, TextCompositionEventArgs e)
