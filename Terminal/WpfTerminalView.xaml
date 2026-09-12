@@ -1,4 +1,4 @@
-<UserControl x:Class="CnSharp.VSIX.Yolo.WpfTerminalView"
+﻿<UserControl x:Class="CnSharp.VSIX.Yolo.WpfTerminalView"
              x:ClassModifier="internal"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -33,6 +33,7 @@
                  IsUndoEnabled="False"
                  Focusable="True"
                  IsTabStop="True"
+                 IsHitTestVisible="False"
                  FocusVisualStyle="{x:Null}"
                  HorizontalAlignment="Stretch"
                  VerticalAlignment="Stretch"
