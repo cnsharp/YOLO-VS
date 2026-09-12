@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -68,6 +68,8 @@ namespace CnSharp.VSIX.Yolo
         private int _savedX, _savedY;
         private int _scrollTop, _scrollBottom;
         private bool _wrapPending;
+        private bool _applicationCursor;   // DECCKM: cursor keys emit ESC O .. instead of ESC [ ..
+        internal bool ApplicationCursor => _applicationCursor;
 
         private int _fg = -1, _bg = -1;
         private byte _flags;
@@ -387,6 +389,9 @@ namespace CnSharp.VSIX.Yolo
             {
                 switch (_params[i])
                 {
+                    case 1:
+                        _applicationCursor = on;   // DECCKM (smkx/rmkx)
+                        break;
                     case 25:
                         CursorVisible = on;
                         break;
@@ -728,6 +733,7 @@ namespace CnSharp.VSIX.Yolo
             _scrollTop = 0;
             _scrollBottom = _rows - 1;
             CursorVisible = true;
+            _applicationCursor = false;
             _history.Clear();
             _viewOffset = 0;
             ClearAll();

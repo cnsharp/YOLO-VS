@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
@@ -228,7 +228,7 @@ namespace CnSharp.VSIX.Yolo
                 return;
             }
 
-            string? seq = Translate(e.Key, ctrl, alt, (mods & ModifierKeys.Shift) != 0);
+            string? seq = Translate(e.Key, ctrl, alt, (mods & ModifierKeys.Shift) != 0, Screen.Emulator.ApplicationCursor);
             if (seq == null) return;
 
             Send(seq);
@@ -239,7 +239,7 @@ namespace CnSharp.VSIX.Yolo
         /// Maps a WPF key to the bytes a VT terminal would send. Returns null for keys
         /// that should fall through to <see cref="OnTextInput"/> (ordinary characters).
         /// </summary>
-        private static string? Translate(Key key, bool ctrl, bool alt, bool shift)
+        private static string? Translate(Key key, bool ctrl, bool alt, bool shift, bool appCursor)
         {
             if (ctrl && !alt)
             {
@@ -260,12 +260,12 @@ namespace CnSharp.VSIX.Yolo
                 case Key.Back: return "\x7f";
                 case Key.Tab: return shift ? "\x1b[Z" : "\t";
                 case Key.Escape: return "\x1b";
-                case Key.Up: return "\x1b[A";
-                case Key.Down: return "\x1b[B";
-                case Key.Right: return "\x1b[C";
-                case Key.Left: return "\x1b[D";
-                case Key.Home: return "\x1b[H";
-                case Key.End: return "\x1b[F";
+                case Key.Up: return appCursor ? "\x1bOA" : "\x1b[A";
+                case Key.Down: return appCursor ? "\x1bOB" : "\x1b[B";
+                case Key.Right: return appCursor ? "\x1bOC" : "\x1b[C";
+                case Key.Left: return appCursor ? "\x1bOD" : "\x1b[D";
+                case Key.Home: return appCursor ? "\x1bOH" : "\x1b[H";
+                case Key.End: return appCursor ? "\x1bOF" : "\x1b[F";
                 case Key.Insert: return "\x1b[2~";
                 case Key.Delete: return "\x1b[3~";
                 case Key.PageUp: return "\x1b[5~";
