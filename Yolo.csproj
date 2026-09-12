@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
@@ -28,7 +28,7 @@
     <PackageReference Include="Microsoft.VisualStudio.ImageCatalog" Version="17.0.31902.203" ExcludeAssets="runtime" />
     <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="18.5.40034" />
     <!-- JSON parsing for the embedded agents.json (already transitively present via the VS SDK). -->
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" ForceIncludeInVSIX="true" />
     <!-- Real SVG renderer: the agent icons (codebuddy, copilot, etc.) use gradients,
          <circle>/<rect> shapes and fill="url(#…)" references that a hand-rolled <path>
          parser cannot reproduce, so they collapsed to a single flat color. -->
