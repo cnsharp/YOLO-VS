@@ -217,6 +217,24 @@ namespace CnSharp.VSIX.Yolo
             InputReceived?.Invoke(Encoding.UTF8.GetBytes(s));
         }
 
+        /// <summary>
+        /// Public send entry used by <c>YoloToolWindowPane</c>'s <see cref="IOleCommandTarget"/>
+        /// so intercepted VS editor commands (Ctrl+C/H/E/A/...) forward their control byte to
+        /// the pty. Mirrors the private <see cref="Send"/> exactly.
+        /// </summary>
+        public void SendInput(string bytes) => Send(bytes);
+
+        /// <summary>
+        /// Public paste entry used by <c>YoloToolWindowPane</c>'s <see cref="IOleCommandTarget"/>
+        /// to handle VS's PASTE command. Replicates the clipboard logic from <see cref="OnPasteMenu"/>.
+        /// </summary>
+        public void PasteInput()
+        {
+            if (!Clipboard.ContainsText()) return;
+            try { Send(Clipboard.GetText()); }
+            catch (Exception ex) { Log.Write("WpfTerminalView paste failed: " + ex.Message); }
+        }
+
         private void OnPreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
             // Wheel over the terminal reviews scrollback (unless a full-screen app owns it).
