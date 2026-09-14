@@ -207,8 +207,9 @@ namespace CnSharp.VSIX.Yolo
 
         /// <summary>
         /// Sets the hand cursor when the pointer is over a painted link, otherwise the text
-        /// (I-beam) cursor. <see cref="InputCapture"/> is the topmost element, so its cursor is
-        /// what the user actually sees — set it there directly.
+        /// (I-beam) cursor. Set on the control itself (not <see cref="InputCapture"/>, which is
+        /// <c>IsHitTestVisible=False</c> and therefore never the element under the pointer); the
+        /// value inherits down to the drawn surface and the grid.
         /// </summary>
         private void UpdateHoverCursor(MouseEventArgs e)
         {
@@ -232,13 +233,13 @@ namespace CnSharp.VSIX.Yolo
                     }
                 }
             }
-            InputCapture.Cursor = overLink ? Cursors.Hand : Cursors.IBeam;
+            this.Cursor = overLink ? Cursors.Hand : Cursors.IBeam;
         }
 
         private void OnMouseLeave(object sender, MouseEventArgs e)
         {
             // Drop the hand cursor when the pointer leaves the terminal.
-            InputCapture.Cursor = Cursors.IBeam;
+            this.Cursor = Cursors.IBeam;
         }
 
         private void OnMouseUp(object sender, MouseButtonEventArgs e)
