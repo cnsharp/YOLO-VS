@@ -13,11 +13,33 @@ Install range is `[17.0, 19.0)`, so it covers both **Visual Studio 2022** and **
 - **Tab switcher**: when more than one terminal tab is open, a compact chevron button appears at the right end of the toolbar and opens a tab-list popup to jump between sessions.
 - **Keyboard capture**: the terminal keeps keyboard focus (click to capture; Esc / Ctrl+C work as expected).
 - **Settings page** (`Tools > Options > Agent YOLO`): edit agent flags, custom tools, and icons. Icons are validated as real images, and network icon URLs are downloaded to a local cache.
+- **Clickable agent output**: file paths, stack frames, type/member references and URLs printed by the agent become hyperlinks — see [Clickable terminal output](#clickable-terminal-output).
 - **Installed-agent cache**: the detected agent set is persisted and only re-scanned in the background when it changes.
 
 ## Screenshot
 
 ![YOLO tool window with a running agent terminal](Screenshots/yolo-panel.png)
+
+## Clickable terminal output
+
+While an agent runs, its output is scanned and the references in it turn into hyperlinks. Click one and Visual Studio opens the file at that line — the YOLO window stays open, so you can keep reading the agent's output.
+
+| You print… | Becomes a link to… |
+|---|---|
+| `src/foo/Bar.cs:42`, `/abs/Bar.cs:42:13`, `C:\foo\Bar.cs:7` | the file at that line / column |
+| `./Makefile:10`, `~/x/y.cs:3`, `file:///abs/x.cs` | the file (home-relative and `file://` URIs supported) |
+| `path:12-18` | the file at the start of the line range |
+| `"/path with space/Bar.cs":5` | a quoted path containing spaces |
+| `Bar.cs:123` | a bare stack-trace frame |
+| `File "app/main.py", line 42` | a Python / JS traceback frame |
+| `Class1.cs`, `appsettings.json`, `README.md` | a bare file name anywhere in the solution |
+| `ClassLibrary1.Class1` / `Class1` | the type declaration (qualified or project-local simple name) |
+| `ClassLibrary1.Class1.Foo` / `Class1#Foo` | that member, at its declaration line |
+| `https://example.com` | the URL, opened in your system browser |
+
+- **Qualified names resolve inside their own project.** `ClassLibrary1.Class1.Foo()` opens `ClassLibrary1\Class1.cs`.
+- **Hard-wrapped paths are reconstructed.** A path the terminal wrapped across two or more rows is still a single link that navigates to the full path.
+- **Only the agent's output is linked.** Links are painted on what the agent printed; what you type into the terminal stays plain, so a link can never appear under your cursor as you type.
 
 ## Supported agents
 
@@ -100,7 +122,7 @@ yolo-vs/
     WpfTerminalView.xaml(.cs) # WPF host control
     TerminalPalette.cs / CharWidth.cs / ITerminalView.cs / Logger.cs
 
-  Links/                      # Terminal-output link detection (present, not yet wired into the main flow)
+  Links/                      # Terminal-output link detection
     YoloLinkPatterns.cs       # Regex patterns
     YoloHyperlink.cs          # Link model (LinkMatch / LinkTarget / LinkKind)
     FileLinkFilter.cs         # File-path links
@@ -108,6 +130,10 @@ yolo-vs/
     TypeLinkFilter.cs         # Type-name links
     MemberLinkFilter.cs       # Class.member links
     UrlLinkFilter.cs          # URL links
+    YoloLinkFilters.cs        # Runs the filters; the render + click path share it
+    YoloLinkNavigator.cs      # Click-time resolution (opens the file / URL)
+    YoloProjectTypes.cs       # Solution file-name index (type/member gate + lookup)
+    PathWrapState.cs          # State for reconstructing hard-wrapped paths
     OutputLinkInterceptor.cs  # Output interceptor entry point
 
   Agents/
