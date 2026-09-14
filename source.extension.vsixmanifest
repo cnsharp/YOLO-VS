@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Language="en-US" Id="CnSharp.Yolo" Version="1.0.3" Publisher="CnSharp Studio" />
+    <Identity Language="en-US" Id="CnSharp.Yolo" Version="1.1" Publisher="CnSharp Studio" />
     <DisplayName>Agent YOLO</DisplayName>
     <Description>AI Agent extension for Visual Studio - bridge between IDE and AI agents</Description>
     <Locale>en-US</Locale>
