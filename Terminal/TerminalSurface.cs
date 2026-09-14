@@ -38,6 +38,7 @@ namespace CnSharp.VSIX.Yolo
         private readonly Dictionary<int, List<LinkMatch>?> _rowLinkCache = new Dictionary<int, List<LinkMatch>?>();
 
         private readonly StringBuilder _run = new StringBuilder();
+        private readonly Dictionary<char, double> _advanceCache = new Dictionary<char, double>();
 
         private double _cellWidth;
         private double _cellHeight;
@@ -234,6 +235,15 @@ namespace CnSharp.VSIX.Yolo
                         // with its neighbours, since the advance no longer matches the grid.
                         len = 2;
                     }
+                    else if (!FitsCell(cell.Text))
+                    {
+                        // A glyph whose font advance differs from the cell width (⏺, ✔, … — narrow
+                        // by CharWidth but rendered from a fallback face) must not join a run: inside
+                        // a run WPF advances by font metrics, so everything after it would drift off
+                        // the grid and the link overlay (painted at exact cell positions) would show
+                        // a ghost copy. Draw it alone at its cell origin; the next cell starts a run.
+                        len = 1;
+                    }
                     else
                     {
                         len = 1;
@@ -242,6 +252,7 @@ namespace CnSharp.VSIX.Yolo
                             var nextCell = em.VirtualCell(topRow + y, x + len);
                             if (nextCell.Fg != fg || nextCell.Bg != bg || nextCell.Flags != flags) break;
                             if ((nextCell.Flags & (TerminalEmulator.FlagWide | TerminalEmulator.FlagTrailer)) != 0) break;
+                            if (!FitsCell(nextCell.Text)) break;
                             _run.Append(nextCell.Text);
                             len++;
                         }
@@ -466,6 +477,33 @@ namespace CnSharp.VSIX.Yolo
 #pragma warning restore CS0618
             ft.SetFontSize(_fontSize);
             return ft;
+        }
+
+        /// <summary>
+        /// True when every character in <paramref name="s"/> renders with (almost exactly) the cell
+        /// advance, so it can share a <see cref="FormattedText"/> run with its neighbours without the
+        /// painted glyphs drifting off the grid. ASCII is free — the primary console face is
+        /// monospaced and <c>_cellWidth</c> is derived from it. Non-ASCII glyphs (⏺, ✔, CJK from a
+        /// fallback face…) are measured once and cached; anything whose advance deviates from the
+        /// cell width is drawn cell-by-cell so the run origin stays exact.
+        /// </summary>
+        private bool FitsCell(string s)
+        {
+            foreach (char c in s)
+            {
+                if (c < 0x80) continue;
+                if (_advanceCache.TryGetValue(c, out double adv))
+                {
+                    if (Math.Abs(adv - _cellWidth) > 0.1) return false;
+                }
+                else
+                {
+                    double a = MakeText(c.ToString(), _regular, _defaultFg).WidthIncludingTrailingWhitespace;
+                    _advanceCache[c] = a;
+                    if (Math.Abs(a - _cellWidth) > 0.1) return false;
+                }
+            }
+            return true;
         }
 
         private Brush Freeze(int rgb)
