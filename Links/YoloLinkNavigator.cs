@@ -80,7 +80,10 @@ namespace CnSharp.VSIX.Yolo
             if (string.IsNullOrEmpty(target.TypeName)) return false;
 
             string simple = YoloLinkPatterns.LastTypeNameSegment(target.TypeName!);
-            string? path = YoloProjectTypes.For(baseDirectory ?? GetSolutionDirectory()).ResolveFile(simple);
+            // Resolve on the QUALIFIED reference: two projects can both declare Class1, and picking by the
+            // bare last segment would open whichever was indexed first (see Snapshot.ResolveQualified).
+            var types = YoloProjectTypes.For(baseDirectory ?? GetSolutionDirectory());
+            string? path = types.ResolveQualified(target.TypeName!) ?? types.ResolveFile(simple);
             if (path == null || !File.Exists(path)) return false;
 
             // For a member reference, land on the member; for a type, on the type declaration. Falling back to

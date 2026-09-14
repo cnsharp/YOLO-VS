@@ -61,17 +61,17 @@ namespace CnSharp.VSIX.Yolo
         {
             public static readonly Snapshot Empty = new Snapshot(
                 new HashSet<string>(StringComparer.Ordinal),
-                new Dictionary<string, string>(StringComparer.Ordinal),
+                new Dictionary<string, List<string>>(StringComparer.Ordinal),
                 new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase));
 
             /// <summary>Source-file base names (no extension), the type-name gate.</summary>
             private readonly HashSet<string> _baseNames;
-            /// <summary>Base name → full path, for the file-name fallback link.</summary>
-            private readonly Dictionary<string, string> _byBaseName;
+            /// <summary>Base name → every file with that name, for the file-name fallback link.</summary>
+            private readonly Dictionary<string, List<string>> _byBaseName;
             /// <summary>File name incl. extension → full path, for resolving bare stack-frame names.</summary>
             private readonly Dictionary<string, string> _byFullName;
 
-            internal Snapshot(HashSet<string> baseNames, Dictionary<string, string> byBaseName,
+            internal Snapshot(HashSet<string> baseNames, Dictionary<string, List<string>> byBaseName,
                               Dictionary<string, string> byFullName)
             {
                 _baseNames = baseNames;
@@ -85,9 +85,56 @@ namespace CnSharp.VSIX.Yolo
             /// <summary>Same set as <see cref="ContainsSimple"/>; kept separate to mirror IntelliJ's API shape.</summary>
             public bool ContainsFile(string name) => _baseNames.Contains(name);
 
-            /// <summary>Resolve a source-file base name (no extension) to its full path, or null.</summary>
+            /// <summary>Resolve a source-file base name (no extension) to one of its files, or null.</summary>
             public string? ResolveFile(string name) =>
-                _byBaseName.TryGetValue(name, out string? path) ? path : null;
+                _byBaseName.TryGetValue(name, out List<string>? paths) && paths.Count > 0 ? paths[0] : null;
+
+            /// <summary>
+            /// Resolve a possibly qualified type reference (<c>Namespace.Type</c>, <c>Project.Type</c>) to a
+            /// file. Resolving on the bare last segment alone is ambiguous the moment two projects declare the
+            /// same type — <c>ClassLibrary1.Class1.Foo()</c> would jump into <c>ClassLibrary2\Class1.cs</c> —
+            /// so when several files share the base name, the winner is the one whose directory chain matches
+            /// the qualifier segments (project folder, then namespace folders, innermost first).
+            /// </summary>
+            public string? ResolveQualified(string qualified)
+            {
+                string[] segments = qualified.Split('.');
+                string simple = segments[segments.Length - 1];
+                if (!_byBaseName.TryGetValue(simple, out List<string>? paths) || paths.Count == 0) return null;
+                if (paths.Count == 1 || segments.Length == 1) return paths[0];
+
+                string? best = null;
+                int bestScore = 0;
+                foreach (string path in paths)
+                {
+                    int score = QualifierScore(path, segments);
+                    if (score > bestScore) { bestScore = score; best = path; }
+                }
+                return best ?? paths[0];
+            }
+
+            /// <summary>
+            /// How many qualifier segments (all but the last, walked innermost-first) match the directory
+            /// chain above <paramref name="path"/> contiguously, e.g. <c>ClassLibrary1.Foo</c> scores 1 for
+            /// <c>…\ClassLibrary1\Foo.cs</c>.
+            /// </summary>
+            private static int QualifierScore(string path, string[] segments)
+            {
+                string dir = Path.GetDirectoryName(path) ?? string.Empty;
+                string[] dirs = dir.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                int d = dirs.Length - 1;
+                int q = segments.Length - 2;   // skip the type name itself
+                int score = 0;
+                while (q >= 0 && d >= 0)
+                {
+                    if (dirs[d].Length == 0) { d--; continue; }
+                    if (!string.Equals(dirs[d], segments[q], StringComparison.OrdinalIgnoreCase)) break;
+                    score++;
+                    q--;
+                    d--;
+                }
+                return score;
+            }
 
             /// <summary>Resolve a bare file name including extension (e.g. <c>plugin.xml</c>) to its full path.</summary>
             public string? ResolveFullName(string fileName) =>
@@ -138,7 +185,7 @@ namespace CnSharp.VSIX.Yolo
         private static Snapshot Build(string root)
         {
             var baseNames = new HashSet<string>(StringComparer.Ordinal);
-            var byBaseName = new Dictionary<string, string>(StringComparer.Ordinal);
+            var byBaseName = new Dictionary<string, List<string>>(StringComparer.Ordinal);
             var byFullName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             int scanned = 0;
@@ -169,7 +216,11 @@ namespace CnSharp.VSIX.Yolo
                     string baseName = Path.GetFileNameWithoutExtension(file);
                     if (baseName.Length == 0) continue;
                     baseNames.Add(baseName);
-                    if (!byBaseName.ContainsKey(baseName)) byBaseName[baseName] = file;
+                    // Keep EVERY path per base name (IntelliJ keeps an index of all of them); collisions
+                    // across projects are disambiguated at click time by ResolveQualified.
+                    if (!byBaseName.TryGetValue(baseName, out List<string>? list))
+                        byBaseName[baseName] = list = new List<string>(1);
+                    if (!list.Contains(file)) list.Add(file);
                 }
 
                 string[] subDirs;
