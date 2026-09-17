@@ -49,6 +49,10 @@ namespace CnSharp.VSIX.Yolo
         /// Ctrl+V, Ctrl+Z, ...) would otherwise be intercepted before the WPF control sees the
         /// key, so the terminal never receives the control byte. We report those commands as
         /// available and, in <see cref="Exec"/>, forward the equivalent byte to the terminal.
+        /// Commands we do not handle MUST be reported as OLECMDERR_E_NOTSUPPORTED so the shell
+        /// keeps routing them; returning E_NOTIMPL instead makes the shell treat the whole
+        /// command as failed and it pops up "The operation could not be completed. 尚未实现"
+        /// for every IDE command (Manage Extensions, File.Exit, ...).
         /// </summary>
         int IOleCommandTarget.QueryStatus(ref Guid pguidCmdGroup, uint cCmds, OLECMD[] prgCmds, IntPtr pCmdText)
         {
@@ -57,7 +61,7 @@ namespace CnSharp.VSIX.Yolo
                 prgCmds[0].cmdf = (uint)(OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED);
                 return 0; // S_OK
             }
-            return (int)VSConstants.E_NOTIMPL;
+            return NotSupported;
         }
 
         int IOleCommandTarget.Exec(ref Guid pguidCmdGroup, uint nCmdID, uint nCmdexecopt, IntPtr pvaIn, IntPtr pvaOut)
@@ -76,8 +80,15 @@ namespace CnSharp.VSIX.Yolo
                     return 0; // S_OK
                 }
             }
-            return (int)VSConstants.E_NOTIMPL;
+            return NotSupported;
         }
+
+        /// <summary>
+        /// "Not handled, keep routing" reply for a priority command target (see the class
+        /// comment on <see cref="IOleCommandTarget.QueryStatus"/> for why E_NOTIMPL is wrong).
+        /// Fully qualified because this file's namespace has its own <see cref="Constants"/>.
+        /// </summary>
+        private const int NotSupported = (int)Microsoft.VisualStudio.OLE.Interop.Constants.OLECMDERR_E_NOTSUPPORTED;
 
         /// <summary>Finds the <see cref="WpfTerminalView"/> that currently owns keyboard focus, if any.</summary>
         private static WpfTerminalView? GetFocusedTerminal()

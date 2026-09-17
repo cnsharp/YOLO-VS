@@ -135,6 +135,7 @@ TerminalDemo/                      # Standalone headless test program, excluded 
    **The only exception**: the ConPTY terminal surface itself must keep fixed console colors (ANSI colors are independent of the WPF theme).
 7. **Threading**: before touching COM such as `DTE` / `IVsWindowFrame` / `IVsUIShell` / `Events`, you MUST `ThreadHelper.ThrowIfNotOnUIThread()`. Command registration (`AddCommand`) must also run on the UI thread. The build must have **0 VSTHRD0xx warnings**.
 8. **Path conventions**: use forward slashes `/` in Bash commands in the repo; pass backslashes `\` to native Windows tools (VSCT.exe, CreateExpInstance.exe), otherwise you get "The given path's format is not supported".
+9. **A priority command target must answer `OLECMDERR_E_NOTSUPPORTED`, never `E_NOTIMPL`.** → §6.8
 
 ---
 
@@ -185,6 +186,19 @@ Putting `<Symbols>` last (which **Microsoft's own item template `VSPackage.vsct`
 > The element 'CommandTable' … has invalid child element 'Symbols' … List of possible elements expected: 'CommandPlacements, VisibilityConstraints, KeyBindings, UsedCommands'
 
 So this is **editor-error / compiler-ok**. This repo's `Yolo.vsct` is already correctly ordered per the XSD (`Extern → Symbols → Commands → KeyBindings`); don't change it back.
+
+### 6.8 Priority command target: "not handled" MUST be `OLECMDERR_E_NOTSUPPORTED`
+
+`YoloToolWindowPane` implements `IOleCommandTarget` and registers via `SVsRegisterPriorityCommandTarget` (so the ConPTY terminal can take Ctrl+C/H/E/A/Z/Y/F/Del/Ctrl+V ahead of VS's editor bindings). A priority target sits **in front of the shell's whole command routing chain**, so **every IDE command is routed through it first** — not just terminal keys.
+
+- Commands it does not handle MUST return `Microsoft.VisualStudio.OLE.Interop.Constants.OLECMDERR_E_NOTSUPPORTED`.
+- **Never return `VSConstants.E_NOTIMPL`** (or `E_FAIL` / `S_FALSE`). Docs (`command-implementation.md`) are explicit: *"If you fail to pass the command on (usually by returning OLECMDERR_E_NOTSUPPORTED), Visual Studio may stop working properly."* `E_NOTIMPL` (0x80004001) is surfaced to the user as `The operation could not be completed. 尚未实现` instead of continuing routing.
+
+**Incident:** commit `64adbae` ("forward VS editor commands to the focused terminal", shipped as **v1.0.3**) returned `E_NOTIMPL`, so `扩展 ▸ 管理扩展` **and** closing VS **and** anything else in the chain all failed with 尚未实现 — VS could not even exit. Fixed in **v1.1.1**.
+
+**Signature that points here immediately:** several *unrelated* commands fail with the same error while `YoloPackage` loads fine and `ActivityLog.xml` has **0 errors** (routing-layer failures are not logged).
+
+> Gotcha: this repo has its own `Constants` (`Constants.cs`), so the SDK one must be fully qualified as `Microsoft.VisualStudio.OLE.Interop.Constants`.
 
 ---
 
