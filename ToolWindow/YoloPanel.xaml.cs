@@ -378,8 +378,8 @@ namespace CnSharp.VSIX.Yolo
 
             var tab = new TabItem
             {
-                // Header shows the name + a × close button.
-                Header = BuildTabHeader(session.DisplayName, () => CloseSession(session))
+                // Header shows the agent icon + the name + a × close button.
+                Header = BuildTabHeader(session.DisplayName, agentName, () => CloseSession(session))
             };
             tab.Content = view;
             SessionTabs.Items.Add(tab);
@@ -401,12 +401,29 @@ namespace CnSharp.VSIX.Yolo
         }
 
         /// <summary>
-        /// Builds the tab header: a label + a small × button that closes the tab.
+        /// Builds the tab header: agent icon + label + a small × button that closes the tab.
         /// </summary>
-        private StackPanel BuildTabHeader(string title, Action onClose)
+        private StackPanel BuildTabHeader(string title, string? agentName, Action onClose)
         {
             var panel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(4, 2, 4, 2) };
-            // NB: do NOT set Foreground here — the title (and ×) inherit the TabItem's Foreground,
+            // Same source as the tab switcher: the agent's icon, or the terminal glyph for a
+            // plain shell session with no agent.
+            var icon = agentName != null
+                ? AgentIconImage.GetIcon(agentName, darkVariant: true)
+                : AgentIconImage.GetTerminalFallback();
+            if (icon != null)
+            {
+                panel.Children.Add(new Image
+                {
+                    Source = icon,
+                    Width = 14,
+                    Height = 14,
+                    Margin = new Thickness(0, 0, 5, 0),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    SnapsToDevicePixels = true
+                });
+            }
+            // NB: do NOT set Foreground on the title — the title inherits the TabItem's Foreground,
             // which the TabItem template sets per state (TabFgActive / TabFgInactive) so the title
             // stays readable in both dark and light themes.
             panel.Children.Add(new TextBlock
@@ -421,13 +438,24 @@ namespace CnSharp.VSIX.Yolo
                 Width = 16,
                 Height = 16,
                 Margin = new Thickness(6, 0, 0, 0),
-                Padding = new Thickness(0),
+                // Shift the glyph up 3px without shrinking its content box: a negative top +
+                // equal positive bottom padding moves the centred content area up by exactly
+                // that amount (bottom-only padding lifts by only half, because it also shrinks
+                // the box). × sits on the font baseline, so a "centred" 16px box renders it
+                // visually low against the hover square.
+                Padding = new Thickness(0, -3, 0, 3),
                 Background = Brushes.Transparent,
                 BorderThickness = new Thickness(0),
-                FontSize = 12,
+                FontSize = 13,
                 VerticalAlignment = VerticalAlignment.Center,
+                VerticalContentAlignment = VerticalAlignment.Center,
                 Cursor = System.Windows.Input.Cursors.Hand
             };
+            // The × must NOT inherit the TabItem Foreground: an inactive tab is set to
+            // TabFgInactive (#9b9b9b in the dark theme), which made the close button nearly
+            // invisible on the #2d2d2d tab strip. Pin it to the themed active text colour —
+            // TabFgActive is driven by ApplyVsTheme, so it follows light themes too.
+            close.SetResourceReference(Control.ForegroundProperty, "TabFgActive");
             close.Click += (_, __) =>
             {
                 ThreadHelper.ThrowIfNotOnUIThread();
