@@ -200,6 +200,30 @@ So this is **editor-error / compiler-ok**. This repo's `Yolo.vsct` is already co
 
 > Gotcha: this repo has its own `Constants` (`Constants.cs`), so the SDK one must be fully qualified as `Microsoft.VisualStudio.OLE.Interop.Constants`.
 
+### 6.9 The Escape key itself is a standard VS command — a focused terminal must claim it
+
+Related to §6.8: the moment the priority target starts behaving *correctly* (§6.8 fix, v1.1.1), **Esc stopped reaching the terminal and focus jumped back into the IDE**. Reason: the shell binds the Escape key to a real standard command and executes it unless something claims it first. Before the §6.8 fix our bogus `E_NOTIMPL` made the shell abandon command execution, so the raw key fell through to WPF by accident — the bug was "protecting" Esc.
+
+The authoritative list comes from the live IDE, not the headers — enumerate it with DTE
+(`Commands` → `Bindings`, keep `Global::*`); see below. Inspect bindings got
+
+```
+Global::Esc  | Window.ActivateDocumentWindow | {5EFC7975-14BC-11CF-9B2B-00AA00573819} | 289
+Global::Tab  | Edit.SelectNextControl        | {1496A755-94DE-11D0-8C3F-00C04FC2AAE2} | 1510
+Global::Up Arrow | Edit.MoveControlUpGrid    | {1496A755-94DE-11D0-8C3F-00C04FC2AAE2} | 1502   (↓←→ 1503/1504/1505)
+Global::F5   | Debug.Start                   | {5EFC7975-14BC-11CF-9B2B-00AA00573819} | 295
+```
+
+Note `Window.ActivateDocumentWindow` (289) is the command that actually moves focus out — **not**
+`cmdidEscape` (743) from `stdidcmd.h`; both are claimed now. Verified 2026-09-19 with DTE enumeration:
+121 global bindings exist; unbound keys (Space, Home/End/PgUp/PgDn, plain Ctrl+letters) reach WPF normally.
+Empirically the arrow keys are still fine — those designer commands are simply not enabled outside the
+Forms designer, so they fall through. **Claim a key only if it measurably breaks.**
+
+So `YoloToolWindowPane` claims both when a terminal owns keyboard focus and forwards `\x1b` (double-Esc within 400 ms still clears the line with `\x15`, mirroring the WPF handler). **Do not remove this**, or Esc will be swallowed again.
+
+> Generalization: any key VS binds to a command must be explicitly claimed while the terminal has focus; "return NOTSUPPORTED and let the key fall through" only works for keys with no shell binding.
+
 ---
 
 ## 7. VSSDK v18 API breaks (verified on this machine)
