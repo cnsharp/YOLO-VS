@@ -69,6 +69,11 @@ namespace CnSharp.VSIX.Yolo
             var term = GetFocusedTerminal();
             if (term != null)
             {
+                if (IsEscape(pguidCmdGroup, nCmdID))
+                {
+                    ForwardEscape(term);
+                    return 0; // S_OK
+                }
                 if (IsPaste(pguidCmdGroup, nCmdID))
                 {
                     term.PasteInput();
@@ -102,11 +107,48 @@ namespace CnSharp.VSIX.Yolo
             return null;
         }
 
+        private DateTime _lastEscUtc = DateTime.MinValue;
+        private static readonly TimeSpan DoubleEscWindow = TimeSpan.FromMilliseconds(400);
+
+        /// <summary>
+        /// The Escape key itself is a standard VS command (see §6.8/6.9): the shell binds it and
+        /// handles it unless something claims it first. Enumerated from the running IDE via DTE
+        /// (`Commands` → `Bindings`), group <c>guidVSStd97</c>:
+        ///   Global::Esc → Window.ActivateDocumentWindow (289)  ← the one that steals focus
+        /// with the VSSDK spellings kept as belt-and-braces (stdidcmd.h #define cmdidEscape 743,
+        /// cmdidWildEscape 774).
+        /// </summary>
+        private const uint CmdidEscapeDocumentWindow = 289;
+        private const uint CmdidEscape = 743;
+        private const uint CmdidWildEscape = 774;
+
+        private static bool IsEscape(Guid g, uint id) =>
+            g == VSConstants.GUID_VSStandardCommandSet97 &&
+            (id == CmdidEscapeDocumentWindow || id == CmdidEscape || id == CmdidWildEscape);
+
+        /// <summary>
+        /// Sends the byte(s) the terminal expects for Escape. Mirrors the WPF handler in
+        /// <see cref="WpfTerminalView"/>: a quick second Escape clears the line (Ctrl+U, \x15),
+        /// a single one sends ESC (\x1b) so TUIs/Agents see the interrupt.
+        /// </summary>
+        private void ForwardEscape(WpfTerminalView term)
+        {
+            var now = DateTime.UtcNow;
+            if (now - _lastEscUtc <= DoubleEscWindow)
+            {
+                _lastEscUtc = DateTime.MinValue;
+                term.SendInput("\x15");
+                return;
+            }
+            _lastEscUtc = now;
+            term.SendInput("\x1b");
+        }
+
         private static bool IsPaste(Guid g, uint id) =>
             (g == VSConstants.VSStd2K && (VSConstants.VSStd2KCmdID)id == VSConstants.VSStd2KCmdID.PASTE) ||
             (g == VSConstants.GUID_VSStandardCommandSet97 && (VSConstants.VSStd97CmdID)id == VSConstants.VSStd97CmdID.Paste);
 
-        private static bool IsMapped(Guid g, uint id) => IsPaste(g, id) || TryMap(g, id, out _);
+        private static bool IsMapped(Guid g, uint id) => IsPaste(g, id) || IsEscape(g, id) || TryMap(g, id, out _);
 
         /// <summary>
         /// Maps a VS editor command (when the terminal is focused) to the control byte the
