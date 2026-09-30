@@ -71,21 +71,30 @@
                     <DataGridTextColumn Header="{x:Static local:Resources.Settings_Col_BaseArgs}" Width="120" Binding="{Binding BaseArgs, UpdateSourceTrigger=PropertyChanged}"/>
                     <DataGridTextColumn Header="{x:Static local:Resources.Settings_Col_SkipFlag}" Width="200" Binding="{Binding SkipFlag, UpdateSourceTrigger=PropertyChanged}"/>
                     <DataGridTextColumn Header="{x:Static local:Resources.Settings_Col_ResumeFlag}" Width="120" Binding="{Binding ResumeFlag, UpdateSourceTrigger=PropertyChanged}"/>
+                    <DataGridTextColumn Header="{x:Static local:Resources.Settings_Col_Update}" Width="150" IsReadOnly="True" Binding="{Binding UpdateStatus}"/>
                     <DataGridTextColumn Header="{x:Static local:Resources.Settings_Col_IconPath}" Width="240" Binding="{Binding IconPath, UpdateSourceTrigger=PropertyChanged}"/>
                 </DataGrid.Columns>
             </DataGrid>
         </Border>
 
         <!-- General options -->
-        <CheckBox Grid.Row="1" x:Name="SuppressSkipWarningBox" Margin="0,8,0,0"
-                  Content="{x:Static local:Resources.Settings_SuppressSkipWarning}"
-                  Checked="SuppressSkipWarningBox_Changed" Unchecked="SuppressSkipWarningBox_Changed"/>
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,8,0,0">
+            <CheckBox x:Name="SuppressSkipWarningBox"
+                      Content="{x:Static local:Resources.Settings_SuppressSkipWarning}"
+                      Checked="SuppressSkipWarningBox_Changed" Unchecked="SuppressSkipWarningBox_Changed"/>
+            <CheckBox x:Name="AutoCheckUpdatesBox" Margin="24,0,0,0"
+                      Content="{x:Static local:Resources.Settings_AutoCheckUpdates}"
+                      Checked="AutoCheckUpdatesBox_Changed" Unchecked="AutoCheckUpdatesBox_Changed"/>
+        </StackPanel>
 
         <!-- Action buttons -->
         <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0">
             <Button x:Name="AddButton" Content="{x:Static local:Resources.Settings_AddCustomTool}" Width="120" Click="AddButton_Click"/>
             <Button x:Name="RemoveButton" Content="{x:Static local:Resources.Settings_RemoveSelected}" Width="120" Margin="8,0,0,0" Click="RemoveButton_Click"/>
             <Button x:Name="ValidateButton" Content="{x:Static local:Resources.Settings_Validate}" Width="90" Margin="8,0,0,0" Click="ValidateButton_Click"/>
+            <Button x:Name="InstallButton" Content="{x:Static local:Resources.Settings_Install}" Width="90" Margin="8,0,0,0" Click="InstallButton_Click" IsEnabled="False"/>
+            <Button x:Name="UpdateButton" Content="{x:Static local:Resources.Settings_Update}" Width="90" Margin="8,0,0,0" Click="UpdateButton_Click" IsEnabled="False"/>
+            <Button x:Name="CheckUpdatesButton" Content="{x:Static local:Resources.Settings_CheckUpdates}" Width="120" Margin="8,0,0,0" Click="CheckUpdatesButton_Click"/>
         </StackPanel>
 
         <!-- Icon chooser for the selected custom tool -->

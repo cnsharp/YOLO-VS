@@ -62,6 +62,12 @@ namespace CnSharp.VSIX.Yolo
         public bool AutoRefreshAgents { get; set; } = true;
 
         /// <summary>
+        /// When true, the extension checks for newer agent versions on startup (and when the
+        /// Options page opens). Mirrors IntelliJ's autoCheckUpdates preference.
+        /// </summary>
+        public bool AutoCheckUpdates { get; set; } = true;
+
+        /// <summary>
         /// Per-agent skip-permission flags. Keyed by the agent's command base name (e.g. "claude").
         /// Whether a flag is injected is decided by the global YOLO (skip) toggle.
         /// </summary>

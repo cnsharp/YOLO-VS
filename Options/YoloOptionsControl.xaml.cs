@@ -43,11 +43,33 @@ namespace CnSharp.VSIX.Yolo
             // Pair subscribe/unsubscribe with Loaded/Unloaded so a re-shown control re-subscribes
             // and a hidden one can't leak a reference through the static event (ElementHost does not
             // always raise Unloaded reliably, so the subscription must live for the visible span only).
-            Loaded += (_, _) => InstalledAgents.CacheChanged += OnAgentCacheChanged;
-            Unloaded += (_, _) => InstalledAgents.CacheChanged -= OnAgentCacheChanged;
+            Loaded += (_, _) =>
+            {
+                InstalledAgents.CacheChanged += OnAgentCacheChanged;
+                AgentUpdateChecker.AddListener(OnUpdateResultsChanged);
+            };
+            Unloaded += (_, _) =>
+            {
+                InstalledAgents.CacheChanged -= OnAgentCacheChanged;
+                AgentUpdateChecker.RemoveListener(OnUpdateResultsChanged);
+            };
         }
 
-        private void OnAgentCacheChanged() => ApplyInstalledFromCache();
+        private void OnAgentCacheChanged()
+        {
+            ApplyInstalledFromCache();
+            UpdateButtonStates();
+        }
+
+        private void OnUpdateResultsChanged()
+        {
+            // Raised on the background thread by AgentUpdateChecker; marshal to the UI thread.
+            Dispatcher.InvokeAsync(() =>
+            {
+                ReflectUpdateStatuses();
+                UpdateButtonStates();
+            });
+        }
 
         // ── Load / save ─────────────────────────────────────────────
 
@@ -112,8 +134,14 @@ namespace CnSharp.VSIX.Yolo
 
                 // Default agent selection removed: not part of the reference design.
                 SuppressSkipWarningBox.IsChecked = settings.SuppressSkipWarning;
+                AutoCheckUpdatesBox.IsChecked = settings.AutoCheckUpdates;
                 SetStatus(string.Empty, false);
                 _ = RefreshInstalledAsync();
+                ReflectUpdateStatuses();
+                // Auto-check for newer versions on open (mirrors IntelliJ's startup auto-check).
+                if (settings.AutoCheckUpdates)
+                    AgentUpdateChecker.CheckAll();
+                UpdateButtonStates();
             }
             finally
             {
@@ -173,6 +201,7 @@ namespace CnSharp.VSIX.Yolo
                 .ToList();
 
             settings.SuppressSkipWarning = SuppressSkipWarningBox.IsChecked == true;
+            settings.AutoCheckUpdates = AutoCheckUpdatesBox.IsChecked == true;
 
             settings.Save();
         }
@@ -280,6 +309,227 @@ namespace CnSharp.VSIX.Yolo
         private void SuppressSkipWarningBox_Changed(object sender, RoutedEventArgs e)
         {
             if (!_loading) Page?.MarkDirty();
+        }
+
+        private void AutoCheckUpdatesBox_Changed(object sender, RoutedEventArgs e)
+        {
+            if (!_loading)
+            {
+                if (AutoCheckUpdatesBox.IsChecked == true)
+                    AgentUpdateChecker.CheckAll();
+                Page?.MarkDirty();
+            }
+        }
+
+        // ── Install / Update ───────────────────────────────────────
+
+        /// <summary>
+        /// Resolve the install spec for the selected row (by command first, then id). Returns null for
+        /// custom tools / unknown agents (which have no built-in install metadata).
+        /// </summary>
+        private InstallSpec? SpecForSelected()
+        {
+            if (AgentsGrid.SelectedItem is not AgentRow row) return null;
+            var cmd = (row.Command ?? string.Empty).Trim();
+            var spec = !string.IsNullOrEmpty(cmd) ? AgentRegistry.InstallFor(cmd) : null;
+            if (spec == null && !string.IsNullOrEmpty(row.Id))
+                spec = AgentRegistry.InstallFor(row.Id);
+            return spec;
+        }
+
+        /// <summary>The site to open when an install/update can't be run head-less (url type, or
+        ///  a platform that lacks the tool — e.g. brew on Windows).</summary>
+        private static string SiteFor(InstallSpec spec, AgentRow row)
+            => !string.IsNullOrEmpty(spec.Url) ? spec.Url : AgentRegistry.UrlFor(row.Id);
+
+        /// <summary>Enable the Install / Update buttons based on the selected row's spec + state.</summary>
+        private void UpdateButtonStates()
+        {
+            var row = AgentsGrid.SelectedItem as AgentRow;
+            var spec = row != null ? SpecForSelected() : null;
+
+            bool canInstall = false;
+            bool canUpdate = false;
+            if (row != null && spec != null)
+            {
+                var hasSite = !string.IsNullOrEmpty(SiteFor(spec, row));
+                if (spec.Type == "url")
+                {
+                    // Open the site to download/install; allowed whether or not it's already installed.
+                    canInstall = true;
+                }
+                else if (!spec.AutomatableOnPlatform)
+                {
+                    // e.g. brew on native Windows — can't run the command, but offer the site.
+                    canInstall = hasSite;
+                }
+                else
+                {
+                    canInstall = !row.IsInstalled;
+                }
+
+                if (spec.Type == "url")
+                {
+                    canUpdate = row.IsInstalled && hasSite;
+                }
+                else if (!spec.AutomatableOnPlatform)
+                {
+                    canUpdate = row.IsInstalled && hasSite;
+                }
+                else
+                {
+                    canUpdate = row.IsInstalled &&
+                                (AgentUpdateChecker.StatusFor(row.Command) == AgentUpdateChecker.Status.UPDATE_AVAILABLE
+                                 || spec.HasUpdateCommand);
+                }
+            }
+
+            InstallButton.IsEnabled = canInstall;
+            UpdateButton.IsEnabled = canUpdate;
+            CheckUpdatesButton.IsEnabled = !AgentUpdateChecker.IsChecking;
+        }
+
+        private void InstallButton_Click(object sender, RoutedEventArgs e)
+        {
+            var row = AgentsGrid.SelectedItem as AgentRow;
+            var spec = SpecForSelected();
+            if (row == null || spec == null) return;
+
+            // Non-runnable specs (url type, or brew-on-Windows) just open the site.
+            if (spec.Type == "url" || !spec.AutomatableOnPlatform)
+            {
+                var site = SiteFor(spec, row);
+                if (string.IsNullOrEmpty(site))
+                {
+                    SetStatus(string.Format(CnSharp.VSIX.Yolo.Resources.Settings_NoInstallUrl, row.DisplayName), true);
+                    return;
+                }
+                AgentInstaller.OpenUrl(site);
+                SetStatus(string.Format(CnSharp.VSIX.Yolo.Resources.Settings_OpenedSite, row.DisplayName), false);
+                return;
+            }
+
+            RunInstallOrUpdate(row, spec, upgrade: false);
+        }
+
+        private void UpdateButton_Click(object sender, RoutedEventArgs e)
+        {
+            var row = AgentsGrid.SelectedItem as AgentRow;
+            var spec = SpecForSelected();
+            if (row == null || spec == null) return;
+
+            // Non-runnable specs (url type, or brew-on-Windows) just open the site.
+            if (spec.Type == "url" || !spec.AutomatableOnPlatform)
+            {
+                var site = SiteFor(spec, row);
+                if (string.IsNullOrEmpty(site))
+                {
+                    SetStatus(string.Format(CnSharp.VSIX.Yolo.Resources.Settings_NoInstallUrl, row.DisplayName), true);
+                    return;
+                }
+                AgentInstaller.OpenUrl(site);
+                SetStatus(string.Format(CnSharp.VSIX.Yolo.Resources.Settings_OpenedSite, row.DisplayName), false);
+                return;
+            }
+
+            RunInstallOrUpdate(row, spec, upgrade: true);
+        }
+
+        private void CheckUpdatesButton_Click(object sender, RoutedEventArgs e)
+        {
+            AgentUpdateChecker.CheckAll();
+            ReflectUpdateStatuses();
+            UpdateButtonStates();
+            SetStatus(CnSharp.VSIX.Yolo.Resources.Settings_CheckingUpdates, false);
+        }
+
+        /// <summary>
+        /// Run an install or upgrade command head-less, then verify the agent landed on PATH and
+        /// refresh its installed / update status. Mirrors IntelliJ's runInstall + post-install
+        /// markInstalled / refresh.
+        /// </summary>
+        private async void RunInstallOrUpdate(AgentRow row, InstallSpec spec, bool upgrade)
+        {
+            var command = (row.Command ?? string.Empty).Trim();
+            var target = upgrade ? AgentInstaller.BuildUpdateCommand(spec) : AgentInstaller.BuildInstallCommand(spec);
+            if (string.IsNullOrWhiteSpace(target))
+            {
+                SetStatus(string.Format(CnSharp.VSIX.Yolo.Resources.Settings_NoInstallCommand, row.DisplayName), true);
+                return;
+            }
+
+            InstallButton.IsEnabled = false;
+            UpdateButton.IsEnabled = false;
+            SetStatus(string.Format(upgrade
+                ? CnSharp.VSIX.Yolo.Resources.Settings_Updating
+                : CnSharp.VSIX.Yolo.Resources.Settings_Installing, row.DisplayName), false);
+
+            await Task.Run(() =>
+            {
+                var (ok, lastLine) = AgentInstaller.RunCommand(target);
+                Dispatcher.InvokeAsync(() =>
+                {
+                    if (ok)
+                    {
+                        if (AgentDetector.CanExecute(command))
+                        {
+                            InstalledAgents.MarkInstalled(command);
+                            SetStatus(string.Format(
+                                CnSharp.VSIX.Yolo.Resources.Settings_InstallSucceeded, row.DisplayName), false);
+                            // Re-check this agent's version now that it changed.
+                            AgentUpdateChecker.Refresh(command, spec);
+                        }
+                        else
+                        {
+                            SetStatus(string.Format(
+                                CnSharp.VSIX.Yolo.Resources.Settings_InstallDoneButNotOnPath,
+                                row.DisplayName, Truncate(lastLine)), true);
+                        }
+                    }
+                    else
+                    {
+                        SetStatus(string.Format(
+                            CnSharp.VSIX.Yolo.Resources.Settings_InstallFailed,
+                            row.DisplayName, Truncate(lastLine)), true);
+                    }
+                    ReflectUpdateStatuses();
+                    UpdateButtonStates();
+                });
+            });
+        }
+
+        /// <summary>Paint each row's Update column from the current AgentUpdateChecker snapshot.</summary>
+        private void ReflectUpdateStatuses()
+        {
+            var snap = AgentUpdateChecker.Snapshot();
+            foreach (var row in Rows)
+            {
+                var key = ExecutableNames.BaseName(row.Command ?? string.Empty).ToLowerInvariant();
+                snap.TryGetValue(key, out var info);
+                row.UpdateStatus = FormatUpdateStatus(info);
+            }
+        }
+
+        private static string FormatUpdateStatus(AgentUpdateChecker.UpdateInfo? info) => info switch
+        {
+            null => string.Empty,
+            _ when info.Status == AgentUpdateChecker.Status.CHECKING => CnSharp.VSIX.Yolo.Resources.Settings_UpdateChecking,
+            _ when info.Status == AgentUpdateChecker.Status.UP_TO_DATE =>
+                string.IsNullOrEmpty(info.Current)
+                    ? CnSharp.VSIX.Yolo.Resources.Settings_UpdateUpToDate
+                    : string.Format(CnSharp.VSIX.Yolo.Resources.Settings_UpdateUpToDateVer, info.Current),
+            _ when info.Status == AgentUpdateChecker.Status.UPDATE_AVAILABLE =>
+                string.Format(CnSharp.VSIX.Yolo.Resources.Settings_UpdateAvailable, info.Current, info.Latest),
+            _ when info.Status == AgentUpdateChecker.Status.MANUAL => CnSharp.VSIX.Yolo.Resources.Settings_UpdateManual,
+            _ when info.Status == AgentUpdateChecker.Status.ERROR => CnSharp.VSIX.Yolo.Resources.Settings_UpdateError,
+            _ => string.Empty
+        };
+
+        /// <summary>Keep a status line short so it fits the single-line TextBlock.</summary>
+        private static string Truncate(string s, int max = 120)
+        {
+            s = (s ?? string.Empty).Replace("\r", " ").Replace("\n", " ").Trim();
+            return s.Length <= max ? s : s.Substring(0, max) + "…";
         }
 
         // ── Buttons ─────────────────────────────────────────────────
@@ -552,6 +802,7 @@ namespace CnSharp.VSIX.Yolo
                 IconPathBox.Text = string.Empty;
                 IconPreview.Source = null;
             }
+            UpdateButtonStates();
         }
 
         private void SetStatus(string text, bool warn)
@@ -573,6 +824,7 @@ namespace CnSharp.VSIX.Yolo
         private string _iconPath = string.Empty;
         private bool _isLocked;
         private bool _isInstalled;
+        private string _updateStatus = string.Empty;
 
         public string Id { get => _id; set => Set(ref _id, value); }
         public string DisplayName { get => _displayName; set => Set(ref _displayName, value); }
@@ -583,6 +835,8 @@ namespace CnSharp.VSIX.Yolo
         public string IconPath { get => _iconPath; set => Set(ref _iconPath, value); }
         public bool IsLocked { get => _isLocked; set => Set(ref _isLocked, value); }
         public bool IsInstalled { get => _isInstalled; set => Set(ref _isInstalled, value); }
+        /// <summary>Human-readable update status (transient, not persisted). Driven by AgentUpdateChecker.</summary>
+        public string UpdateStatus { get => _updateStatus; set => Set(ref _updateStatus, value); }
 
         public event PropertyChangedEventHandler? PropertyChanged;
 

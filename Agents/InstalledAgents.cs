@@ -77,6 +77,31 @@ namespace CnSharp.VSIX.Yolo
             lock (_cacheLock) return _cachedCommands.Contains(baseCmd);
         }
 
+        /// <summary>
+        /// Record that a command is now installed (e.g. right after a successful install) without a
+        /// full rescan: adds the base name to the cache, persists it, and raises
+        /// <see cref="CacheChanged"/> on the UI thread so the options/tool-window dots refresh.
+        /// Mirrors IntelliJ's <c>InstalledAgents.markInstalled</c>.
+        /// </summary>
+        public static void MarkInstalled(string command)
+        {
+            if (string.IsNullOrWhiteSpace(command)) return;
+            var baseCmd = ExecutableNames.BaseName(command);
+            bool changed;
+            lock (_cacheLock)
+            {
+                changed = _cachedCommands.Add(baseCmd);
+                if (changed) Persist(_cachedCommands);
+            }
+            if (!changed) return;
+
+            var dt = Application.Current?.Dispatcher;
+            if (dt != null && !dt.CheckAccess())
+                dt.BeginInvoke(new Action(() => CacheChanged?.Invoke()));
+            else
+                CacheChanged?.Invoke();
+        }
+
         private static IEnumerable<string> AllAgentCommands()
         {
             var cmds = new List<string>();

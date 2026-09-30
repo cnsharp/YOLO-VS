@@ -235,6 +235,68 @@
   <data name="Settings_SuppressSkipWarning" xml:space="preserve">
     <value>Don't warn me when enabling Y (skip permissions)</value>
   </data>
+  <data name="Settings_AutoCheckUpdates" xml:space="preserve">
+    <value>Automatically check for agent updates on startup</value>
+  </data>
+
+  <!-- Install / Update -->
+  <data name="Settings_Col_Update" xml:space="preserve">
+    <value>Update</value>
+  </data>
+  <data name="Settings_Install" xml:space="preserve">
+    <value>Install</value>
+  </data>
+  <data name="Settings_Update" xml:space="preserve">
+    <value>Update</value>
+  </data>
+  <data name="Settings_CheckUpdates" xml:space="preserve">
+    <value>Check updates</value>
+  </data>
+  <data name="Settings_Installing" xml:space="preserve">
+    <value>Installing {0}…</value>
+  </data>
+  <data name="Settings_Updating" xml:space="preserve">
+    <value>Updating {0}…</value>
+  </data>
+  <data name="Settings_InstallSucceeded" xml:space="preserve">
+    <value>{0} installed successfully and found on PATH.</value>
+  </data>
+  <data name="Settings_InstallDoneButNotOnPath" xml:space="preserve">
+    <value>{0} command finished but was not found on PATH: {1}</value>
+  </data>
+  <data name="Settings_InstallFailed" xml:space="preserve">
+    <value>Failed to install {0}: {1}</value>
+  </data>
+  <data name="Settings_NoInstallCommand" xml:space="preserve">
+    <value>No install command is defined for {0}.</value>
+  </data>
+  <data name="Settings_NoInstallUrl" xml:space="preserve">
+    <value>No download page is defined for {0}.</value>
+  </data>
+  <data name="Settings_OpenedSite" xml:space="preserve">
+    <value>Opened {0}'s download page in your browser.</value>
+  </data>
+  <data name="Settings_CheckingUpdates" xml:space="preserve">
+    <value>Checking for agent updates…</value>
+  </data>
+  <data name="Settings_UpdateChecking" xml:space="preserve">
+    <value>Checking…</value>
+  </data>
+  <data name="Settings_UpdateUpToDate" xml:space="preserve">
+    <value>Up to date</value>
+  </data>
+  <data name="Settings_UpdateUpToDateVer" xml:space="preserve">
+    <value>Up to date ({0})</value>
+  </data>
+  <data name="Settings_UpdateAvailable" xml:space="preserve">
+    <value>Update {0} → {1}</value>
+  </data>
+  <data name="Settings_UpdateManual" xml:space="preserve">
+    <value>Manual</value>
+  </data>
+  <data name="Settings_UpdateError" xml:space="preserve">
+    <value>Check failed</value>
+  </data>
 
   <!-- Settings dialog -->
   <data name="Dialog_OK" xml:space="preserve">
