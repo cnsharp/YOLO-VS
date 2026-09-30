@@ -13,8 +13,7 @@ namespace CnSharp.VSIX.Yolo
     /// This is the single source of truth for built-in agent data — it replaces the
     /// previously hardcoded <c>KnownAgents</c> / <c>DefaultSkipFlags</c> /
     /// <c>DefaultSkipEnvs</c> / <c>AgentIcons</c> data, so agent metadata is maintained
-    /// in a data file (separated from the program), mirroring the IntelliJ plugin's
-    /// <c>AgentRegistry.kt</c>.
+    /// in a data file (separated from the program) rather than hardcoded in code.
     /// </summary>
     public sealed class AgentDef
     {
@@ -46,7 +45,7 @@ namespace CnSharp.VSIX.Yolo
     ///     the Update button runs it directly instead of re-running the installer.</item>
     ///   <item>url: no automatable package; the Install button opens <c>Url</c> in the browser instead.</item>
     /// </list>
-    /// Faithful port of IntelliJ's <c>InstallSpec</c>.
+    /// Describes how an agent is installed.
     /// </summary>
     public sealed class InstallSpec
     {
@@ -58,7 +57,7 @@ namespace CnSharp.VSIX.Yolo
         public string UpdateCmd { get; set; } = string.Empty;
 
         /// <summary>Whether the plugin can run this install head-less (everything except <c>url</c>).
-        /// Data-model field, matching IntelliJ's <c>InstallSpec.automatable</c> (not platform-aware).</summary>
+        /// Data-model field (not platform-aware): whether the plugin can run this install head-less.</summary>
         public bool Automatable =>
             Type is "npm" or "pip" or "brew" or "shell";
 
@@ -130,7 +129,7 @@ namespace CnSharp.VSIX.Yolo
         public static AgentDef? ByCommand(string command) =>
             command != null && _byCommand.TryGetValue(ExecutableNames.BaseName(command), out var a) ? a : null;
 
-        /// <summary>Lookup by command base name first, then by id — mirrors the old skip-flag resolution.</summary>
+        /// <summary>Lookup by command base name first, then by id — matching how skip-flag resolution is keyed.</summary>
         public static AgentDef? Lookup(string key) => ByCommand(key) ?? ById(key);
 
         public static string SkipFlagFor(string key) => Lookup(key)?.SkipFlag ?? string.Empty;

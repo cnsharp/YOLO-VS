@@ -24,8 +24,8 @@ namespace CnSharp.VSIX.Yolo
     {
         /// <summary>
         /// One terminal session = one tab. A session is either a plain shell or an
-        /// agent run (in which case <see cref="AgentName"/> is set). Mirrors IDEA's
-        /// behaviour of opening a fresh terminal per agent launch.
+        /// agent run (in which case <see cref="AgentName"/> is set). A fresh terminal is opened for each
+        /// agent launch.
         /// </summary>
         private sealed class Session
         {
@@ -77,7 +77,7 @@ namespace CnSharp.VSIX.Yolo
             public System.Windows.Media.ImageSource? Icon { get; set; }
         }
 
-        // Icon colours mirror IDEA's toggle states exactly.
+        // Icon colours encode the toggle states (grey = off, red = Y skip, green = R resume).
         private static readonly Brush Gray = new SolidColorBrush(Color.FromRgb(0x6C, 0x70, 0x7E));
         private static readonly Brush Red  = new SolidColorBrush(Color.FromRgb(0xDB, 0x3B, 0x4B));
         private static readonly Brush Green = new SolidColorBrush(Color.FromRgb(0x2E, 0xA0, 0x43));
@@ -200,7 +200,7 @@ namespace CnSharp.VSIX.Yolo
             Log.Reset();
             _installedAgents = new InstalledAgents();
 
-            // Restore the global Y / R toggles from settings (IDEA persists these too).
+            // Restore the global Y / R toggles from settings (these are persisted between sessions).
             _restoringToggles = true;
             try
             {
@@ -478,7 +478,7 @@ namespace CnSharp.VSIX.Yolo
         }
 
         /// <summary>
-        /// Mirror IDEA's confirmCloseTab(): ask before tearing down a terminal, since closing it
+        /// Ask before tearing down a terminal, since closing it
         /// kills the running PTY process. Returns true only when the user picks Yes.
         /// </summary>
         private bool ConfirmCloseTab()
@@ -521,7 +521,7 @@ namespace CnSharp.VSIX.Yolo
 
             AgentComboBox.Items.Clear();
 
-            // Add each installed agent (with its icon, reused from IDEA's asset files)
+            // Add each installed agent (with its bundled icon)
             foreach (var agent in agents)
             {
                 AgentComboBox.Items.Add(new AgentComboItem
@@ -626,7 +626,7 @@ namespace CnSharp.VSIX.Yolo
         /// Launches the selected agent as a REAL process inside a new terminal tab. The agent's
         /// configured command is resolved from <see cref="InstalledAgents"/>; when Y is on its
         /// skip-permission flag (and any skip env var) is injected, and when R is on its resume
-        /// flag is appended — mirroring IDEA's TerminalSkipFlagCustomizer / ResumeAction.
+        /// flag is appended — the agent launch applies both the skip-permission and resume flags.
         /// </summary>
         private void OnRunAgentClicked(object sender, RoutedEventArgs e)
         {
@@ -654,7 +654,7 @@ namespace CnSharp.VSIX.Yolo
             YoloSettings.Instance.LastAgent = cfg.Name;
             YoloSettings.Instance.Save();
 
-            // This creates a brand-new tab + terminal for the run (IDEA opens a new terminal).
+            // This creates a brand-new tab + terminal for the run.
             var session = CreateSession(cfg.Name, cfg);
 
             SetStatus(string.Format(CnSharp.VSIX.Yolo.Resources.Panel_Running, cfg.Command, cfg.DisplayName));

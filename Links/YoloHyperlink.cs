@@ -1,8 +1,8 @@
 namespace CnSharp.VSIX.Yolo
 {
     /// <summary>
-    /// What kind of symbol a terminal link refers to. Mirrors the IntelliJ link types
-    /// (file path, stack-trace / bare file name, type name, member, URL).
+    /// What kind of symbol a terminal link refers to — one of:
+    /// file path, stack-trace / bare file name, type name, member, URL.
     /// </summary>
     internal enum LinkKind
     {

@@ -7,7 +7,7 @@ namespace CnSharp.VSIX.Yolo
     /// Makes <c>Class.Member</c> / <c>Class#member</c> references clickable, navigating to the specific
     /// method/field rather than just the enclosing type. In C# the separator is <c>.</c> (e.g.
     /// <c>MyApp.Services.UserService.SomeMethod</c>, <c>UserRepository.Save</c>); the shared link regex also
-    /// accepts the Java/Kotlin <c>#</c>. Faithful port of IntelliJ <c>MemberLinkFilter</c>, including the
+    /// accepts the Java/Kotlin <c>#</c>. This filter also performs the hard-wrap reconstruction, including the
     /// hard-wrap reconstruction that stitches a <c>Class</c> / <c>Class.Member</c> the terminal split across
     /// consecutive rows back into one reference (e.g. <c>OrderService.Sub</c> + <c>mitAsync</c> →
     /// <c>OrderService.SubmitAsync</c>).

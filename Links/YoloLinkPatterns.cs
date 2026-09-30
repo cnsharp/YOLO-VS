@@ -8,7 +8,7 @@ namespace CnSharp.VSIX.Yolo
 {
     /// <summary>
     /// Link-detection building blocks shared by the terminal link filters.
-    /// Faithful C# port of IntelliJ <c>YoloLinkPatterns.kt</c>. The regex bodies are copied
+    /// The regex bodies are copied
     /// verbatim from the Kotlin raw strings (Kotlin raw strings do not process escapes, and C#
     /// verbatim strings also keep backslashes literal, so the two map 1:1). The only substitution
     /// is <c>$PROGRAMMING_EXT</c> → <c>{0}</c>, filled from <see cref="ProgrammingExt"/>.
@@ -104,7 +104,7 @@ internal static readonly Regex MemberHeadPattern = new Regex(
 
         /// <summary>
         /// Separators a qualified type name may use across languages: Java/C#/Python/Go <c>.</c>,
-        /// Rust/Ruby <c>::</c>, PHP <c>\</c>. Port of IntelliJ <c>QUALIFIED_SEPARATORS</c>.
+        /// Rust/Ruby <c>::</c>, PHP <c>\</c>. Qualified-type separators across languages.
         /// </summary>
         private static readonly char[] QualifiedSeparators = { '.', ':', '\\' };
 

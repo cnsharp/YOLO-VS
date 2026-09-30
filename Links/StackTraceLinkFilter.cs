@@ -5,8 +5,7 @@ namespace CnSharp.VSIX.Yolo
 {
     /// <summary>
     /// Makes stack-trace / traceback file references clickable — the cases <see cref="FileLinkFilter"/> does
-    /// not cover because the file name has no directory component. Faithful port of IntelliJ
-    /// <c>StackTraceLinkFilter</c>. Handles:
+    /// not cover because the file name has no directory component. This is the stack-trace equivalent filter. Handles:
     /// <list type="bullet">
     /// <item>Java/Kotlin frames: <c>at com.foo.Bar.method(Bar.java:123)</c> → links <c>Bar.java:123</c>.</item>
     /// <item>Same-directory references: <c>Bar.kt:12</c>.</item>

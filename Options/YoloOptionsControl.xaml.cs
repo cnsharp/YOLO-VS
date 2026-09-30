@@ -21,9 +21,9 @@ using Microsoft.Win32;
 namespace CnSharp.VSIX.Yolo
 {
     /// <summary>
-    /// WPF control hosted by <see cref="YoloOptionsPage"/> (via an ElementHost). Mirrors the
-    /// IntelliJ AgentExtenderConfigurable: one merged table of agents (known/locked + custom),
-    /// with skip-flag auto-fill, duplicate detection, PATH-based installed greying and Validate.
+    /// WPF control hosted by <see cref="YoloOptionsPage"/> (via an ElementHost). Shows one merged
+    /// table of agents (known/locked + custom), with skip-flag auto-fill, duplicate detection,
+    /// PATH-based installed greying and Validate.
     /// </summary>
     public partial class YoloOptionsControl : UserControl
     {
@@ -445,8 +445,7 @@ namespace CnSharp.VSIX.Yolo
 
         /// <summary>
         /// Run an install or upgrade command head-less, then verify the agent landed on PATH and
-        /// refresh its installed / update status. Mirrors IntelliJ's runInstall + post-install
-        /// markInstalled / refresh.
+        /// refresh its installed / update status.
         /// </summary>
         private async void RunInstallOrUpdate(AgentRow row, InstallSpec spec, bool upgrade)
         {

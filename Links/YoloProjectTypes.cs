@@ -9,17 +9,17 @@ namespace CnSharp.VSIX.Yolo
     /// Lazily-built snapshot of the current solution's source-file names, used by the terminal link filters
     /// to decide which identifiers are worth turning into clickable links.
     /// <para>
-    /// Port of IntelliJ <c>YoloProjectTypes</c>. Without this gate the type/member regexes match every
+    /// Limits the terminal link filters to identifiers that actually look like project types. Without this gate the type/member regexes match every
     /// capitalized word — <c>Result</c>, <c>OK</c>, <c>Error</c>, or the <c>Ctrl</c> in a <c>Ctrl/C</c>
     /// shortcut — and paint it as a link even though it is not a project type.
     /// </para>
     /// <para>
-    /// IntelliJ sources its type names from the language-agnostic <c>gotoClassContributor</c> extension point.
+    /// A language-agnostic class-contributor extension point supplies the type names in the original design.
     /// Visual Studio has no comparable cheap, language-agnostic type index available to a VSIX (Roslyn's
     /// workspace is per-language, heavy, and does not cover every project type), so this port derives the gate
     /// from the solution's <b>source-file base names</b> instead. In C#/Java/Kotlin/TypeScript/Swift the file
     /// base name equals the type name for the large majority of types, so the gate has essentially the same
-    /// selectivity, and it doubles as IntelliJ's file-name fallback set (<c>Snapshot.files</c>).
+    /// selectivity, and it doubles as the file-name fallback set (<c>Snapshot.files</c>).
     /// </para>
     /// <para>
     /// IMPORTANT — <see cref="For"/> must never block. It is called from the WPF render path while painting
@@ -207,7 +207,7 @@ namespace CnSharp.VSIX.Yolo
                     string fileName = Path.GetFileName(file);
                     if (fileName.Length == 0) continue;
 
-                    // First writer wins, matching IntelliJ's putIfAbsent: with duplicate names across
+                    // First writer wins, matching the putIfAbsent semantics: with duplicate names across
                     // projects, a stable pick beats an arbitrary last-one-wins.
                     if (!byFullName.ContainsKey(fileName)) byFullName[fileName] = file;
 
@@ -216,7 +216,7 @@ namespace CnSharp.VSIX.Yolo
                     string baseName = Path.GetFileNameWithoutExtension(file);
                     if (baseName.Length == 0) continue;
                     baseNames.Add(baseName);
-                    // Keep EVERY path per base name (IntelliJ keeps an index of all of them); collisions
+                    // Keep EVERY path per base name (the index keeps all of them); collisions
                     // across projects are disambiguated at click time by ResolveQualified.
                     if (!byBaseName.TryGetValue(baseName, out List<string>? list))
                         byBaseName[baseName] = list = new List<string>(1);

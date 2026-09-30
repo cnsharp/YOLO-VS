@@ -6,9 +6,8 @@ namespace CnSharp.VSIX.Yolo
 {
     /// <summary>
     /// Runs agent install / update commands head-less and opens agent home pages in the browser.
-    /// Faithful port of the install half of IntelliJ's <c>AgentExtenderConfigurable</c>
-    /// (installShellCommand / runInstallCommand / openInBrowser) plus <c>AgentUpdateChecker.run</c>'s
-    /// command runner.
+    /// Provides the install / upgrade command builders (package-manager and shell installers) plus the
+    /// shared head-less command runner used for both install and version checks.
     ///
     /// Platform notes:
     ///   • Windows — commands run through <c>powershell -NoProfile -Command</c> (so <c>irm</c>,
@@ -75,7 +74,7 @@ namespace CnSharp.VSIX.Yolo
         /// Run a shell command head-less and return (<c>ok</c>, last non-empty output line).
         /// <c>ok</c> is true only when the process finished and exited 0. A 600-second timeout stops a
         /// stuck installer (or a pager triggered by <c>--version</c>) from hanging the caller; PAGER is
-        /// forced to <c>cat</c> for the same reason. Mirrors IntelliJ's <c>AgentUpdateChecker.run</c>.
+        /// forced to <c>cat</c> so a pager never blocks waiting on a TTY.
         /// </summary>
         public static (bool ok, string lastLine) RunCommand(string command)
         {

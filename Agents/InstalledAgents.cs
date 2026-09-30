@@ -32,8 +32,8 @@ namespace CnSharp.VSIX.Yolo
 
     /// <summary>
     /// Single source of truth for the tool window's agent list and for the persisted
-    /// installed-agent detection cache (mirrors IDEA's <c>InstalledAgents</c> +
-    /// <c>AgentExtenderSettings.installedCommands</c>).
+    /// installed-agent detection cache (the lower-cased command base names detected on PATH,
+    /// persisted so the UI can render instantly).
     ///
     /// The merged list is built from:
     ///   • built-in/known agents — <see cref="AgentRegistry.All"/> (from agents.json);
@@ -65,7 +65,7 @@ namespace CnSharp.VSIX.Yolo
         /// <summary>
         /// Raised on the UI thread whenever a background rescan detects that the installed-agent
         /// set actually changed. Both the options page and the tool window subscribe so their UI
-        /// refreshes from the cache without a manual re-open (IDEA's "notify only on change").
+        /// refreshes from the cache without a manual re-open (the cache only notifies when the set changed).
         /// </summary>
         public static event Action? CacheChanged;
 
@@ -81,7 +81,6 @@ namespace CnSharp.VSIX.Yolo
         /// Record that a command is now installed (e.g. right after a successful install) without a
         /// full rescan: adds the base name to the cache, persists it, and raises
         /// <see cref="CacheChanged"/> on the UI thread so the options/tool-window dots refresh.
-        /// Mirrors IntelliJ's <c>InstalledAgents.markInstalled</c>.
         /// </summary>
         public static void MarkInstalled(string command)
         {
@@ -150,7 +149,7 @@ namespace CnSharp.VSIX.Yolo
         /// <summary>
         /// Background rescan of every known/custom agent command. Updates the persisted cache
         /// only when the detected set actually changed, then invokes <paramref name="onChanged"/>
-        /// on the UI thread with the new set (IDEA's "notify only on change" behaviour).
+        /// on the UI thread with the new set (the cache only notifies when the set actually changed).
         /// </summary>
         public static void RescanCache(Action<HashSet<string>>? onChanged = null)
         {

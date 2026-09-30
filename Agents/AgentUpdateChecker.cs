@@ -8,8 +8,7 @@ using System.Threading.Tasks;
 namespace CnSharp.VSIX.Yolo
 {
     /// <summary>
-    /// Background checker for newer versions of the <b>installed</b> agent CLIs. Faithful port of
-    /// IntelliJ's <c>AgentUpdateChecker.kt</c>.
+    /// Background checker for newer versions of the <b>installed</b> agent CLIs.
     ///
     /// Strategy: the <i>installed</i> version is read from the agent's own binary via
     /// <c>&lt;command&gt; --version</c>, while the <i>latest</i> version is queried from the agent's

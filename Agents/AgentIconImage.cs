@@ -13,8 +13,8 @@ using Svg;
 namespace CnSharp.VSIX.Yolo
 {
     /// <summary>
-    /// Renders an agent's icon as a WPF <see cref="ImageSource"/>, reusing IntelliJ's icon
-    /// assets verbatim (copied to <c>Resources/icons/agents/</c> and embedded as WPF resources).
+    /// Renders an agent's icon as a WPF <see cref="ImageSource"/>, reusing the original plugin's icon
+    /// assets (copied to <c>Resources/icons/agents/</c> and embedded as WPF resources).
     /// PNG/JPG load directly; SVG files are parsed into vector geometry (WPF's path mini-language
     /// is a superset of SVG path data, so no external SVG decoder is needed).
     /// </summary>
@@ -176,7 +176,7 @@ namespace CnSharp.VSIX.Yolo
         /// <summary>
         /// The dark-theme twin of an embedded icon (<c>codex.svg</c> → <c>codex_dark.svg</c>), but only
         /// when that asset really ships in this assembly; null otherwise, so the caller keeps the plain
-        /// icon. IntelliJ gets this for free from <c>IconLoader</c>; here it is explicit. Only a few
+        /// icon. The original plugin supplies this automatically; here it is explicit. Only a few
         /// bundled icons have a twin today (e.g. codex), and adding one is just dropping the file in.
         /// </summary>
         private static string? DarkVariant(string icon)
@@ -256,7 +256,7 @@ namespace CnSharp.VSIX.Yolo
     }
 
     /// <summary>
-    /// Renders an agent icon the way the IntelliJ plugin does in its settings table: a coloured
+    /// Renders an agent icon for the settings table: a coloured
     /// (lit) icon when the agent is installed, and a desaturated grey icon when it is not. Takes
     /// two values — the icon spec and the installed bool. Grayscale preserves the icon's alpha so
     /// transparent PNGs/SVGs don't pick up a black box.

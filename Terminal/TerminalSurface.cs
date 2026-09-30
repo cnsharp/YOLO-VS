@@ -321,7 +321,7 @@ namespace CnSharp.VSIX.Yolo
             {
                 // Evaluate every visible row top-to-bottom, threading ONE PathWrapState so a path hard-wrapped
                 // across 3+ rows reconstructs correctly (the accumulated prefix is carried from the row above,
-                // exactly like IDEA's JediTerm). Results are cached per row for the click handler.
+                // exactly like the underlying terminal emulator). Results are cached per row for the click handler.
                 var wrap = new PathWrapState();
                 for (int y = 0; y < rows; y++)
                 {

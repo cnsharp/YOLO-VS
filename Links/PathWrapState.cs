@@ -4,14 +4,14 @@ namespace CnSharp.VSIX.Yolo
 {
     /// <summary>
     /// Shared state for tracking a terminal path that was hard-wrapped across consecutive physical lines.
-    /// Port of IntelliJ <c>PathWrapState</c>, adapted to the hand-drawn terminal's render model.
+    /// Adapted to the hand-drawn terminal's render model.
     /// <para>
-    /// IntelliJ's JediTerm calls each filter once per physical line, in output order, so it carries one
+    /// The terminal emulator calls each filter once per physical line, in output order, so it carries one
     /// long-lived <c>PathWrapState</c> per session and writes <see cref="PendingPrefix"/> at the end of each
     /// line for the next line to consume. The hand-drawn terminal here re-evaluates only the visible rows,
     /// top-to-bottom, on every repaint — so <see cref="TerminalSurface"/> owns the single <c>PathWrapState</c>
     /// and threads it through <see cref="YoloLinkFilters.FindLinks(string, PathWrapState)"/> for each visible
-    /// row in order. The prefix therefore accumulates exactly as in JediTerm, with no order-dependency hazard.
+    /// row in order. The prefix therefore accumulates correctly across rows, with no order-dependency hazard.
     /// </para>
     /// <para>
     /// Unlike the naive "store only the previous row's head" approach, the prefix here ACCUMULATES across
@@ -29,8 +29,7 @@ namespace CnSharp.VSIX.Yolo
         /// <summary>
         /// Type-name fragment at the end of the PREVIOUS row — a qualified name (with namespace separators)
         /// that had no trailing member. Stitched to the next row so a wrapped <c>MyApp.Services.Use</c> +
-        /// <c>rService</c> becomes <c>MyApp.Services.UserService</c>. Port of IntelliJ
-        /// <c>WrapState.pendingType</c>.
+    /// <c>rService</c> becomes <c>MyApp.Services.UserService</c>. This is the terminal's pending-type fragment.
         /// </summary>
         public string PendingType = string.Empty;
 
@@ -40,24 +39,24 @@ namespace CnSharp.VSIX.Yolo
         /// <c>Class.Member</c> split inside the member name. Stitched to the next row so a wrapped
         /// <c>MyApp.Services.Use</c> + <c>rService.FindById</c> becomes
         /// <c>MyApp.Services.UserService.FindById</c>. (The shared link regex also accepts the Java/Kotlin
-        /// <c>#</c>, Rust/Ruby <c>::</c> and PHP <c>\</c> member separators, but C# uses <c>.</c>.) Port of
-        /// IntelliJ <c>WrapState.pendingMember</c>.
+    /// <c>#</c>, Rust/Ruby <c>::</c> and PHP <c>\</c> member separators, but C# uses <c>.</c>.) This is the
+    /// terminal's pending-member fragment.
         /// </summary>
         public string PendingMember = string.Empty;
 
         /// <summary>
         /// True when <see cref="PendingMember"/> already carries its member part — i.e. the terminal split the
         /// reference <i>inside</i> the member name (C#: <c>OrderService.Sub</c> + <c>mitAsync</c>; Java/Kotlin:
-        /// <c>Foo#antiFra</c> + <c>udConfirm</c>) rather than inside the class name. Port of IntelliJ
-        /// <c>WrapState.pendingMemberHasMember</c>.
+    /// <c>Foo#antiFra</c> + <c>udConfirm</c>) rather than inside the class name. This is the terminal's
+    /// pending-member-has-member flag.
         /// </summary>
         public bool PendingMemberHasMember;
 
         /// <summary>
         /// Bare (path-less) file-name fragment at the end of the PREVIOUS row — a name the terminal hard-wrapped
         /// mid-name, e.g. the <c>AccountD</c> of a split <c>AccountDataMigrationDispatcher.java:18</c>. Matched
-        /// by <c>STACK_BARE_PATTERN</c> (not <c>PATH_PATTERN</c>, which demands a directory prefix). Port of
-        /// IntelliJ <c>WrapState.pendingBareName</c>.
+    /// by <c>STACK_BARE_PATTERN</c> (not <c>PATH_PATTERN</c>, which demands a directory prefix). This is the
+    /// terminal's pending-bare-name fragment.
         /// </summary>
         public string PendingBareName = string.Empty;
 

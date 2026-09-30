@@ -6,8 +6,8 @@ using System.Xml.Serialization;
 namespace CnSharp.VSIX.Yolo
 {
     /// <summary>
-    /// Persistent settings, corresponding to the IntelliJ version AgentExtenderSettings.kt
-    /// Settings are saved as an XML file in the local AppData directory, avoiding dependency on the project-level Settings designer.
+    /// Persistent settings for the extension. Settings are saved as an XML file in the local
+    /// AppData directory, avoiding dependency on the project-level Settings designer.
     /// </summary>
     [XmlRoot("YoloSettings")]
     public class YoloSettings
@@ -44,10 +44,10 @@ namespace CnSharp.VSIX.Yolo
         }
 
         // Settings items
-        /// <summary>Global Y (skip-permissions) toggle, persisted across sessions (mirrors IDEA's skipEnabled).</summary>
+        /// <summary>Global Y (skip-permissions) toggle, persisted across sessions.</summary>
         public bool SkipEnabled { get; set; }
 
-        /// <summary>Global R (resume) toggle, persisted across sessions (mirrors IDEA's resumeEnabled).</summary>
+        /// <summary>Global R (resume) toggle, persisted across sessions.</summary>
         public bool ResumeEnabled { get; set; }
 
         /// <summary>
@@ -63,7 +63,7 @@ namespace CnSharp.VSIX.Yolo
 
         /// <summary>
         /// When true, the extension checks for newer agent versions on startup (and when the
-        /// Options page opens). Mirrors IntelliJ's autoCheckUpdates preference.
+        /// Options page opens).
         /// </summary>
         public bool AutoCheckUpdates { get; set; } = true;
 
@@ -75,7 +75,7 @@ namespace CnSharp.VSIX.Yolo
         public List<PermissionRule> PermissionRules { get; set; } = new List<PermissionRule>();
 
         /// <summary>
-        /// Per-agent resume flags (mirrors IDEA's resumeRules). Keyed by command base name.
+        /// Per-agent resume flags. Keyed by command base name.
         /// Applied when the global R (resume) toggle is on.
         /// </summary>
         [XmlArray("ResumeRules"), XmlArrayItem("Rule")]
@@ -87,8 +87,8 @@ namespace CnSharp.VSIX.Yolo
 
         /// <summary>
         /// Persisted install-state cache: lower-cased command base names that resolved on PATH
-        /// (or via execution probe) during the last scan. Mirrors IDEA's installedCommands so the
-        /// UI can render instantly and a background rescan only updates when the set actually changes.
+        /// (or via execution probe) during the last scan. The UI renders instantly from this cache,
+        /// and a background rescan only updates when the set actually changes.
         /// </summary>
         [XmlArray("CachedInstalledCommands"), XmlArrayItem("Cmd")]
         public List<string> CachedInstalledCommands { get; set; } = new List<string>();

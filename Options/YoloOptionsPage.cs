@@ -8,9 +8,9 @@ using Microsoft.VisualStudio.Shell;
 namespace CnSharp.VSIX.Yolo
 {
     /// <summary>
-    /// YOLO settings page, corresponding to the IntelliJ version's AgentExtenderConfigurable.
-    /// Hosts a WPF control (YoloOptionsControl) inside an ElementHost and persists everything to
-    /// YoloSettings (an XML file under LocalApplicationData). The reference design has no
+    /// YOLO settings page. Hosts a WPF control (YoloOptionsControl) inside an ElementHost and
+    /// persists everything to YoloSettings (an XML file under LocalApplicationData). The reference
+    /// design has no
     /// "default agent" concept — settings are: global YOLO toggle, auto-refresh, per-agent
     /// permission rules, and user custom tools.
     /// </summary>

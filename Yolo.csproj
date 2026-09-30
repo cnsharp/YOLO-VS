@@ -35,8 +35,8 @@
     <PackageReference Include="Svg" Version="3.4.4" />
   </ItemGroup>
 
-  <!-- Agent metadata is kept in a data file, separated from the program (mirrors the
-       IntelliJ plugin's agents.json on the classpath). LogicalName pins the resource name
+  <!-- Agent metadata is kept in a data file, separated from the program (the original plugin
+       ships the same data alongside its code). LogicalName pins the resource name
        so AgentRegistry can load it deterministically. -->
   <ItemGroup>
     <EmbeddedResource Include="agents.json">
@@ -52,7 +52,7 @@
     <None Include="Resources\YoloCommand.bmp" />
   </ItemGroup>
 
-  <!-- Plugin brand tile, ported from the IntelliJ version's META-INF/pluginIcon*.
+  <!-- Plugin brand tile, copied from the original plugin's icon assets.
        The .png is referenced by <Icon>/<PreviewImage> in the manifest; the two SVGs are the
        light/dark vector originals kept alongside it. Content+IncludeInVSIX ships them in the
        container (do NOT use <None>, which the skill flags as an anti-pattern here). -->
@@ -68,7 +68,7 @@
     </Content>
   </ItemGroup>
 
-  <!-- IDEA icon resources (copied from the IntelliJ plugin) used by the Y/R toggle buttons
+  <!-- Toggle-button icon resources (copied from the original plugin's assets) used by the Y/R toggle buttons
        and the settings-page agent-icon column. WPF Resource build action => pack URI access. -->
   <ItemGroup>
     <Resource Include="Resources/icons/skipY.svg" />

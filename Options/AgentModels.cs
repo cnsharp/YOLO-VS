@@ -5,7 +5,7 @@ namespace CnSharp.VSIX.Yolo
     /// <summary>
     /// A single agent's permission-bypass rule. Only the agent's skip flag is stored here;
     /// whether the flag is actually injected is decided by the global YOLO (skip) toggle.
-    /// Mirrors IntelliJ's PermissionRule.
+    /// Captures one agent's skip-flag permission rule.
     /// </summary>
     public class PermissionRule
     {
@@ -18,7 +18,7 @@ namespace CnSharp.VSIX.Yolo
 
     /// <summary>
     /// A custom tool the user adds to the agents dropdown (as opposed to the built-in / known agents).
-    /// Mirrors IntelliJ's CustomTool.
+    /// Represents a user-added tool in the agents dropdown.
     /// </summary>
     public class CustomTool
     {

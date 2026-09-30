@@ -59,8 +59,8 @@ namespace CnSharp.VSIX.Yolo
         /// <summary>
         /// Detect all links on a single terminal row, threading <paramref name="wrap"/> so a path hard-wrapped
         /// across several consecutive rows reconstructs correctly. The caller owns <paramref name="wrap"/> and
-        /// passes the SAME instance for each successive row, top to bottom — matching IDEA's JediTerm, which
-        /// carries one mutable <c>PathWrapState</c> per session. (Our terminal re-evaluates visible rows per
+    /// passes the SAME instance for each successive row, top to bottom — the terminal carries one mutable
+    /// <c>PathWrapState</c> per session. (Our terminal re-evaluates visible rows per
         /// repaint rather than streaming lines, so the caller threads the state instead of a long-lived field.)
         /// </summary>
         public List<LinkMatch>? FindLinks(string text, PathWrapState wrap, int virtualRow = -1)
@@ -68,7 +68,7 @@ namespace CnSharp.VSIX.Yolo
             if (string.IsNullOrWhiteSpace(text))
             {
                 // A blank row breaks any pending wrap sequence. (PendingType / PendingMember are intentionally
-                // NOT cleared here — matching IntelliJ, where a blank line does not drop a type/member wrap
+                // NOT cleared here — a blank line does not drop a type/member wrap
                 // fragment, since the terminal never inserts a blank between wrapped parts.)
                 wrap.PendingPrefix = string.Empty;
                 wrap.PendingBareName = string.Empty;

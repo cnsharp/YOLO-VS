@@ -5,7 +5,7 @@ namespace CnSharp.VSIX.Yolo
 {
     /// <summary>
     /// Makes <c>http(s)://</c> URLs printed by agents clickable, opening them in the system browser.
-    /// Faithful port of IntelliJ <c>UrlLinkFilter</c> (this does NOT hide the YOLO pane, since a URL
+    /// This filter does NOT hide the YOLO pane, since a URL
     /// opens an external browser rather than the IDE editor).
     /// </summary>
     internal sealed class UrlLinkFilter

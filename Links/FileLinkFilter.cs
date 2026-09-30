@@ -6,7 +6,7 @@ namespace CnSharp.VSIX.Yolo
     /// <summary>
     /// Makes file references printed by agents clickable: <c>path</c>, <c>path:line</c>,
     /// <c>path:line:column</c>, <c>path:line-line</c> (range) and quoted paths with embedded spaces.
-    /// Faithful port of IntelliJ <c>FileLinkFilter</c>. Resolution to a real file is deferred to click time
+    /// This filter only parses the reference. Resolution to a real file is deferred to click time
     /// (<see cref="YoloLinkNavigator"/>) so streaming output is never blocked on filesystem I/O; this filter
     /// only parses the reference and applies the truncated-path / diff-line guards.
     /// </summary>

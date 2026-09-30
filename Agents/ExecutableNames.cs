@@ -3,7 +3,7 @@ using System;
 namespace CnSharp.VSIX.Yolo
 {
     /// <summary>
-    /// Normalize executable file names, mirroring IntelliJ's ExecutableNames.kt.
+    /// Normalize executable file names so injection rules match by base name.
     /// Injection rules match by executable base name, so /usr/local/bin/claude and claude.cmd
     /// resolve to the same agent.
     /// </summary>

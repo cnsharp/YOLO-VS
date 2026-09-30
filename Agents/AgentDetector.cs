@@ -6,7 +6,7 @@ namespace CnSharp.VSIX.Yolo
 {
     /// <summary>
     /// Runtime probe: can the command be resolved on PATH (or as an absolute path)?
-    /// Faithful port of the IntelliJ plugin's AgentDetector.kt.
+    /// Detects whether an agent command can be resolved before launch.
     ///
     /// It ONLY resolves the command via "where" (Windows) / "command -v" through a login
     /// shell (Unix, so nvm / Homebrew-injected PATH is picked up). It deliberately does NOT

@@ -194,7 +194,7 @@ namespace CnSharp.VSIX.Yolo
         /// Sets an environment variable in the running shell before an agent is launched.
         /// Some agents (e.g. goose, via GOOSE_MODE) bypass permissions through an env var
         /// that must be present when the process starts — it cannot be appended to the
-        /// command line. Mirrors the IntelliJ plugin's DefaultSkipEnvs handling.
+        /// command line. The skip-flag mechanism relies on these variables being set before launch.
         /// </summary>
         public void SetEnvVar(string name, string value)
         {

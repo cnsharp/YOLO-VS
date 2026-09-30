@@ -6,7 +6,7 @@ namespace CnSharp.VSIX.Yolo
     /// <summary>
     /// Makes type references printed by agents clickable: qualified names (<c>MyApp.Services.UserService</c>,
     /// <c>com.foo.Bar</c>, <c>foo::Bar</c>, <c>\App\Models\User</c>) and simple PascalCase names (<c>Bar</c>).
-    /// Faithful port of IntelliJ <c>TypeLinkFilter</c>, including:
+    /// This filter handles the following cases, including:
     /// <list type="bullet">
     /// <item>The <c>TypeName:line[:col]</c> "caller citation" branch (e.g. <c>UserService:182</c>), which opens
     /// the resolved type's source file at the cited line.</item>
@@ -21,7 +21,7 @@ namespace CnSharp.VSIX.Yolo
     /// and paints it as a link.
     /// </para>
     /// <para>
-    /// IntelliJ additionally has a "file-name fallback" branch for a simple name that is a source-file base
+    /// The original filter additionally has a "file-name fallback" branch for a simple name that is a source-file base
     /// name but not a class (e.g. a Kotlin file facade). That branch is unreachable here by construction: this
     /// port's type gate <i>is</i> the source-file base-name set, so any name reaching the fallback has already
     /// matched the type branch, and <see cref="YoloLinkNavigator"/> resolves both the same way (open the file

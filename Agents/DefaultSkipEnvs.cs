@@ -4,8 +4,7 @@ namespace CnSharp.VSIX.Yolo
 {
     /// <summary>
     /// Default skip environment variables, sourced from <see cref="AgentRegistry"/> (the
-    /// <c>skipEnv</c> field of agents.json). Corresponds to the IntelliJ version's
-    /// DefaultSkipEnvs.kt.
+    /// <c>skipEnv</c> field of agents.json).
     /// </summary>
     public static class DefaultSkipEnvs
     {

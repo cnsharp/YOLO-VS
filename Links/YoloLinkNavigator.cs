@@ -10,14 +10,13 @@ using Microsoft.VisualStudio.TextManager.Interop;
 namespace CnSharp.VSIX.Yolo
 {
     /// <summary>
-    /// Performs the actual navigation when a terminal link is clicked. VS-side counterpart of IntelliJ's
-    /// <c>YoloNavigation.kt</c> + <c>yoloHyperlink</c>.
+    /// Performs the actual navigation when a terminal link is clicked.
     /// <para>
     /// All resolution happens here rather than in the filters, so painting terminal rows never touches the
-    /// filesystem — matching IntelliJ, which defers resolution to click time to keep the emulator thread free.
+    /// filesystem — resolution is deferred to click time to keep the emulator thread free.
     /// </para>
     /// <para>
-    /// Symbol resolution differs from upstream by necessity. IntelliJ resolves types and members through the
+    /// Symbol resolution differs from the original design by necessity. The original resolves types and members through the
     /// language-agnostic <c>gotoClassContributor</c> / <c>gotoSymbolContributor</c> extension points, which
     /// have no VS equivalent reachable from a VSIX (<c>ISymbolSearchService</c> is not shipped in VS2026, and
     /// Roslyn's workspace is per-language and would not cover every project type). Instead a type resolves to
@@ -32,7 +31,7 @@ namespace CnSharp.VSIX.Yolo
         private const int MaxScanBytes = 4 * 1024 * 1024;
 
         /// <summary>
-        /// Navigates to <paramref name="target"/>. Mirrors IntelliJ's <c>yoloHyperlink</c>: a successful
+        /// Navigates to <paramref name="target"/>. On a successful
         /// file/type/member navigation hides the YOLO pane so it no longer covers the editor, while a URL does
         /// not (it opens an external browser, so there is no in-IDE destination to reveal).
         /// </summary>
@@ -89,7 +88,7 @@ namespace CnSharp.VSIX.Yolo
             // A type:line citation (e.g. an agent "caller" line `DeductPaymentServiceImpl:182`) opens the
             // resolved file at the cited line/column. Otherwise land on the type/member declaration: for a
             // member reference, on the member; for a type, on the type declaration. Falling back to line 0
-            // opens the top of the file, which is IntelliJ's behaviour when the member can't be pinned.
+            // opens the top of the file, which is the fallback behaviour when the member can't be pinned.
             if (target.Line > 0)
                 return OpenDocumentAt(path, target.Line, target.Column);
 
@@ -102,8 +101,8 @@ namespace CnSharp.VSIX.Yolo
 
         /// <summary>
         /// Resolves a file reference against the agent's working directory, the solution directory, and the
-        /// solution-wide file-name index. Port of IntelliJ's <c>FileLinkFilter.resolve</c> +
-        /// <c>StackTraceLinkFilter.resolve</c>.
+    /// solution-wide file-name index. Resolves against the same logic as <c>FileLinkFilter</c> and
+    /// <c>StackTraceLinkFilter</c>.
         /// </summary>
         private static string? ResolveFile(LinkTarget target, string? baseDirectory)
         {
@@ -120,7 +119,7 @@ namespace CnSharp.VSIX.Yolo
             }
 
             // A bare stack-frame name (no directory component) needs the solution-wide file-name lookup, the
-            // equivalent of IntelliJ's FilenameIndex.getVirtualFilesByName.
+            // equivalent of a solution-wide file-name lookup.
             string? bare = target.BareFileName;
             if (!string.IsNullOrEmpty(bare))
             {
@@ -135,7 +134,7 @@ namespace CnSharp.VSIX.Yolo
             return null;
         }
 
-        /// <summary>Candidate absolute paths for a raw reference, in IntelliJ's resolution order.</summary>
+        /// <summary>Candidate absolute paths for a raw reference, in resolution order.</summary>
         private static System.Collections.Generic.IEnumerable<string> Candidates(
             string raw, string? baseDirectory, string? solutionDir)
         {
@@ -211,7 +210,7 @@ namespace CnSharp.VSIX.Yolo
 
         /// <summary>
         /// The 1-based line where <paramref name="name"/> appears to be declared, or 0 when it is not found.
-        /// Stands in for IntelliJ's PSI member resolution: a line that both contains the name as a whole word
+        /// Replaces language-aware member resolution: a line that both contains the name as a whole word
         /// and looks like a declaration wins; otherwise the first whole-word occurrence is used.
         /// </summary>
         private static int FindDeclarationLine(string path, string name)

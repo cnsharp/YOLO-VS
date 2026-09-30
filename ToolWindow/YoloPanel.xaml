@@ -269,7 +269,7 @@
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
                                         <!-- Every tab row shows its agent (or generic terminal) icon,
-                                             so the popup reads like IDEA's own switcher instead of a
+                                             so the popup reads like the host IDE's own switcher instead of a
                                              checkmark that only appears on the active row. -->
                                         <Image Grid.Column="0"
                                                Source="{Binding Icon}"
