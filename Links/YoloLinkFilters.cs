@@ -44,7 +44,16 @@ namespace CnSharp.VSIX.Yolo
         {
             var wrap = new PathWrapState();
             if (!string.IsNullOrEmpty(previousLine))
-                wrap.PendingPrefix = FileLinkFilter.ComputePendingPrefix(previousLine!);
+            {
+                // Seed cross-line wrap state from the previous row by running the head-detecting filters on it
+                // (virtualRow = -1 so no head rows are recorded). This lets a reference the terminal wrapped
+                // across exactly these two rows reconstruct on `text` without needing the full visible-window
+                // threading that OnRender uses.
+                var types = _types() ?? YoloProjectTypes.Snapshot.Empty;
+                _file.Apply(previousLine!, wrap, -1);
+                _type.Apply(previousLine!, types, wrap, -1);
+                _member.Apply(previousLine!, types, wrap, -1);
+            }
             return FindLinks(text, wrap);
         }
 
@@ -59,8 +68,11 @@ namespace CnSharp.VSIX.Yolo
         {
             if (string.IsNullOrWhiteSpace(text))
             {
-                // A blank row breaks any pending wrap sequence.
+                // A blank row breaks any pending wrap sequence. (PendingType / PendingMember are intentionally
+                // NOT cleared here — matching IntelliJ, where a blank line does not drop a type/member wrap
+                // fragment, since the terminal never inserts a blank between wrapped parts.)
                 wrap.PendingPrefix = string.Empty;
+                wrap.PendingBareName = string.Empty;
                 wrap.ContinuationStart = wrap.ContinuationEnd = -1;
                 return null;
             }
@@ -70,14 +82,15 @@ namespace CnSharp.VSIX.Yolo
             var all = new List<LinkMatch>();
             Collect(_file.Apply(text, wrap, virtualRow), all);
             Collect(_stack.Apply(text, wrap), all);
-            Collect(_type.Apply(text, types), all);
-            Collect(_member.Apply(text, types), all);
+            Collect(_type.Apply(text, types, wrap, virtualRow), all);
+            Collect(_member.Apply(text, types, wrap, virtualRow), all);
             Collect(_url.Apply(text), all);
 
             if (all.Count == 0) return null;
 
             // Stable order by start offset, then drop any span fully contained in one already kept, so a
-            // reference is never painted or clicked twice (e.g. the `Bar` type inside `com.foo.Bar.baz`).
+            // reference is never painted or clicked twice (e.g. the `UserService` type inside
+            // `MyApp.Services.UserService.FindById`).
             all.Sort((a, b) => a.Start != b.Start ? a.Start.CompareTo(b.Start) : b.End.CompareTo(a.End));
             var merged = new List<LinkMatch>();
             foreach (var m in all)

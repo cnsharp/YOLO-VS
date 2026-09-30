@@ -26,6 +26,7 @@ namespace CnSharp.VSIX.Yolo
                 if (wrap != null)
                 {
                     wrap.PendingPrefix = string.Empty;
+                    wrap.PendingBareName = string.Empty;
                     wrap.ContinuationStart = wrap.ContinuationEnd = -1;
                     wrap.WrapActive = false;
                     wrap.HeadRows.Clear();
@@ -124,6 +125,86 @@ namespace CnSharp.VSIX.Yolo
             }
             // --- End hard-wrap reconstruction ---
 
+            // --- Bare-name hard-wrap reconstruction ---
+            // Same idea as the path block above, but for path-less file names the terminal hard-wrapped
+            // mid-name, matched by STACK_BARE_PATTERN rather than PATH_PATTERN (which requires a directory
+            // prefix). Example:
+            //     AccountD
+            //     ataMigrationDispatcher.cs:18
+            // The head `AccountD` is a bare fragment with no extension/line; the continuation completes it to
+            // `AccountDataMigrationDispatcher.cs:18`. Every row — including the head — navigates to the
+            // reconstructed name (the head row is upgraded via CompletedTarget / HeadRows).
+            string barePrefix = wrap?.PendingBareName ?? string.Empty;
+            if (wrap != null) wrap.PendingBareName = string.Empty;
+            if (barePrefix.Length > 0)
+            {
+                string trimmed = text.TrimStart();
+                int leading = text.Length - trimmed.Length;
+                string combined = barePrefix + trimmed;
+                bool done = false;
+                foreach (Match bm in YoloLinkPatterns.StackBarePattern.Matches(combined))
+                {
+                    if (bm.Index < barePrefix.Length && bm.Index + bm.Length > barePrefix.Length)
+                    {
+                        string name = bm.Groups[1].Value;
+                        int lineNum = ParseInt(bm.Groups[2].Value);
+                        int col = ParseInt(bm.Groups[3].Value);
+                        int tailStart = leading;
+                        int tailEnd = leading + (bm.Index + bm.Length - barePrefix.Length);
+                        if (tailEnd > text.Length) continue;
+
+                        var target = new LinkTarget
+                        {
+                            Kind = LinkKind.File,
+                            Raw = name,
+                            BareFileName = name,
+                            Line = lineNum,
+                            Column = col
+                        };
+                        items.Add(new LinkMatch { Start = tailStart, End = tailEnd, Target = target });
+                        if (wrap != null)
+                        {
+                            wrap.ContinuationStart = tailStart;
+                            wrap.ContinuationEnd = tailEnd;
+                            wrap.CompletedTarget = target;
+                            if (virtualRow >= 0) wrap.HeadRows.Add(virtualRow);
+                        }
+                        done = true;
+                        break;
+                    }
+                }
+                if (!done && wrap != null)
+                {
+                    // Still wrapping (no complete name yet): accumulate the prefix and highlight the new
+                    // continuation fragment so even an intermediate row is clickable and upgradeable. A name
+                    // that already contains a dot (the wrap split inside an extension) is not a bare mid-name
+                    // fragment and is left for the standard pass instead.
+                    bool reachesEnd = text.Substring(trimmed.Length).Trim().Length == 0;
+                    if (reachesEnd && !combined.Contains('.'))
+                    {
+                        wrap.PendingBareName = combined;
+                        int cStart = leading;
+                        int cEnd = text.Length;
+                        if (cEnd > cStart)
+                        {
+                            items.Add(new LinkMatch
+                            {
+                                Start = cStart,
+                                End = cEnd,
+                                Target = new LinkTarget
+                                {
+                                    Kind = LinkKind.File,
+                                    Raw = combined,
+                                    BareFileName = combined
+                                }
+                            });
+                            if (virtualRow >= 0) wrap.HeadRows.Add(virtualRow);
+                        }
+                    }
+                }
+            }
+            // --- End bare-name hard-wrap reconstruction ---
+
             // Quoted paths first (may contain spaces, e.g. `"/path with space/Bar.kt":5`). Their full spans
             // are recorded so the unquoted pass below can suppress a sub-path that falls inside the quotes —
             // `space/Bar.kt` inside `"/path with space/Bar.kt"` would otherwise be linked twice.
@@ -201,33 +282,38 @@ namespace CnSharp.VSIX.Yolo
                 items.Add(Make(start, end, raw, line, column));
             }
 
-            return items.Count == 0 ? null : items;
-        }
-
-        /// <summary>
-        /// The dangling path fragment at the end of <paramref name="previousLine"/>, i.e. the value IntelliJ
-        /// would have left in <see cref="PathWrapState.PendingPrefix"/> after filtering that line. Returns an
-        /// empty string when the line does not end in a wrapped path head. Computing this from the previous
-        /// row (instead of carrying mutable state) is what makes link detection order-independent.
-        /// </summary>
-        public static string ComputePendingPrefix(string previousLine)
-        {
-            if (string.IsNullOrWhiteSpace(previousLine) || YoloLinkPatterns.IsDiffLine(previousLine))
-                return string.Empty;
-
-            foreach (Match m in YoloLinkPatterns.PathPattern.Matches(previousLine))
+            // --- Bare-name head detection ---
+            // A standalone, capitalized identifier at end-of-line with no dot/`:line` is the head fragment of a
+            // bare file name the terminal wrapped mid-name (e.g. `AccountD` of `AccountDataMigrationDispatcher.cs`).
+            // Highlight it now; its link navigates to whatever the continuation completes it to (set on the next
+            // row), falling back to the fragment itself until then. Only when this line is a genuine fresh head
+            // (neither a path nor a bare continuation is pending) — otherwise a continuation line would wrongly
+            // re-mark its own fragment.
+            if (prefix.Length == 0 && barePrefix.Length == 0 &&
+                !text.Contains('/') && !text.Contains('\\') && wrap != null)
             {
-                if (HasFileExtension(m.Groups[1].Value) || m.Groups[3].Success) continue;  // complete reference, not a head
-                int end = m.Index + m.Length;
-                if (end < previousLine.Length && previousLine.Substring(end).Trim().Length > 0) continue;
-
-                string raw = m.Groups[1].Value;
-                int lastSep = raw.LastIndexOfAny(new[] { '/', '\\' });
-                string lastSegment = lastSep >= 0 ? raw.Substring(lastSep + 1) : raw;
-                if (lastSegment.IndexOf('.') >= 0) continue;  // wrap split inside the extension
-                return raw;
+                var bh = YoloLinkPatterns.BareHeadPattern.Match(text);
+                if (bh.Success)
+                {
+                    string tok = bh.Groups[1].Value;
+                    wrap.PendingBareName = tok;
+                    items.Add(new LinkMatch
+                    {
+                        Start = bh.Index,
+                        End = bh.Index + bh.Length,
+                        Target = new LinkTarget
+                        {
+                            Kind = LinkKind.File,
+                            Raw = tok,
+                            BareFileName = tok
+                        }
+                    });
+                    if (virtualRow >= 0) wrap.HeadRows.Add(virtualRow);
+                }
             }
-            return string.Empty;
+            // --- End bare-name head detection ---
+
+            return items.Count == 0 ? null : items;
         }
 
         private static LinkMatch Make(int start, int end, string raw, int line, int column) => new LinkMatch

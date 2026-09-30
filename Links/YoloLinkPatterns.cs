@@ -17,107 +17,90 @@ namespace CnSharp.VSIX.Yolo
     /// </summary>
     public static class YoloLinkPatterns
     {
-        /// <summary>Max hyperlinks a single terminal line may produce before the rest is ignored.</summary>
-        internal const int MaxMatchesPerLine = 50;
+        // >>> YOLO_LINK_PATTERNS_START >>>
+internal const int MaxMatchesPerLine = 50;
 
-        /// <summary>
-        /// Fixed allowlist of common programming / source / config file extensions, so a dotted name
-        /// that is not a real file (e.g. <c>pay.amount.mark</c>, <c>JSON.parseObject</c>, <c>Ctrl/C</c>)
-        /// is never mistaken for a file reference.
-        /// </summary>
-        internal const string ProgrammingExt = "kt|kts|java|scala|sc|groovy|gradle|" +
-            "py|pyi|pyw|rb|rake|php|pl|pm|lua|sh|bash|zsh|ksh|" +
-            "js|jsx|mjs|cjs|ts|tsx|vue|html|htm|xhtml|css|scss|sass|less|styl|" +
-            "go|rs|c|h|cc|cpp|cxx|hpp|hxx|hh|cs|m|mm|swift|d|nim|zig|s|asm|" +
-            "ex|exs|clj|cljs|cljc|erl|hs|ml|mli|fs|fsx|fsi|jl|r|proto|sol|graphql|gql|" +
-            "xml|xsd|xsl|xslt|wsdl|json|json5|jsonc|yaml|yml|toml|ini|cfg|conf|config|properties|env|lock|csv|tsv|log|" +
-            "md|markdown|rst|txt|text|diff|patch|editorconfig|gitignore|dockerignore|tf|tfvars|feature|bnf|avsc|edn|" +
-            "iml|ipr|iws|" +
-            "csproj|sln|slnx|props|targets|vcxproj|vcxitems|user|ruleset|publishproj|" +
-            "vsix|nuspec|appxmanifest|manifest|resx|settings|dbml|edmx|dll|exe";
+internal const string ProgrammingExt = "kt|kts|java|scala|sc|groovy|gradle|py|pyi|pyw|rb|rake|php|pl|pm|lua|sh|bash|zsh|ksh|bat|cmd|ps1|psm1|psd1|js|jsx|mjs|cjs|ts|tsx|vue|html|htm|xhtml|css|scss|sass|less|styl|go|rs|c|h|cc|cpp|cxx|hpp|hxx|hh|cs|m|mm|swift|d|nim|zig|s|asm|ex|exs|clj|cljs|cljc|erl|hs|ml|mli|fs|fsx|fsi|jl|r|proto|sol|graphql|gql|xml|xsd|xsl|xslt|wsdl|json|json5|jsonc|yaml|yml|toml|ini|cfg|conf|config|properties|env|lock|csv|tsv|log|md|markdown|rst|txt|text|diff|patch|editorconfig|gitignore|dockerignore|tf|tfvars|feature|bnf|avsc|edn|iml|ipr|iws|vb|razor|cshtml|vbhtml|xaml|csx|cake|aspx|ascx|ashx|asmx|asax|csproj|vbproj|fsproj|sln|slnx|props|targets|vcxproj|vcxitems|user|ruleset|publishproj|vsix|nuspec|appxmanifest|manifest|resx|settings|dbml|edmx";
 
-        /// <summary>
-        /// Path references: <c>path</c>, <c>path:line</c>, <c>path:line:column</c>,
-        /// <c>path:line-line</c> (range), <c>path:column</c>, and <c>file://</c> URIs. Windows drives,
-        /// UNC shares and <c>~</c> home are supported. Completion requirement (extension OR <c>:line</c>):
-        /// the matched path must end in a recognized extension or be followed by a line number, which stops
-        /// a long path hard-wrapped across lines from being linked as several broken fragments.
-        /// <para>Groups: 1 = full path (incl. extension), 2 = extension, 3 = line, 4 = range end, 5 = column.</para>
-        /// </summary>
-        internal static readonly Regex PathPattern = new Regex(
-            string.Format(CultureInfo.InvariantCulture,
-                @"(?<![\\/\w.])((?:(?:[A-Za-z]:[\\/]?)|[\\/]|[~][\\/]?|\\\\[A-Za-z0-9._\-]+(?:[\\/][A-Za-z0-9._\-]+)+|[A-Za-z0-9._\-]+[\\/])(?:[A-Za-z0-9._\-]+[\\/])*(?:[A-Za-z0-9._\-]+\.((?i:{0}))(?![\\/\w.])|[A-Za-z0-9._\-]+))(?::(\d+)(?:-(\d+))?(?::(\d+))?)?",
-                ProgrammingExt),
-            RegexOptions.Compiled);
+internal static readonly Regex PathPattern = new Regex(
+    string.Format(CultureInfo.InvariantCulture,
+        @"(?<![\\/\w.])((?:(?:[A-Za-z]:[\\/]?)|[\\/]|[~][\\/]?|\\\\[A-Za-z0-9._\-]+(?:[\\/][A-Za-z0-9._\-]+)+|[A-Za-z0-9._\-]+[\\/])(?:[A-Za-z0-9._\-]+[\\/])*(?:[A-Za-z0-9._\-]+\.((?i:{0}))(?![\\/\w.])|[A-Za-z0-9._\-]+))(?::(\d+)(?:-(\d+))?(?::(\d+))?)?",
+        ProgrammingExt),
+    RegexOptions.Compiled);
 
-        /// <summary>
-        /// Quoted path (allows embedded spaces), e.g. <c>"/path with space/Bar.kt":5</c>. Requires a
-        /// path ending in a recognized programming extension. A <c>…</c> / <c>...</c> inside the quotes marks a
-        /// truncated path and is dropped. Groups: 1 = opening quote, 2 = path, 3 = line, 4 = column.
-        /// </summary>
-        internal static readonly Regex QuotedPathPattern = new Regex(
-            string.Format(CultureInfo.InvariantCulture,
-                @"([""'])((?:[A-Za-z]:)?[\\/][^""']*?\.(?i:{0}))\1(?::(\d+))?(?::(\d+))?",
-                ProgrammingExt),
-            RegexOptions.Compiled);
+internal static readonly Regex QuotedPathPattern = new Regex(
+    string.Format(CultureInfo.InvariantCulture,
+        @"([""'])((?:[A-Za-z]:)?[\\/][^""']*?\.(?i:{0}))\1(?::(\d+))?(?::(\d+))?",
+        ProgrammingExt),
+    RegexOptions.Compiled);
 
-        /// <summary>Bare <c>FileName.ext:line</c> / <c>FileName.ext:line:col</c> with no directory. Groups: 1 = file, 2 = line, 3 = column.</summary>
-        internal static readonly Regex StackBarePattern = new Regex(
-            string.Format(CultureInfo.InvariantCulture,
-                @"(?<![\\/\w.\-])([\w.\-]+\.(?i:{0})):(\d+)(?::(\d+))?",
-                ProgrammingExt),
-            RegexOptions.Compiled);
+internal static readonly Regex StackBarePattern = new Regex(
+    string.Format(CultureInfo.InvariantCulture,
+        @"(?<![\\/\w.\-])([\w.\-]+\.(?i:{0})):(\d+)(?::(\d+))?",
+        ProgrammingExt),
+    RegexOptions.Compiled);
 
-        /// <summary>Bare file name with no line number (e.g. <c>plugin.xml</c>). Groups: 1 = file.</summary>
-        internal static readonly Regex StackBareNamePattern = new Regex(
-            string.Format(CultureInfo.InvariantCulture,
-                @"(?<![\\/\w.\-])([\w.\-]+\.(?i:{0}))(?![\\/\w.:])",
-                ProgrammingExt),
-            RegexOptions.Compiled);
+internal static readonly Regex StackBareNamePattern = new Regex(
+    string.Format(CultureInfo.InvariantCulture,
+        @"(?<![\\/\w.\-])([\w.\-]+\.(?i:{0})|\.(?:gitignore|dockerignore|editorconfig))(?![\\/\w.:])",
+        ProgrammingExt),
+    RegexOptions.Compiled);
 
-        /// <summary>Python traceback <c>File "path", line N</c> (double-quoted). Groups: 1 = file, 2 = line.</summary>
-        internal static readonly Regex StackPyDqPattern = new Regex(
-            string.Format(CultureInfo.InvariantCulture,
-                @"File ""([^""]+\.(?i:{0}))"", line (\d+)",
-                ProgrammingExt),
-            RegexOptions.Compiled);
+internal static readonly Regex StackPyDqPattern = new Regex(
+    string.Format(CultureInfo.InvariantCulture,
+        @"File ""([^""]+\.(?i:{0}))"", line (\d+)",
+        ProgrammingExt),
+    RegexOptions.Compiled);
 
-        /// <summary>Python traceback <c>File 'path', line N</c> (single-quoted). Groups: 1 = file, 2 = line.</summary>
-        internal static readonly Regex StackPySqPattern = new Regex(
-            string.Format(CultureInfo.InvariantCulture,
-                @"File '([^']+\.(?i:{0}))', line (\d+)",
-                ProgrammingExt),
-            RegexOptions.Compiled);
+internal static readonly Regex StackPySqPattern = new Regex(
+    string.Format(CultureInfo.InvariantCulture,
+        @"File '([^']+\.(?i:{0}))', line (\d+)",
+        ProgrammingExt),
+    RegexOptions.Compiled);
 
-        /// <summary>
-        /// Type references: a qualified name or a simple PascalCase identifier. A trailing lowercase
-        /// extension is excluded so type links never collide with file-path links. Named groups:
-        /// <c>qualified</c>, <c>simple</c> (mutually exclusive).
-        /// </summary>
-        internal static readonly Regex TypeNamePattern = new Regex(
-            @"(?<![.\w/\\])(?<qualified>\\?(?:[A-Za-z_][A-Za-z0-9_]*)(?:(?:\.|::|\\)[A-Za-z_][A-Za-z0-9_]*)+)(?!\.[a-z])" +
-            @"|(?<![.\w/\\])(?<simple>(?![A-Z]+\b)[A-Z][a-zA-Z0-9_]*)(?!\.[a-z])",
-            RegexOptions.Compiled);
+internal static readonly Regex TypeNamePattern = new Regex(
+    string.Format(CultureInfo.InvariantCulture,
+        @"(?<![.\w/\\])(?<qualified>\\?(?:[A-Za-z_][A-Za-z0-9_]*)(?:(?:\.|::|\\)[A-Za-z_][A-Za-z0-9_]*)+)(?!\.[a-z])(?![#.][A-Za-z_]\w*)(?!:\d)|(?<![.\w/\\])(?<simple>(?![A-Z]+\b)[A-Z][a-zA-Z0-9_]*)(?!\.[a-z])(?![#.][A-Za-z_]\w*)(?!:\d)",
+        ProgrammingExt),
+    RegexOptions.Compiled);
 
-        /// <summary>
-        /// <c>Class.member</c> / <c>Class#member</c> references. The class part reuses the multi-separator
-        /// qualified form so C# <c>MyApp.Services.UserService.SomeMethod</c>, Python
-        /// <c>myapp.models.User.save</c> and Go <c>http.Client.Get</c> are recognized too.
-        /// Named groups: <c>class</c>, <c>member</c>.
-        /// <para>
-        /// Aligned with IntelliJ <c>MEMBER_REF_PATTERN</c>. The member group has no
-        /// <c>(?&lt;![.\w])</c> lookbehind: that anchor would be evaluated right after the <c>[.#]</c>
-        /// separator (where the preceding char is always <c>.</c> or <c>#</c>), so it could only ever succeed
-        /// for the <c>#</c> form and silently rejected the <c>.</c> form — the primary case. The bug was fixed
-        /// in the upstream Kotlin source as well, so this is no longer a divergence.
-        /// </para>
-        /// </summary>
-        internal static readonly Regex MemberRefPattern = new Regex(
-            @"(?<class>(?<![.\w/\\])(?:\\?(?:[A-Za-z_][A-Za-z0-9_]*)(?:(?:\.|::|\\)[A-Za-z_][A-Za-z0-9_]*)+)|[A-Z][a-zA-Z0-9_]*)[.#](?<member>[A-Za-z_]\w*)",
-            RegexOptions.Compiled);
+internal static readonly Regex TypeLinePattern = new Regex(
+    string.Format(CultureInfo.InvariantCulture,
+        @"(?<![.\w/\\])(?:(?<qualified>\\?(?:[A-Za-z_][A-Za-z0-9_]*)(?:(?:\.|::|\\)[A-Za-z_][A-Za-z0-9_]*)+)|(?<simple>(?![A-Z]+\b)[A-Z][a-zA-Z0-9_]*)):(?<line>\d+)(?::(?<col>\d+))?",
+        ProgrammingExt),
+    RegexOptions.Compiled);
 
-        /// <summary><c>http(s)://</c> URLs (no trailing whitespace/quote/bracket).</summary>
-        internal static readonly Regex UrlPattern = new Regex(@"https?://[^\s<>""'\)\]]+", RegexOptions.Compiled);
+internal static readonly Regex MemberRefPattern = new Regex(
+    string.Format(CultureInfo.InvariantCulture,
+        @"(?<class>(?<![.\w/\\])(?:\\?(?:[A-Za-z_][A-Za-z0-9_]*)(?:(?:\.|::|\\)[A-Za-z_][A-Za-z0-9_]*)+)|(?<![.\w/\\])[A-Z][a-zA-Z0-9_]*)[.#](?<member>[A-Za-z_]\w*)",
+        ProgrammingExt),
+    RegexOptions.Compiled);
+
+internal static readonly Regex UrlPattern = new Regex(
+    string.Format(CultureInfo.InvariantCulture,
+        @"https?://[^\s<>""'\)\]]+",
+        ProgrammingExt),
+    RegexOptions.Compiled);
+
+internal static readonly Regex TypeHeadPattern = new Regex(
+    string.Format(CultureInfo.InvariantCulture,
+        @"(?<![.\w/\\])(?<qualified>\\?(?:[A-Za-z_][A-Za-z0-9_]*)(?:(?:\.|::|\\)[A-Za-z_][A-Za-z0-9_]*)+)\s*$",
+        ProgrammingExt),
+    RegexOptions.Compiled);
+
+internal static readonly Regex BareHeadPattern = new Regex(
+    string.Format(CultureInfo.InvariantCulture,
+        @"(?<![\\/\w.\-])([A-Z][A-Za-z0-9_\-]{2,})\s*$",
+        ProgrammingExt),
+    RegexOptions.Compiled);
+
+internal static readonly Regex MemberHeadPattern = new Regex(
+    string.Format(CultureInfo.InvariantCulture,
+        @"(?<![.\w/\\])(?<class>(?:(?:\\?(?:[A-Za-z_][A-Za-z0-9_]*)(?:(?:\.|::|\\)[A-Za-z_][A-Za-z0-9_]*)+)|[A-Z][a-zA-Z0-9_]*))\s*$",
+        ProgrammingExt),
+    RegexOptions.Compiled);
+
+        // <<< YOLO_LINK_PATTERNS_END <<<
 
         /// <summary>
         /// Separators a qualified type name may use across languages: Java/C#/Python/Go <c>.</c>,

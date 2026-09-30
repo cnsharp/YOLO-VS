@@ -86,8 +86,13 @@ namespace CnSharp.VSIX.Yolo
             string? path = types.ResolveQualified(target.TypeName!) ?? types.ResolveFile(simple);
             if (path == null || !File.Exists(path)) return false;
 
-            // For a member reference, land on the member; for a type, on the type declaration. Falling back to
-            // line 0 opens the top of the file, which is IntelliJ's behaviour when the member can't be pinned.
+            // A type:line citation (e.g. an agent "caller" line `DeductPaymentServiceImpl:182`) opens the
+            // resolved file at the cited line/column. Otherwise land on the type/member declaration: for a
+            // member reference, on the member; for a type, on the type declaration. Falling back to line 0
+            // opens the top of the file, which is IntelliJ's behaviour when the member can't be pinned.
+            if (target.Line > 0)
+                return OpenDocumentAt(path, target.Line, target.Column);
+
             string wanted = target.Kind == LinkKind.Member && !string.IsNullOrEmpty(target.MemberName)
                 ? target.MemberName!
                 : simple;

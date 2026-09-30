@@ -118,8 +118,20 @@ namespace CnSharp.VSIX.Yolo
             return null;
         }
 
-        private static string PackUri(string icon) =>
-            $"pack://application:,,,/{AssemblyName};component/{icon.TrimStart('/')}";
+        // agents.json stores the icon as a bare filename (e.g. "claude.svg"); the bundled-icons
+        // root differs per end, so VS maps it onto its embedded "Resources/icons/agents/<id>.<ext>".
+        // A legacy full-path spec ("/icons/agents/<id>.<ext>") is still accepted for safety. A rooted
+        // filesystem or downloaded icon never reaches here (handled above); only bundled resource
+        // specs do.
+        private static string PackUri(string icon)
+        {
+            var rel = icon.TrimStart('/');
+            if (!rel.Contains('/'))
+                rel = "Resources/icons/agents/" + rel;
+            else if (rel.StartsWith("icons/", StringComparison.OrdinalIgnoreCase))
+                rel = "Resources/" + rel;
+            return $"pack://application:,,,/{AssemblyName};component/{rel}";
+        }
 
         /// <summary>
         /// Current monitor DPI scale (1.0 at 100%, 2.0 at 200%, …). Used to rasterise SVGs at the

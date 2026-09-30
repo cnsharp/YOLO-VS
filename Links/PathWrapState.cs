@@ -27,6 +27,41 @@ namespace CnSharp.VSIX.Yolo
         public string PendingPrefix = string.Empty;
 
         /// <summary>
+        /// Type-name fragment at the end of the PREVIOUS row — a qualified name (with namespace separators)
+        /// that had no trailing member. Stitched to the next row so a wrapped <c>MyApp.Services.Use</c> +
+        /// <c>rService</c> becomes <c>MyApp.Services.UserService</c>. Port of IntelliJ
+        /// <c>WrapState.pendingType</c>.
+        /// </summary>
+        public string PendingType = string.Empty;
+
+        /// <summary>
+        /// Class-part fragment at the end of the PREVIOUS row — a <c>Class</c> (C# namespace-qualified, e.g.
+        /// <c>MyApp.Services.UserService</c>, or a capitalized simple name) that had no member part yet, or a
+        /// <c>Class.Member</c> split inside the member name. Stitched to the next row so a wrapped
+        /// <c>MyApp.Services.Use</c> + <c>rService.FindById</c> becomes
+        /// <c>MyApp.Services.UserService.FindById</c>. (The shared link regex also accepts the Java/Kotlin
+        /// <c>#</c>, Rust/Ruby <c>::</c> and PHP <c>\</c> member separators, but C# uses <c>.</c>.) Port of
+        /// IntelliJ <c>WrapState.pendingMember</c>.
+        /// </summary>
+        public string PendingMember = string.Empty;
+
+        /// <summary>
+        /// True when <see cref="PendingMember"/> already carries its member part — i.e. the terminal split the
+        /// reference <i>inside</i> the member name (C#: <c>OrderService.Sub</c> + <c>mitAsync</c>; Java/Kotlin:
+        /// <c>Foo#antiFra</c> + <c>udConfirm</c>) rather than inside the class name. Port of IntelliJ
+        /// <c>WrapState.pendingMemberHasMember</c>.
+        /// </summary>
+        public bool PendingMemberHasMember;
+
+        /// <summary>
+        /// Bare (path-less) file-name fragment at the end of the PREVIOUS row — a name the terminal hard-wrapped
+        /// mid-name, e.g. the <c>AccountD</c> of a split <c>AccountDataMigrationDispatcher.java:18</c>. Matched
+        /// by <c>STACK_BARE_PATTERN</c> (not <c>PATH_PATTERN</c>, which demands a directory prefix). Port of
+        /// IntelliJ <c>WrapState.pendingBareName</c>.
+        /// </summary>
+        public string PendingBareName = string.Empty;
+
+        /// <summary>
         /// When <see cref="FileLinkFilter"/> reconstructed a wrapped path on the current row, the
         /// <c>[ContinuationStart, ContinuationEnd)</c> range in the current row where the continuation tail
         /// was linked. <see cref="StackTraceLinkFilter"/> suppresses any match overlapping this span so the
