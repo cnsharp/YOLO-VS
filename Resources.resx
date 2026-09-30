@@ -250,22 +250,22 @@
     <value>Update</value>
   </data>
   <data name="Settings_CheckUpdates" xml:space="preserve">
-    <value>Check updates</value>
+    <value>Check Updates</value>
   </data>
   <data name="Settings_Installing" xml:space="preserve">
-    <value>Installing {0}…</value>
+    <value>Installing {0} ({1})…</value>
   </data>
   <data name="Settings_Updating" xml:space="preserve">
-    <value>Updating {0}…</value>
+    <value>Updating {0} ({1})…</value>
   </data>
   <data name="Settings_InstallSucceeded" xml:space="preserve">
-    <value>{0} installed successfully and found on PATH.</value>
+    <value>{0} installed</value>
   </data>
   <data name="Settings_InstallDoneButNotOnPath" xml:space="preserve">
-    <value>{0} command finished but was not found on PATH: {1}</value>
+    <value>{0} install reported success, but '{1}' is not runnable — check your PATH</value>
   </data>
   <data name="Settings_InstallFailed" xml:space="preserve">
-    <value>Failed to install {0}: {1}</value>
+    <value>{0} install failed: {1}</value>
   </data>
   <data name="Settings_NoInstallCommand" xml:space="preserve">
     <value>No install command is defined for {0}.</value>
@@ -274,7 +274,7 @@
     <value>No download page is defined for {0}.</value>
   </data>
   <data name="Settings_OpenedSite" xml:space="preserve">
-    <value>Opened {0}'s download page in your browser.</value>
+    <value>Opened {0} download page</value>
   </data>
   <data name="Settings_CheckingUpdates" xml:space="preserve">
     <value>Checking for agent updates…</value>
@@ -295,7 +295,7 @@
     <value>Manual</value>
   </data>
   <data name="Settings_UpdateError" xml:space="preserve">
-    <value>Check failed</value>
+    <value>Offline / failed</value>
   </data>
 
   <!-- Settings dialog -->

@@ -461,7 +461,7 @@ namespace CnSharp.VSIX.Yolo
             UpdateButton.IsEnabled = false;
             SetStatus(string.Format(upgrade
                 ? CnSharp.VSIX.Yolo.Resources.Settings_Updating
-                : CnSharp.VSIX.Yolo.Resources.Settings_Installing, row.DisplayName), false);
+                : CnSharp.VSIX.Yolo.Resources.Settings_Installing, row.DisplayName, spec.Target), false);
 
             await Task.Run(() =>
             {
@@ -482,7 +482,7 @@ namespace CnSharp.VSIX.Yolo
                         {
                             SetStatus(string.Format(
                                 CnSharp.VSIX.Yolo.Resources.Settings_InstallDoneButNotOnPath,
-                                row.DisplayName, Truncate(lastLine)), true);
+                                row.DisplayName, command), true);
                         }
                     }
                     else

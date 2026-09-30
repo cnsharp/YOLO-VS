@@ -115,6 +115,24 @@ namespace CnSharp.VSIX.Yolo {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Close this terminal? The running process will be terminated..
+        /// </summary>
+        public static string Panel_CloseTabConfirm {
+            get {
+                return ResourceManager.GetString("Panel_CloseTabConfirm", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Don&apos;t show this warning again.
+        /// </summary>
+        public static string Panel_DontShowAgain {
+            get {
+                return ResourceManager.GetString("Panel_DontShowAgain", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Launch.
         /// </summary>
         public static string Panel_Launch {
@@ -196,47 +214,11 @@ namespace CnSharp.VSIX.Yolo {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Switch terminal tab.
-        /// </summary>
-        public static string Panel_TabSwitchTooltip {
-            get {
-                return ResourceManager.GetString("Panel_TabSwitchTooltip", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Close this terminal? The running process will be terminated.
-        /// </summary>
-        public static string Panel_CloseTabConfirm {
-            get {
-                return ResourceManager.GetString("Panel_CloseTabConfirm", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Skip permissions OFF (Y).
         /// </summary>
         public static string Panel_SkipOff {
             get {
                 return ResourceManager.GetString("Panel_SkipOff", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to You are enabling Y (skip permissions)....
-        /// </summary>
-        public static string Panel_SkipWarningText {
-            get {
-                return ResourceManager.GetString("Panel_SkipWarningText", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Don't show this warning again.
-        /// </summary>
-        public static string Panel_DontShowAgain {
-            get {
-                return ResourceManager.GetString("Panel_DontShowAgain", resourceCulture);
             }
         }
         
@@ -259,6 +241,33 @@ namespace CnSharp.VSIX.Yolo {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to You are enabling Y (skip permissions). The agent&apos;s permission prompts will be auto-approved, which may let it run commands or modify files without asking. Only enable this if you trust the agent and the session..
+        /// </summary>
+        public static string Panel_SkipWarningText {
+            get {
+                return ResourceManager.GetString("Panel_SkipWarningText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Switch terminal tab.
+        /// </summary>
+        public static string Panel_TabSwitchTooltip {
+            get {
+                return ResourceManager.GetString("Panel_TabSwitchTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Settings.
+        /// </summary>
+        public static string SettingsButton {
+            get {
+                return ResourceManager.GetString("SettingsButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Add custom tool.
         /// </summary>
         public static string Settings_AddCustomTool {
@@ -277,6 +286,15 @@ namespace CnSharp.VSIX.Yolo {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Automatically check for agent updates on startup.
+        /// </summary>
+        public static string Settings_AutoCheckUpdates {
+            get {
+                return ResourceManager.GetString("Settings_AutoCheckUpdates", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Browse….
         /// </summary>
         public static string Settings_Browse {
@@ -291,6 +309,24 @@ namespace CnSharp.VSIX.Yolo {
         public static string Settings_CannotRemoveKnownAgent {
             get {
                 return ResourceManager.GetString("Settings_CannotRemoveKnownAgent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Check Updates.
+        /// </summary>
+        public static string Settings_CheckUpdates {
+            get {
+                return ResourceManager.GetString("Settings_CheckUpdates", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Checking for agent updates….
+        /// </summary>
+        public static string Settings_CheckingUpdates {
+            get {
+                return ResourceManager.GetString("Settings_CheckingUpdates", resourceCulture);
             }
         }
         
@@ -367,20 +403,20 @@ namespace CnSharp.VSIX.Yolo {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Update.
+        /// </summary>
+        public static string Settings_Col_Update {
+            get {
+                return ResourceManager.GetString("Settings_Col_Update", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Duplicate command: {0}.
         /// </summary>
         public static string Settings_DupCmd {
             get {
                 return ResourceManager.GetString("Settings_DupCmd", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Don't warn me when enabling Y (skip permissions).
-        /// </summary>
-        public static string Settings_SuppressSkipWarning {
-            get {
-                return ResourceManager.GetString("Settings_SuppressSkipWarning", resourceCulture);
             }
         }
         
@@ -403,20 +439,20 @@ namespace CnSharp.VSIX.Yolo {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Failed to download icon from: {0}.
+        /// </summary>
+        public static string Settings_IconDownloadFailed {
+            get {
+                return ResourceManager.GetString("Settings_IconDownloadFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Icon for selected tool:.
         /// </summary>
         public static string Settings_IconForSelectedTool {
             get {
                 return ResourceManager.GetString("Settings_IconForSelectedTool", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Icon path is not a valid local file: {0}.
-        /// </summary>
-        public static string Settings_IconPathInvalid {
-            get {
-                return ResourceManager.GetString("Settings_IconPathInvalid", resourceCulture);
             }
         }
         
@@ -430,11 +466,11 @@ namespace CnSharp.VSIX.Yolo {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Failed to download icon from: {0}.
+        ///   Looks up a localized string similar to Icon path is not a valid local file: {0}.
         /// </summary>
-        public static string Settings_IconDownloadFailed {
+        public static string Settings_IconPathInvalid {
             get {
-                return ResourceManager.GetString("Settings_IconDownloadFailed", resourceCulture);
+                return ResourceManager.GetString("Settings_IconPathInvalid", resourceCulture);
             }
         }
         
@@ -448,6 +484,69 @@ namespace CnSharp.VSIX.Yolo {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Install.
+        /// </summary>
+        public static string Settings_Install {
+            get {
+                return ResourceManager.GetString("Settings_Install", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} install reported success, but &apos;{1}&apos; is not runnable — check your PATH.
+        /// </summary>
+        public static string Settings_InstallDoneButNotOnPath {
+            get {
+                return ResourceManager.GetString("Settings_InstallDoneButNotOnPath", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} install failed: {1}.
+        /// </summary>
+        public static string Settings_InstallFailed {
+            get {
+                return ResourceManager.GetString("Settings_InstallFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} installed.
+        /// </summary>
+        public static string Settings_InstallSucceeded {
+            get {
+                return ResourceManager.GetString("Settings_InstallSucceeded", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Installing {0} ({1})….
+        /// </summary>
+        public static string Settings_Installing {
+            get {
+                return ResourceManager.GetString("Settings_Installing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No install command is defined for {0}..
+        /// </summary>
+        public static string Settings_NoInstallCommand {
+            get {
+                return ResourceManager.GetString("Settings_NoInstallCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No download page is defined for {0}..
+        /// </summary>
+        public static string Settings_NoInstallUrl {
+            get {
+                return ResourceManager.GetString("Settings_NoInstallUrl", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to No tool to validate..
         /// </summary>
         public static string Settings_NoToolToValidate {
@@ -457,11 +556,11 @@ namespace CnSharp.VSIX.Yolo {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Removed selected custom tool..
+        ///   Looks up a localized string similar to Opened {0} download page.
         /// </summary>
-        public static string Settings_RemovedCustomTool {
+        public static string Settings_OpenedSite {
             get {
-                return ResourceManager.GetString("Settings_RemovedCustomTool", resourceCulture);
+                return ResourceManager.GetString("Settings_OpenedSite", resourceCulture);
             }
         }
         
@@ -471,6 +570,15 @@ namespace CnSharp.VSIX.Yolo {
         public static string Settings_RemoveSelected {
             get {
                 return ResourceManager.GetString("Settings_RemoveSelected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Removed selected custom tool..
+        /// </summary>
+        public static string Settings_RemovedCustomTool {
+            get {
+                return ResourceManager.GetString("Settings_RemovedCustomTool", resourceCulture);
             }
         }
         
@@ -489,6 +597,87 @@ namespace CnSharp.VSIX.Yolo {
         public static string Settings_SelectRowToRemove {
             get {
                 return ResourceManager.GetString("Settings_SelectRowToRemove", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Don&apos;t warn me when enabling Y (skip permissions).
+        /// </summary>
+        public static string Settings_SuppressSkipWarning {
+            get {
+                return ResourceManager.GetString("Settings_SuppressSkipWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Update.
+        /// </summary>
+        public static string Settings_Update {
+            get {
+                return ResourceManager.GetString("Settings_Update", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Update {0} → {1}.
+        /// </summary>
+        public static string Settings_UpdateAvailable {
+            get {
+                return ResourceManager.GetString("Settings_UpdateAvailable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Checking….
+        /// </summary>
+        public static string Settings_UpdateChecking {
+            get {
+                return ResourceManager.GetString("Settings_UpdateChecking", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Offline / failed.
+        /// </summary>
+        public static string Settings_UpdateError {
+            get {
+                return ResourceManager.GetString("Settings_UpdateError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Manual.
+        /// </summary>
+        public static string Settings_UpdateManual {
+            get {
+                return ResourceManager.GetString("Settings_UpdateManual", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Up to date.
+        /// </summary>
+        public static string Settings_UpdateUpToDate {
+            get {
+                return ResourceManager.GetString("Settings_UpdateUpToDate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Up to date ({0}).
+        /// </summary>
+        public static string Settings_UpdateUpToDateVer {
+            get {
+                return ResourceManager.GetString("Settings_UpdateUpToDateVer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Updating {0} ({1})….
+        /// </summary>
+        public static string Settings_Updating {
+            get {
+                return ResourceManager.GetString("Settings_Updating", resourceCulture);
             }
         }
         
@@ -516,15 +705,6 @@ namespace CnSharp.VSIX.Yolo {
         public static string Settings_ValidationPassed {
             get {
                 return ResourceManager.GetString("Settings_ValidationPassed", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Settings.
-        /// </summary>
-        public static string SettingsButton {
-            get {
-                return ResourceManager.GetString("SettingsButton", resourceCulture);
             }
         }
         
@@ -590,5 +770,6 @@ namespace CnSharp.VSIX.Yolo {
                 return ResourceManager.GetString("YoloModeOn", resourceCulture);
             }
         }
+        
     }
 }
