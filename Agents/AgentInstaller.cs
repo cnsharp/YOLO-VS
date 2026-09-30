@@ -128,7 +128,7 @@ namespace CnSharp.VSIX.Yolo
             }
         }
 
-        /// <summary>Escape a single-quoted shell argument (mirrors the IntelliJ <c>replace("'", "'\\''")</c>).</summary>
+        /// <summary>Escape a single-quoted shell argument (the <c>replace("'", "'\\''")</c> idiom).</summary>
         private static string Escape(string s) => (s ?? string.Empty).Replace("'", "'\\''");
     }
 }

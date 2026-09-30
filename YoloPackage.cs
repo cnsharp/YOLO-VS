@@ -27,7 +27,7 @@ namespace CnSharp.VSIX.Yolo
             // Register the "View ▸ Other Windows ▸ YOLO" command (toggles the tool window).
             await YoloToolWindowCommand.InitializeAsync(this);
 
-            // Auto-check for newer agent versions on startup (mirrors IntelliJ's autoCheckUpdates).
+            // Auto-check for newer agent versions on startup.
             if (YoloSettings.Instance.AutoCheckUpdates)
                 AgentUpdateChecker.CheckAll();
 

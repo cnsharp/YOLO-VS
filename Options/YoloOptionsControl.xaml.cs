@@ -138,7 +138,7 @@ namespace CnSharp.VSIX.Yolo
                 SetStatus(string.Empty, false);
                 _ = RefreshInstalledAsync();
                 ReflectUpdateStatuses();
-                // Auto-check for newer versions on open (mirrors IntelliJ's startup auto-check).
+                // Auto-check for newer versions on open.
                 if (settings.AutoCheckUpdates)
                     AgentUpdateChecker.CheckAll();
                 UpdateButtonStates();

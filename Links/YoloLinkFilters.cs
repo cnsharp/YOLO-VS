@@ -8,9 +8,8 @@ namespace CnSharp.VSIX.Yolo
     /// clickable <see cref="LinkMatch"/> spans. This is the single integration point the terminal renderer and
     /// the click handler both call, so a painted link and a clicked link can never disagree.
     /// <para>
-    /// Filter order mirrors IntelliJ's HyperlinkFilter registration order — file, stack-trace, type, member,
-    /// URL — because the earlier filters' results suppress the later ones (see the wrapped-path continuation
-    /// span, and the overlap pruning below).
+    /// Filter order is file, stack-trace, type, member, URL — the earlier filters' results suppress the
+    /// later ones (see the wrapped-path continuation span, and the overlap pruning below).
     /// </para>
     /// </summary>
     internal sealed class YoloLinkFilters

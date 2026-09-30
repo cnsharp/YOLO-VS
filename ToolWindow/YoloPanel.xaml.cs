@@ -670,7 +670,7 @@ namespace CnSharp.VSIX.Yolo
         {
             var settings = YoloSettings.Instance;
 
-            // Y (skip) => auto-approve. Two bypass mechanisms (mirrors the IntelliJ plugin):
+            // Y (skip) => auto-approve. Two bypass mechanisms:
             //   1. CLI flag — appended to the launch command (most agents).
             //   2. Env var — set in the shell before launch for agents that don't take a flag
             //      (e.g. goose: GOOSE_MODE=auto). Cannot be a command-line argument.

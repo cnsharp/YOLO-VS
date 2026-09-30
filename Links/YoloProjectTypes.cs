@@ -82,7 +82,7 @@ namespace CnSharp.VSIX.Yolo
             /// <summary>True when <paramref name="name"/> is a source-file base name in the solution.</summary>
             public bool ContainsSimple(string name) => _baseNames.Contains(name);
 
-            /// <summary>Same set as <see cref="ContainsSimple"/>; kept separate to mirror IntelliJ's API shape.</summary>
+            /// <summary>Same set as <see cref="ContainsSimple"/>; kept as a distinct method for call-site clarity.</summary>
             public bool ContainsFile(string name) => _baseNames.Contains(name);
 
             /// <summary>Resolve a source-file base name (no extension) to one of its files, or null.</summary>
