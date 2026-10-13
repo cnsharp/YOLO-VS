@@ -7,7 +7,7 @@ Install range is `[17.0, 19.0)`, so it covers both **Visual Studio 2022** and **
 ## Features
 
 - **Right-side tool window**: a YOLO window docked next to the Solution Explorer. Open it from the top-level **Agent YOLO** entry on the **View** menu, or press **Ctrl+W, Y**.
-- **Data-driven agent dropdown**: lists the agents found in `agents.json` (Claude, Codex, Copilot, Cursor, OpenCode, etc. — 34 built-ins), kept separate from code — add an agent by editing the JSON, not the source.
+- **Data-driven agent dropdown**: lists the agents found in `agents.json` (Claude, Codex, Copilot, Cursor, OpenCode, etc. — 51 built-ins), kept separate from code — add an agent by editing the JSON, not the source.
 - **Y (skip permission) / R (resume session) global toggles**: sticky, persisted across sessions. At launch they append the agent's skip/resume flag (or inject a skip env var, e.g. `GOOSE_MODE=auto`) — they never touch already-running sessions.
 - **Real multi-tab ConPTY terminal**: each Agent launch opens a fresh tab backed by a hand-drawn ConPTY (not WebView2 / Windows Terminal control). Multiple Agent sessions run concurrently; every tab has a close button, and text selection / copy work inside the TUI.
 - **Tab switcher**: when more than one terminal tab is open, a compact chevron button appears at the right end of the toolbar and opens a tab-list popup to jump between sessions.
@@ -43,7 +43,7 @@ While an agent runs, its output is scanned and the references in it turn into hy
 
 ## Supported agents
 
-Every agent below ships in `agents.json` (34 built-ins). The file is the source of truth — this table is generated from it, so add or change an agent by editing the JSON, not the code.
+Every agent below ships in `agents.json` (51 built-ins). The file is the source of truth — this table is generated from it, so add or change an agent by editing the JSON, not the code.
 
 | id | display name | command | website |
 |---|---|---|---|
@@ -81,6 +81,23 @@ Every agent below ships in `agents.json` (34 built-ins). The file is the source 
 | ante | Ante | `ante` | <a href="https://antigma.ai/"><img src="Resources/icons/agents/ante.svg" height="20" alt="Ante"></a> |
 | codebuff | Codebuff | `codebuff` | <a href="https://codebuff.com/"><img src="Resources/icons/agents/codebuff.png" height="20" alt="Codebuff"></a> |
 | omp | OMP | `omp` | <a href="https://ohmyposh.dev/"><img src="Resources/icons/agents/omp.svg" height="20" alt="OMP"></a> |
+| agoragentic | Agoragentic | `agoragentic-mcp` | <a href="https://agoragentic.com"><img src="Resources/icons/agents/agoragentic.png" height="20" alt="Agoragentic"></a> |
+| cortex-code | Cortex Code | `cortex` | <a href="https://docs.snowflake.com/en/user-guide/cortex-code/cortex-code"><img src="Resources/icons/agents/cortex-code.png" height="20" alt="Cortex Code"></a> |
+| corust-agent | Corust Agent | `corust` | <a href="https://corust.ai/"><img src="Resources/icons/agents/corust-agent.svg" height="20" alt="Corust Agent"></a> |
+| crow-cli | Crow CLI | `crow-cli` | <a href="https://crow-ai.dev"><img src="Resources/icons/agents/crow-cli.svg" height="20" alt="Crow CLI"></a> |
+| deepagents | DeepAgents | `deepagents-acp` | <a href="https://docs.langchain.com/oss/javascript/deepagents/overview"><img src="Resources/icons/agents/deepagents.svg" height="20" alt="DeepAgents"></a> |
+| dirac | Dirac | `dirac` | <a href="https://dirac.run"><img src="Resources/icons/agents/dirac.svg" height="20" alt="Dirac"></a> |
+| dimcode | DimCode | `dim` | <a href="https://dimcode.dev/docs/acp.html"><img src="Resources/icons/agents/dimcode.png" height="20" alt="DimCode"></a> |
+| fast-agent | Fast Agent | `fast-agent` | <a href="https://fast-agent.ai"><img src="Resources/icons/agents/fast-agent.svg" height="20" alt="Fast Agent"></a> |
+| glm-agent | GLM Agent | `glm-acp-agent` | <a href="https://github.com/stefandevo/glm-acp-agent"><img src="Resources/icons/agents/glm-agent.svg" height="20" alt="GLM Agent"></a> |
+| harn | Harn | `harn` | <a href="https://harnlang.com"><img src="Resources/icons/agents/harn.svg" height="20" alt="Harn"></a> |
+| junie | Junie | `junie` | <a href="https://junie.jetbrains.com"><img src="Resources/icons/agents/junie.svg" height="20" alt="Junie"></a> |
+| minion-code | Minion Code | `minion-code` | <a href="https://github.com/femto/minion-code"><img src="Resources/icons/agents/minion-code.svg" height="20" alt="Minion Code"></a> |
+| nova | Nova | `nova` | <a href="https://www.compassap.ai/portfolio/nova.html"><img src="Resources/icons/agents/nova.svg" height="20" alt="Nova"></a> |
+| poolside | Poolside | `pool` | <a href="https://poolside.ai"><img src="Resources/icons/agents/poolside.svg" height="20" alt="Poolside"></a> |
+| sigit | siGit Code | `sigit` | <a href="https://smbcloud.xyz"><img src="Resources/icons/agents/sigit.png" height="20" alt="siGit Code"></a> |
+| stakpak | Stakpak | `stakpak` | <a href="https://stakpak.dev"><img src="Resources/icons/agents/stakpak.png" height="20" alt="Stakpak"></a> |
+| vtcode | VT Code | `vtcode` | <a href="https://github.com/vinhnx/VTCode"><img src="Resources/icons/agents/vtcode.png" height="20" alt="VT Code"></a> |
 
 Anything not listed works as a custom tool: add it under `Tools > Options > Agent YOLO` and fill in its flags yourself.
 
