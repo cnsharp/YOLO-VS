@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
@@ -91,7 +92,11 @@ namespace CnSharp.VSIX.Yolo
                     }
                     if (rawC.Contains("…") || rawC.Contains("...") ||
                         YoloLinkPatterns.IsTruncatedPath(combined, cm.Groups[1].Index + cm.Groups[1].Length))
+                    {
+                        var seg = LastFilenameSegmentLink(rawC, (cm.Groups[1].Index - prefix.Length) + leading, text);
+                        if (seg != null) items.Add(seg);
                         continue;
+                    }
 
                     int lineC = ParseInt(cm.Groups[3].Value);
                     int colC = ParseInt(cm.Groups[5].Value);
@@ -221,7 +226,11 @@ namespace CnSharp.VSIX.Yolo
                 string raw = pathGroup.Value;
                 if (raw.Contains("…") || raw.Contains("...") ||
                     YoloLinkPatterns.IsTruncatedPath(text, pathGroup.Index + pathGroup.Length))
+                {
+                    var seg = LastFilenameSegmentLink(raw, pathGroup.Index, text);
+                    if (seg != null) items.Add(seg);
                     continue;
+                }
 
                 int line = ParseInt(m.Groups[3].Value);
                 int column = ParseInt(m.Groups[4].Value);
@@ -278,7 +287,11 @@ namespace CnSharp.VSIX.Yolo
                 }
                 if (raw.Contains("…") || raw.Contains("...") ||
                     YoloLinkPatterns.IsTruncatedPath(text, start + m.Groups[1].Length))
+                {
+                    var seg = LastFilenameSegmentLink(raw, start, text);
+                    if (seg != null) items.Add(seg);
                     continue;
+                }
 
                 int line = ParseInt(m.Groups[3].Value);
                 int column = ParseInt(m.Groups[5].Value);
@@ -388,6 +401,70 @@ namespace CnSharp.VSIX.Yolo
                 if (c >= 128) return false;
             }
             return true;
+        }
+
+        /// True when [raw] holds a truncation marker (<c>…</c> or <c>...</c>) that forms its own path segment
+        /// — bounded by path separators (<c>/.../</c>, <c>/…/</c>) or a line boundary. Agents use such a
+        /// placeholder to mean "middle directories omitted", leaving the final filename after it intact and
+        /// linkable. An *inline* marker (<c>cnshar…</c>, <c>Proj...name</c>) abuts a word and truncates a
+        /// *component*, so its tail is unreliable and must be dropped. Ports upstream
+        /// <c>FileLinkFilter.isPlaceholderTruncation</c> (commit bdf6554).
+        /// </summary>
+        private static bool IsPlaceholderTruncation(string raw)
+        {
+            foreach (string marker in new[] { "...", "…" })
+            {
+                int i = raw.IndexOf(marker, StringComparison.Ordinal);
+                while (i >= 0)
+                {
+                    char before = i == 0 ? '/' : raw[i - 1];
+                    char after = i + marker.Length >= raw.Length ? '/' : raw[i + marker.Length];
+                    if ((before == '/' || before == '\\') && (after == '/' || after == '\\')) return true;
+                    i = raw.IndexOf(marker, i + marker.Length, StringComparison.Ordinal);
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// The final path segment of [raw] when it looks like a complete file (a recognized programming
+        /// extension or a true dotfile, per <see cref="YoloLinkPatterns.StackBareNamePattern"/>), else null.
+        /// Truncated directory fragments, inline-abbreviated tails, and bare extensions return null.
+        /// </summary>
+        private static string LastFilenameSegment(string raw)
+        {
+            int lastSep = raw.LastIndexOfAny(new[] { '/', '\\' });
+            string name = lastSep >= 0 ? raw.Substring(lastSep + 1) : raw;
+            if (name.Length == 0) return null;
+            return YoloLinkPatterns.StackBareNamePattern.IsMatch(name) ? name : null;
+        }
+
+        /// <summary>
+        /// When [raw] (a matched path containing a <c>…</c>/<c>...</c> marker, starting at [rawPathStart] in
+        /// [text]) is a placeholder truncation, returns a link for just its final filename segment so the
+        /// reference stays clickable (it resolves by bare file name at click time). Returns null when the
+        /// marker is inline or the tail is not a real file.
+        /// </summary>
+        private static LinkMatch LastFilenameSegmentLink(string raw, int rawPathStart, string text)
+        {
+            if (!IsPlaceholderTruncation(raw)) return null;
+            string name = LastFilenameSegment(raw);
+            if (name == null) return null;
+            int start = rawPathStart + (raw.Length - name.Length);
+            int end = rawPathStart + raw.Length;
+            if (start < 0 || end > text.Length || start >= end) return null;
+            return new LinkMatch
+            {
+                Start = start,
+                End = end,
+                Target = new LinkTarget
+                {
+                    Kind = LinkKind.File,
+                    Raw = name,
+                    FilePath = name,
+                    BareFileName = name
+                }
+            };
         }
     }
 }
