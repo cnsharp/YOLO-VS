@@ -42,6 +42,33 @@ namespace CnSharp.VSIX.Yolo
             {
                 reg.RegisterPriorityCommandTarget(0, this, out _priorityCookie);
             }
+            // Seed a sensible width on first creation so the window doesn't open at the default
+            // (very narrow) docked size. Mirrors upstream YOLO's seedInitialWidth (commit cd27d5f).
+            SeedInitialWidth();
+        }
+
+        /// <summary>
+        /// Ensures the tool window is at least 360px and at most 480px wide the first time it is
+        /// created. Already-wider windows (e.g. restored from a previous session) are left alone.
+        /// </summary>
+        private void SeedInitialWidth()
+        {
+            // IVsWindowFrame is a single-threaded COM object and must be touched on the UI thread.
+            ThreadHelper.ThrowIfNotOnUIThread();
+            if (Frame is not IVsWindowFrame frame) return;
+            // Read the current frame position/size and widen the window the first time it is
+            // created, so the panel (dropdown + terminal tabs) is usable on first open. Already-
+            // wider windows (e.g. restored from a previous session) are left alone.
+            // NOTE: the interop GetFramePos takes the flags as an out VSSETFRAMEPOS[] (not a scalar).
+            VSSETFRAMEPOS[] flags = new VSSETFRAMEPOS[1];
+            Guid relativeTo;
+            int x, y, cx, cy;
+            // NOTE: the interop GetFramePos takes the flags as a by-value VSSETFRAMEPOS[] carrying an
+            // [Out] marshalling attribute — pass the array WITHOUT out/ref; it is filled in place.
+            frame.GetFramePos(flags, out relativeTo, out x, out y, out cx, out cy);
+            if (cx >= 360) return;
+            int desired = Math.Min(480, Math.Max(cx <= 0 ? 480 : cx, 360));
+            frame.SetFramePos(flags[0], ref relativeTo, x, y, desired, cy);
         }
 
         /// <summary>
