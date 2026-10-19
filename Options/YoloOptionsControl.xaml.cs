@@ -90,6 +90,11 @@ namespace CnSharp.VSIX.Yolo
                     if (!string.IsNullOrWhiteSpace(r.AgentId))
                         resumeByBase[ExecutableNames.BaseName(r.AgentId)] = r.Flag ?? string.Empty;
 
+                var baseArgsByBase = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var r in settings.BaseArgsRules)
+                    if (!string.IsNullOrWhiteSpace(r.AgentId))
+                        baseArgsByBase[ExecutableNames.BaseName(r.AgentId)] = r.Flag ?? string.Empty;
+
                 // ① Known agents (read-only ID/Command, editable skip/resume flag)
                 foreach (var known in AgentRegistry.All)
                 {
@@ -98,12 +103,14 @@ namespace CnSharp.VSIX.Yolo
                     var flag = saved ?? known.SkipFlag;
                     var savedR = resumeByBase.TryGetValue(baseCmd, out var rf) ? rf : null;
                     var resume = savedR ?? known.ResumeFlag;
+                    baseArgsByBase.TryGetValue(baseCmd, out var savedBase);
+                    var baseArgs = savedBase ?? string.Empty;
                     Rows.Add(new AgentRow
                     {
                         Id = known.Id,
                         DisplayName = known.DisplayName,
                         Command = known.Command,
-                        BaseArgs = string.Empty,
+                        BaseArgs = baseArgs,
                         SkipFlag = flag,
                         ResumeFlag = resume,
                         IconPath = known.Icon ?? string.Empty,
@@ -180,6 +187,21 @@ namespace CnSharp.VSIX.Yolo
                 resumes.Add(new PermissionRule { AgentId = key, Flag = flag });
             }
             settings.ResumeRules = resumes;
+
+            // ②b Base args for known (locked) agents only — custom tools carry their own BaseArgs.
+            var baseArgs = new List<PermissionRule>();
+            var seenB = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var row in Rows)
+            {
+                if (!row.IsLocked) continue;
+                var cmd = (row.Command ?? string.Empty).Trim();
+                var ba = (row.BaseArgs ?? string.Empty).Trim();
+                if (cmd.Length == 0 || ba.Length == 0) continue;
+                var key = ExecutableNames.BaseName(cmd);
+                if (!seenB.Add(key)) continue;
+                baseArgs.Add(new PermissionRule { AgentId = key, Flag = ba });
+            }
+            settings.BaseArgsRules = baseArgs;
 
             // ③ Custom tools — skip locked (known) agents.
             settings.CustomTools = Rows

@@ -229,6 +229,11 @@ namespace CnSharp.VSIX.Yolo
                 if (!string.IsNullOrWhiteSpace(r.AgentId))
                     resumeByBase[ExecutableNames.BaseName(r.AgentId)] = r.Flag ?? string.Empty;
 
+            var baseArgsByBase = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var r in settings.BaseArgsRules)
+                if (!string.IsNullOrWhiteSpace(r.AgentId))
+                    baseArgsByBase[ExecutableNames.BaseName(r.AgentId)] = r.Flag ?? string.Empty;
+
             var list = new List<AgentConfig>();
 
             // Index user custom tools by command and by id (case-insensitive) so a newly-built-in agent
@@ -245,11 +250,12 @@ namespace CnSharp.VSIX.Yolo
             }
             var consumed = new HashSet<CustomTool>();
 
-            // ① Built-in / known agents (command + id are fixed; skip/resume flag editable). When a built-in
+            // ① Built-in / known agents (command + id are fixed; skip/resume flag + base args editable). When a built-in
             //    matches a user custom tool (by command or id) the custom fields win for the values it set —
             //    DisplayName / BaseArgs / IconPath — while the built-in keeps the canonical command, id and
             //    default skip / resume flags. The user's prior customization is preserved: never lost and
             //    never shown twice.
+
             foreach (var def in AgentRegistry.All)
             {
                 var baseCmd = ExecutableNames.BaseName(def.Command);
@@ -259,6 +265,8 @@ namespace CnSharp.VSIX.Yolo
                 var resume = resumeByBase.TryGetValue(baseCmd, out var r) && !string.IsNullOrWhiteSpace(r)
                     ? r
                     : def.ResumeFlag;
+
+                var baseArgs = baseArgsByBase.TryGetValue(baseCmd, out var b) ? b : string.Empty;
 
                 customByKey.TryGetValue(def.Command?.Trim() ?? string.Empty, out var match) ||
                     customByKey.TryGetValue(def.Id?.Trim() ?? string.Empty, out match);
@@ -283,12 +291,13 @@ namespace CnSharp.VSIX.Yolo
                         Name = def.Id,
                         DisplayName = def.DisplayName,
                         Command = def.Command,
-                        BaseArgs = string.Empty,
+                        BaseArgs = baseArgs,
                         SkipFlag = skip,
                         ResumeFlag = resume,
                         IconPath = def.Icon
                     });
                 }
+
             }
 
             // ② Custom tools NOT matching any built-in — genuine user additions, emitted as-is.

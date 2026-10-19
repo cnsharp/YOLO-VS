@@ -75,6 +75,14 @@ namespace CnSharp.VSIX.Yolo
         [XmlArray("ResumeRules"), XmlArrayItem("Rule")]
         public List<PermissionRule> ResumeRules { get; set; } = new List<PermissionRule>();
 
+        /// <summary>
+        /// Per-agent base arguments (the always-on args passed before any skip/resume flags).
+        /// Keyed by command base name. Covers the built-in / known agents — custom tools carry their
+        /// own BaseArgs inside <see cref="CustomTools"/>, so they are not duplicated here.
+        /// </summary>
+        [XmlArray("BaseArgsRules"), XmlArrayItem("Rule")]
+        public List<PermissionRule> BaseArgsRules { get; set; } = new List<PermissionRule>();
+
         /// <summary>User-added custom tools (known agents are seeded separately, not stored here).</summary>
         [XmlArray("CustomTools"), XmlArrayItem("Tool")]
         public List<CustomTool> CustomTools { get; set; } = new List<CustomTool>();
