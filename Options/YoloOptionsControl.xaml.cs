@@ -346,12 +346,17 @@ namespace CnSharp.VSIX.Yolo
         private void ReflectUpdateStatuses()
         {
             var snap = AgentUpdateChecker.Snapshot();
+            int updates = 0;
             foreach (var row in Rows)
             {
                 var key = ExecutableNames.BaseName(row.Command ?? string.Empty).ToLowerInvariant();
                 snap.TryGetValue(key, out var info);
                 row.UpdateStatus = FormatUpdateStatus(info);
+                if (info != null && info.Status == AgentUpdateChecker.Status.UPDATE_AVAILABLE) updates++;
             }
+            UpdateBanner.Text = updates > 0
+                ? string.Format(CnSharp.VSIX.Yolo.Resources.Settings_UpdateBanner, updates)
+                : string.Empty;
         }
 
         private static string FormatUpdateStatus(AgentUpdateChecker.UpdateInfo? info) => info switch

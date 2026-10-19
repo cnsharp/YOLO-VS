@@ -293,6 +293,9 @@
   <data name="Settings_UpdateError" xml:space="preserve">
     <value>Offline / failed</value>
   </data>
+  <data name="Settings_UpdateBanner" xml:space="preserve">
+    <value>{0} agent(s) have updates available</value>
+  </data>
 
   <!-- Manage Agents document tab -->
   <data name="Manage_Heading" xml:space="preserve">

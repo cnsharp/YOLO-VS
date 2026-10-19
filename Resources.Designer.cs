@@ -637,6 +637,15 @@ namespace CnSharp.VSIX.Yolo {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {0} agent(s) have updates available.
+        /// </summary>
+        public static string Settings_UpdateBanner {
+            get {
+                return ResourceManager.GetString("Settings_UpdateBanner", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Manual.
         /// </summary>
         public static string Settings_UpdateManual {
