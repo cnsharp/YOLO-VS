@@ -20,7 +20,7 @@ namespace CnSharp.VSIX.Yolo
         // >>> YOLO_LINK_PATTERNS_START >>>
 internal const int MaxMatchesPerLine = 50;
 
-internal const string ProgrammingExt = "kt|kts|java|scala|sc|groovy|gradle|py|pyi|pyw|rb|rake|php|pl|pm|lua|sh|bash|zsh|ksh|bat|cmd|ps1|psm1|psd1|js|jsx|mjs|cjs|ts|tsx|vue|html|htm|xhtml|css|scss|sass|less|styl|go|rs|c|h|cc|cpp|cxx|hpp|hxx|hh|cs|m|mm|swift|d|nim|zig|s|asm|ex|exs|clj|cljs|cljc|erl|hs|ml|mli|fs|fsx|fsi|jl|r|proto|sol|graphql|gql|xml|xsd|xsl|xslt|wsdl|json|json5|jsonc|yaml|yml|toml|ini|cfg|conf|config|properties|env|lock|csv|tsv|log|md|markdown|rst|txt|text|diff|patch|editorconfig|gitignore|dockerignore|tf|tfvars|feature|bnf|avsc|edn|iml|ipr|iws|vb|razor|cshtml|vbhtml|xaml|csx|cake|aspx|ascx|ashx|asmx|asax|csproj|vbproj|fsproj|sln|slnx|props|targets|vcxproj|vcxitems|user|ruleset|publishproj|vsix|nuspec|appxmanifest|manifest|resx|settings|dbml|edmx";
+internal const string ProgrammingExt = "kt|kts|java|scala|sc|groovy|gradle|py|pyi|pyw|rb|rake|php|pl|pm|lua|sh|bash|zsh|ksh|bat|cmd|ps1|psm1|psd1|js|jsx|mjs|cjs|ts|tsx|vue|html|htm|xhtml|css|scss|sass|less|styl|go|rs|c|h|cc|cpp|cxx|hpp|hxx|hh|cs|m|mm|swift|d|nim|zig|s|asm|ex|exs|clj|cljs|cljc|erl|hs|ml|mli|fs|fsx|fsi|jl|r|proto|sol|graphql|gql|sql|xml|xsd|xsl|xslt|wsdl|json|json5|jsonc|yaml|yml|toml|ini|cfg|conf|config|properties|env|lock|csv|tsv|log|md|markdown|rst|txt|text|diff|patch|editorconfig|gitignore|dockerignore|tf|tfvars|feature|bnf|avsc|edn|iml|ipr|iws|vb|razor|cshtml|vbhtml|xaml|csx|cake|aspx|ascx|ashx|asmx|asax|csproj|vbproj|fsproj|sln|slnx|props|targets|vcxproj|vcxitems|user|ruleset|publishproj|vsix|nuspec|appxmanifest|manifest|resx|settings|dbml|edmx";
 
 internal static readonly Regex PathPattern = new Regex(
     string.Format(CultureInfo.InvariantCulture,
