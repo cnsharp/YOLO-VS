@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -153,6 +153,14 @@ namespace CnSharp.VSIX.Yolo
 
         public void SaveToSettings()
         {
+            // Never persist a grid with duplicate IDs / commands — the reference throws here to block Apply.
+            var dup = DetectDuplicates();
+            if (dup.Length > 0)
+            {
+                SetStatus(dup, true);
+                return;
+            }
+
             // Download any still-network (http/https) icon locally before persisting, so the
             // saved IconPath works offline. Validate already rewrites most rows; this is the
             // safety net for an OK-without-Validate click.
@@ -297,6 +305,17 @@ namespace CnSharp.VSIX.Yolo
 
         private void ReportDuplicates()
         {
+            var problems = DetectDuplicates();
+            if (problems.Length > 0)
+                SetStatus(problems, true);
+            else if (!string.IsNullOrEmpty(StatusText.Text) && StatusText.Foreground == Brushes.Red)
+                SetStatus(string.Empty, false);
+        }
+
+        /// <summary>Returns a combined, user-facing message for any duplicate ID / command in the grid,
+        /// or <see cref="string.Empty"/> when the grid is clean. Compared by executable base name for commands.</summary>
+        private string DetectDuplicates()
+        {
             var dupIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var dupCmds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var seenIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -314,14 +333,7 @@ namespace CnSharp.VSIX.Yolo
             if (dupIds.Count > 0) problems.Add(string.Format(CnSharp.VSIX.Yolo.Resources.Settings_DupId, string.Join(", ", dupIds)));
             if (dupCmds.Count > 0) problems.Add(string.Format(CnSharp.VSIX.Yolo.Resources.Settings_DupCmd, string.Join(", ", dupCmds)));
 
-            if (problems.Count > 0)
-            {
-                Console.WriteLine($"YOLO: {string.Join("; ", problems)}");
-                SetStatus(string.Join("; ", problems), true);
-            }
-            else if (!string.IsNullOrEmpty(StatusText.Text) && StatusText.Foreground == Brushes.Red)
-                SetStatus(string.Empty, false);
-        }
+            return string.Join("; ", problems);        }
 
         // ── General options ─────────────────────────────────────────
 
