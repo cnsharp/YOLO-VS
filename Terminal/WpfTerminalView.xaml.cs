@@ -488,6 +488,16 @@ namespace CnSharp.VSIX.Yolo
                 return;
             }
 
+            // Ctrl+T forwards the control byte \x14 to the terminal. Without this, the VS shell
+            // would instead run Edit.GoToAll (bound to Ctrl+T) the moment the terminal is focused
+            // (upstream 56609e0 forwards Ctrl+T to the embedded terminal).
+            if (ctrl && !alt && !shift && e.Key == Key.T)
+            {
+                Send("\x14");
+                e.Handled = true;
+                return;
+            }
+
             // Plain Space is sent directly. Relying on PreviewTextInput alone drops spaces: a
             // focused TextBox frequently raises PreviewTextInput for Space with an empty/whitespace
             // Text, so OnPreviewTextInput's IsNullOrEmpty guard silently discards it. Ctrl+Space
