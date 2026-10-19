@@ -33,6 +33,9 @@ namespace CnSharp.VSIX.Yolo
         private readonly Brush _linkBrush;
         private readonly Pen _linkPen;
         private YoloLinkFilters? _linkFilter;
+        // Guards against linking text the user typed into the terminal (echoed back by the shell) —
+        // only the agent's own output should become clickable. Fed by WpfTerminalView.
+        private TypedInputGuard? _typedGuard;
         private int _linkCacheVersion = -1;
         private readonly Dictionary<int, string?> _rowTextCache = new Dictionary<int, string?>();
         private readonly Dictionary<int, List<LinkMatch>?> _rowLinkCache = new Dictionary<int, List<LinkMatch>?>();
@@ -143,6 +146,25 @@ namespace CnSharp.VSIX.Yolo
             MeasureCell();
             ClipToBounds = true;
             SnapsToDevicePixels = true;
+
+            // Tracks text the user types into the terminal so the input line is never hyperlinked
+            // (AGENTS.md: port of the IntelliJ TypedInputGuard). Fed by WpfTerminalView.Send.
+            _typedGuard = new TypedInputGuard();
+        }
+
+        /// <summary>
+        /// Guards against linking text the user typed into the terminal (echoed back by the shell) —
+        /// only the agent's own output should become clickable. Fed by <see cref="WpfTerminalView"/>.
+        /// </summary>
+        public TypedInputGuard? TypedInputGuard
+        {
+            get => _typedGuard;
+            set
+            {
+                _typedGuard = value;
+                if (_linkFilter != null) _linkFilter.Guard = value;
+                InvalidateLinkCache();
+            }
         }
 
         public double FontSize
@@ -398,6 +420,7 @@ namespace CnSharp.VSIX.Yolo
             {
                 if (ReferenceEquals(_linkFilter, value)) return;
                 _linkFilter = value;
+                if (value != null) value.Guard = _typedGuard;
                 InvalidateLinkCache();
                 InvalidateVisual();
             }

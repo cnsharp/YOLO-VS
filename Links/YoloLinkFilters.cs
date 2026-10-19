@@ -22,6 +22,13 @@ namespace CnSharp.VSIX.Yolo
 
         private readonly Func<YoloProjectTypes.Snapshot> _types;
 
+        /// <summary>
+        /// When set, links overlapping text the user has typed but not yet submitted are dropped, so the
+        /// agent's input box never turns what you are typing into a hyperlink. Fed by <see cref="WpfTerminalView"/>
+        /// via <see cref="TypedInputGuard.OnUserInput"/>. Set by <see cref="TerminalSurface"/>.
+        /// </summary>
+        public TypedInputGuard? Guard { get; set; }
+
         /// <param name="types">
         /// Supplies the project-name gate for the type/member filters. Must not block — it is called from the
         /// render path (see <see cref="YoloProjectTypes.For"/>).
@@ -101,6 +108,31 @@ namespace CnSharp.VSIX.Yolo
                 }
                 if (!contained) merged.Add(m);
             }
+
+            // Drop any link overlapping a span the user is currently typing (echoed back by the shell),
+            // so the input line is never clickable. The guard's spans are offsets into `text`, exactly like
+            // the LinkMatch offsets, so the overlap test is in row coordinates. This runs for BOTH the render
+            // overlay (FindLinks(text, wrap, vRow)) and the click hit-test (FindLinks(text, prev) → this
+            // overload), so the painted and clicked links stay in agreement.
+            if (Guard != null && merged.Count > 0)
+            {
+                var typed = Guard.TypedSpansIn(text);
+                if (typed.Count > 0)
+                {
+                    var kept = new List<LinkMatch>();
+                    foreach (var m in merged)
+                    {
+                        bool overlaps = false;
+                        foreach (var s in typed)
+                        {
+                            if (m.Start < s.End && s.Start < m.End) { overlaps = true; break; }
+                        }
+                        if (!overlaps) kept.Add(m);
+                    }
+                    merged = kept;
+                }
+            }
+
             return merged.Count == 0 ? null : merged;
         }
 

@@ -297,6 +297,9 @@ namespace CnSharp.VSIX.Yolo
         private void Send(string s)
         {
             if (string.IsNullOrEmpty(s)) return;
+            // Record what the user is typing so the link filter can keep the input line un-clickable
+            // (the shell echoes keystrokes back into the same byte stream as the agent's output).
+            Screen.TypedInputGuard?.OnUserInput(s);
             // Any keystroke snaps the view back to the live prompt instead of typing into
             // the history that the user happened to be reviewing.
             if (!Screen.Emulator.AtBottom)
