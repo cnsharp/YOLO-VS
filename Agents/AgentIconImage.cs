@@ -126,7 +126,7 @@ namespace CnSharp.VSIX.Yolo
         private static string PackUri(string icon)
         {
             var rel = icon.TrimStart('/');
-            if (!rel.Contains('/'))
+            if (!rel.Contains("/"))
                 rel = "Resources/icons/agents/" + rel;
             else if (rel.StartsWith("icons/", StringComparison.OrdinalIgnoreCase))
                 rel = "Resources/" + rel;

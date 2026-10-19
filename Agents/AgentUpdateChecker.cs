@@ -47,6 +47,9 @@ namespace CnSharp.VSIX.Yolo
         }
 
         private static readonly object _lock = new object();
+
+        // Holds the in-flight background scan so its result is observed (VSTHRD110) and the task is rooted.
+        private static Task? _scanTask;
         private static readonly Dictionary<string, UpdateInfo> _results =
             new Dictionary<string, UpdateInfo>(StringComparer.OrdinalIgnoreCase);
         private static readonly List<Action> _listeners = new List<Action>();
@@ -240,7 +243,7 @@ namespace CnSharp.VSIX.Yolo
                 _autoCheckRequested = true;
             }
 
-            Task.Run(() =>
+            _scanTask = Task.Run(() =>
             {
                 try
                 {
@@ -437,7 +440,7 @@ namespace CnSharp.VSIX.Yolo
 
             return spec.Type switch
             {
-                "npm" => { var t = outp.Trim(); return t.Length > 0 && t != "{}"; }
+                "npm" => (outp.Trim().Length > 0 && outp.Trim() != "{}"),
                 "pip" => Regex.IsMatch(outp, $"Would install\\s+{Regex.Escape(pkg)}[=\\s-]"),
                 "brew" => outp.Trim().Length > 0,
                 _ => false

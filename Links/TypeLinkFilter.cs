@@ -160,7 +160,7 @@ namespace CnSharp.VSIX.Yolo
                     if (!string.IsNullOrEmpty(headName))
                     {
                         string lastSeg = YoloLinkPatterns.LastTypeNameSegment(headName!);
-                        bool endsWithSep = headName!.EndsWith('.') || headName.EndsWith(':');
+                        bool endsWithSep = headName!.EndsWith(".") || headName.EndsWith(":");
                         if (endsWithSep || !types.ContainsSimple(lastSeg))
                             wrap.PendingType = headName!;
                     }
