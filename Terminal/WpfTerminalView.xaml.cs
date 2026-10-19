@@ -115,7 +115,7 @@ namespace CnSharp.VSIX.Yolo
             }
         }
 
-        private bool IsOnScrollBar(MouseEventArgs e)
+        private bool IsOnScrollBar(RoutedEventArgs e)
         {
             var src = e.OriginalSource as DependencyObject;
             return src != null && ScrollBar.IsAncestorOf(src);
@@ -274,6 +274,44 @@ namespace CnSharp.VSIX.Yolo
         {
             CopyMenuItem.IsEnabled = Screen.HasSelection;
             PasteMenuItem.IsEnabled = Clipboard.ContainsText();
+        }
+
+        /// <summary>
+        /// Shows the copy cursor while a file is dragged over the terminal, and accepts the drop.
+        /// Only file drops are allowed; everything else is rejected.
+        /// </summary>
+        private void OnDragOver(object sender, DragEventArgs e)
+        {
+            e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop)
+                ? DragDropEffects.Copy
+                : DragDropEffects.None;
+            e.Handled = true;
+        }
+
+        /// <summary>
+        /// Drops one or more files into the terminal by typing their (space-quoted) paths onto the
+        /// current input line. The bytes flow through <see cref="SendInput"/> → <see cref="Send"/>, so
+        /// <see cref="TerminalSurface.TypedInputGuard"/> treats them as typed text and keeps the echoed
+        /// path from becoming a hyperlink until the user submits the line (Enter).
+        /// </summary>
+        private void OnDrop(object sender, DragEventArgs e)
+        {
+            if (IsOnScrollBar(e)) return;
+            if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
+            var files = e.Data.GetData(DataFormats.FileDrop) as string[];
+            if (files == null || files.Length == 0) return;
+            e.Handled = true;
+
+            var sb = new StringBuilder();
+            foreach (var file in files)
+            {
+                string path = file;
+                // Quote paths containing spaces so the shell treats each as one argument.
+                if (path.IndexOf(' ') >= 0) path = "\"" + path + "\"";
+                sb.Append(path).Append(' ');
+            }
+            SendInput(sb.ToString().TrimEnd());
+            InputCapture.Focus();
         }
 
         private void OnCopyMenu(object sender, RoutedEventArgs e) => CopySelection();

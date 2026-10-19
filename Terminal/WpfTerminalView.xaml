@@ -7,7 +7,10 @@
              Focusable="False"
              ClipToBounds="True"
              PreviewKeyDown="OnPreviewKeyDown"
-             PreviewTextInput="OnPreviewTextInput">
+             PreviewTextInput="OnPreviewTextInput"
+             AllowDrop="True"
+             DragOver="OnDragOver"
+             Drop="OnDrop">
     <!-- Pure-WPF terminal: no WebView2, no HwndHost. WebView2 does not composite inside
          a VS tool window on this machine (page loads, surface paints black), so the cell
          grid is drawn by TerminalSurface using WPF drawing primitives instead.
