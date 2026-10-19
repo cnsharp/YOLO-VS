@@ -296,6 +296,9 @@
   <data name="Settings_UpdateBanner" xml:space="preserve">
     <value>{0} agent(s) have updates available</value>
   </data>
+  <data name="Panel_EmptyHint" xml:space="preserve">
+    <value>No agent running yet. Pick an agent above and press Launch.</value>
+  </data>
 
   <!-- Manage Agents document tab -->
   <data name="Manage_Heading" xml:space="preserve">

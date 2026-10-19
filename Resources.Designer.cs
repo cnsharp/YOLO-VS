@@ -646,6 +646,15 @@ namespace CnSharp.VSIX.Yolo {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to No agent running yet. Pick an agent above and press Launch..
+        /// </summary>
+        public static string Panel_EmptyHint {
+            get {
+                return ResourceManager.GetString("Panel_EmptyHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Manual.
         /// </summary>
         public static string Settings_UpdateManual {

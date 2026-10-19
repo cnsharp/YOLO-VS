@@ -190,6 +190,7 @@ namespace CnSharp.VSIX.Yolo
             // and keep it in sync when the user switches themes (dark/light/blue) at runtime.
             ApplyVsTheme();
             VSColorTheme.ThemeChanged += OnVsThemeChanged;
+            UpdateEmptyHint();
             InitializeComponents();
             // When the tool window is actually shown the panel is loaded into the frame; that
             // is the moment to cd the terminal(s) into the solution directory and refresh agents.
@@ -314,6 +315,10 @@ namespace CnSharp.VSIX.Yolo
             TabSwitchList.SelectionChanged += OnTabSwitchSelected;
         }
 
+        /// <summary>Shows the empty-state hint when no terminal tab is open, hides it otherwise.</summary>
+        private void UpdateEmptyHint()
+            => EmptyHint.Visibility = _sessions.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+
         /// <summary>When the chevron opens (IsChecked -> true binds Popup.IsOpen), highlight the
         /// currently active tab in the list and focus it for keyboard navigation.</summary>
         private void OnTabSwitchOpened(object sender, RoutedEventArgs e)
@@ -393,6 +398,7 @@ namespace CnSharp.VSIX.Yolo
 
             _sessions.Add(session);
             RefreshTabSwitcher();
+            UpdateEmptyHint();
 
             // Launch the shell on a background thread; the pty starts once the view reports
             // a real cell grid (deferred internally). For agent sessions the agent command is
@@ -480,6 +486,7 @@ namespace CnSharp.VSIX.Yolo
             SessionTabs.Items.Remove(session.Tab);
             _sessions.Remove(session);
             RefreshTabSwitcher();
+            UpdateEmptyHint();
         }
 
         /// <summary>
@@ -823,6 +830,7 @@ namespace CnSharp.VSIX.Yolo
                 catch (Exception ex) { Log.Write("YoloPanel.Shutdown failed: " + ex.Message); }
             }
             _sessions.Clear();
+            UpdateEmptyHint();
         }
 
         /// <summary>

@@ -350,5 +350,13 @@
             </TabControl.Resources>
         </TabControl>
 
+        <!-- Empty-state hint shown when no terminal tab is open (no agent launched yet). -->
+        <TextBlock Grid.Row="1" x:Name="EmptyHint"
+                   Text="{x:Static local:Resources.Panel_EmptyHint}"
+                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                   TextWrapping="Wrap" TextAlignment="Center"
+                   Foreground="{DynamicResource PanelFg}"
+                   Margin="24" Visibility="Collapsed"/>
+
     </Grid>
 </UserControl>
