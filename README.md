@@ -43,65 +43,9 @@ While an agent runs, its output is scanned and the references in it turn into hy
 
 ## Supported agents
 
-Every agent below ships in `agents.json` (51 built-ins). The file is the source of truth — this table is generated from it, so add or change an agent by editing the JSON, not the code.
-
-| id | display name | command | website |
-|---|---|---|---|
-| claude | Claude Code | `claude` | <a href="https://claude.ai/"><img src="Resources/icons/agents/claude.svg" height="20" alt="Claude Code"></a> |
-| codex | Codex | `codex` | <a href="https://openai.com/codex"><img src="Resources/icons/agents/codex.svg" height="20" alt="Codex"></a> |
-| cursor | Cursor | `cursor-agent` | <a href="https://cursor.com/"><img src="Resources/icons/agents/cursor.svg" height="20" alt="Cursor"></a> |
-| copilot | GitHub Copilot | `copilot` | <a href="https://github.com/features/copilot"><img src="Resources/icons/agents/copilot.svg" height="20" alt="GitHub Copilot"></a> |
-| opencode | OpenCode | `opencode` | <a href="https://opencode.ai/"><img src="Resources/icons/agents/opencode.svg" height="20" alt="OpenCode"></a> |
-| aider | Aider | `aider` | <a href="https://aider.chat/"><img src="Resources/icons/agents/aider.svg" height="20" alt="Aider"></a> |
-| cline | Cline | `cline` | <a href="https://cline.bot/"><img src="Resources/icons/agents/cline.svg" height="20" alt="Cline"></a> |
-| continue | Continue | `cn` | <a href="https://continue.dev/"><img src="Resources/icons/agents/continue.svg" height="20" alt="Continue"></a> |
-| openclaw | OpenClaw | `openclaw` | <a href="https://openclaw.ai/"><img src="Resources/icons/agents/openclaw.svg" height="20" alt="OpenClaw"></a> |
-| kiro | Kiro | `kiro-cli` | <a href="https://kiro.dev/"><img src="Resources/icons/agents/kiro.svg" height="20" alt="Kiro"></a> |
-| goose | Goose | `goose` | <a href="https://block.github.io/goose/"><img src="Resources/icons/agents/goose.svg" height="20" alt="Goose"></a> |
-| crush | Charm Crush | `crush` | <a href="https://charm.sh/crush"><img src="Resources/icons/agents/crush.png" height="20" alt="Charm Crush"></a> |
-| amp | Amp | `amp` | <a href="https://ampcode.com/"><img src="Resources/icons/agents/amp.svg" height="20" alt="Amp"></a> |
-| kimi | Kimi | `kimi` | <a href="https://kimi.moonshot.cn/"><img src="Resources/icons/agents/kimi.svg" height="20" alt="Kimi"></a> |
-| qwen-code | Qwen Code | `qwen` | <a href="https://qwen.ai/qwencode"><img src="Resources/icons/agents/qwen-code.png" height="20" alt="Qwen Code"></a> |
-| trae | TraeCode | `traecli` | <a href="https://www.trae.ai/"><img src="Resources/icons/agents/trae.svg" height="20" alt="TraeCode"></a> |
-| codebuddy | CodeBuddy | `codebuddy` | <a href="https://www.codebuddy.ai/"><img src="Resources/icons/agents/codebuddy.svg" height="20" alt="CodeBuddy"></a> |
-| qoder | Qoder | `qoder` | <a href="https://qoder.com/"><img src="Resources/icons/agents/qoder.svg" height="20" alt="Qoder"></a> |
-| devin | Devin | `devin` | <a href="https://devin.ai/"><img src="Resources/icons/agents/devin.svg" height="20" alt="Devin"></a> |
-| grok | Grok | `grok` | <a href="https://grok.com/"><img src="Resources/icons/agents/grok.svg" height="20" alt="Grok"></a> |
-| antigravity | Antigravity | `agy` | <a href="https://antigravity.google/"><img src="Resources/icons/agents/antigravity.png" height="20" alt="Antigravity"></a> |
-| mistral-vibe | Mistral Vibe | `vibe` | <a href="https://mistral.ai/"><img src="Resources/icons/agents/mistral-vibe.svg" height="20" alt="Mistral Vibe"></a> |
-| kilo | Kilo Code | `kilo` | <a href="https://kilocode.ai/"><img src="Resources/icons/agents/kilo.svg" height="20" alt="Kilo Code"></a> |
-| hermes | Hermes | `hermes` | <a href="https://hermes-agent.nousresearch.com/"><img src="Resources/icons/agents/hermes.png" height="20" alt="Hermes"></a> |
-| pi | Pi | `pi` | <a href="https://pi.dev/"><img src="Resources/icons/agents/pi.svg" height="20" alt="Pi"></a> |
-| droid | Droid | `droid` | <a href="https://factory.ai/"><img src="Resources/icons/agents/droid.svg" height="20" alt="Droid"></a> |
-| aug | Auggie | `auggie` | <a href="https://augmentcode.com/"><img src="Resources/icons/agents/aug.svg" height="20" alt="Auggie"></a> |
-| rovo | Rovo Dev | `rovo` | <a href="https://rovo.atlassian.com/"><img src="Resources/icons/agents/rovo.svg" height="20" alt="Rovo Dev"></a> |
-| prime-agent | Prime Agent | `prime-agent` | <a href="https://www.primeintellect.ai/"><img src="Resources/icons/agents/prime-agent.png" height="20" alt="Prime Agent"></a> |
-| autohand | Autohand | `autohand` | <a href="https://autohand.ai/"><img src="Resources/icons/agents/autohand.svg" height="20" alt="Autohand"></a> |
-| command-code | Command Code | `command-code` | <a href="https://commandcode.ai/"><img src="Resources/icons/agents/command-code.svg" height="20" alt="Command Code"></a> |
-| ante | Ante | `ante` | <a href="https://antigma.ai/"><img src="Resources/icons/agents/ante.svg" height="20" alt="Ante"></a> |
-| codebuff | Codebuff | `codebuff` | <a href="https://codebuff.com/"><img src="Resources/icons/agents/codebuff.png" height="20" alt="Codebuff"></a> |
-| omp | OMP | `omp` | <a href="https://ohmyposh.dev/"><img src="Resources/icons/agents/omp.svg" height="20" alt="OMP"></a> |
-| agoragentic | Agoragentic | `agoragentic-mcp` | <a href="https://agoragentic.com"><img src="Resources/icons/agents/agoragentic.png" height="20" alt="Agoragentic"></a> |
-| cortex-code | Cortex Code | `cortex` | <a href="https://docs.snowflake.com/en/user-guide/cortex-code/cortex-code"><img src="Resources/icons/agents/cortex-code.png" height="20" alt="Cortex Code"></a> |
-| corust-agent | Corust Agent | `corust` | <a href="https://corust.ai/"><img src="Resources/icons/agents/corust-agent.svg" height="20" alt="Corust Agent"></a> |
-| crow-cli | Crow CLI | `crow-cli` | <a href="https://crow-ai.dev"><img src="Resources/icons/agents/crow-cli.svg" height="20" alt="Crow CLI"></a> |
-| deepagents | DeepAgents | `deepagents-acp` | <a href="https://docs.langchain.com/oss/javascript/deepagents/overview"><img src="Resources/icons/agents/deepagents.svg" height="20" alt="DeepAgents"></a> |
-| dirac | Dirac | `dirac` | <a href="https://dirac.run"><img src="Resources/icons/agents/dirac.svg" height="20" alt="Dirac"></a> |
-| dimcode | DimCode | `dim` | <a href="https://dimcode.dev/docs/acp.html"><img src="Resources/icons/agents/dimcode.png" height="20" alt="DimCode"></a> |
-| fast-agent | Fast Agent | `fast-agent` | <a href="https://fast-agent.ai"><img src="Resources/icons/agents/fast-agent.svg" height="20" alt="Fast Agent"></a> |
-| glm-agent | GLM Agent | `glm-acp-agent` | <a href="https://github.com/stefandevo/glm-acp-agent"><img src="Resources/icons/agents/glm-agent.svg" height="20" alt="GLM Agent"></a> |
-| harn | Harn | `harn` | <a href="https://harnlang.com"><img src="Resources/icons/agents/harn.svg" height="20" alt="Harn"></a> |
-| junie | Junie | `junie` | <a href="https://junie.jetbrains.com"><img src="Resources/icons/agents/junie.svg" height="20" alt="Junie"></a> |
-| minion-code | Minion Code | `minion-code` | <a href="https://github.com/femto/minion-code"><img src="Resources/icons/agents/minion-code.svg" height="20" alt="Minion Code"></a> |
-| nova | Nova | `nova` | <a href="https://www.compassap.ai/portfolio/nova.html"><img src="Resources/icons/agents/nova.svg" height="20" alt="Nova"></a> |
-| poolside | Poolside | `pool` | <a href="https://poolside.ai"><img src="Resources/icons/agents/poolside.svg" height="20" alt="Poolside"></a> |
-| sigit | siGit Code | `sigit` | <a href="https://smbcloud.xyz"><img src="Resources/icons/agents/sigit.png" height="20" alt="siGit Code"></a> |
-| stakpak | Stakpak | `stakpak` | <a href="https://stakpak.dev"><img src="Resources/icons/agents/stakpak.png" height="20" alt="Stakpak"></a> |
-| vtcode | VT Code | `vtcode` | <a href="https://github.com/vinhnx/VTCode"><img src="Resources/icons/agents/vtcode.png" height="20" alt="VT Code"></a> |
+Every agent ships in `agents.json` (51 built-ins) in this repository — the file is the source of truth. The list is generated from it and published as the single canonical list in the [Agent YOLO family README](https://github.com/cnsharp/Agent-YOLO/blob/main/Meta/README.md#supported-agents), so add or change an agent by editing the JSON, not the code.
 
 Anything not listed works as a custom tool: add it under `Tools > Options > Agent YOLO` and fill in its flags yourself.
-
----
 
 ## Tech stack
 
