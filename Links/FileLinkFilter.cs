@@ -180,7 +180,13 @@ namespace CnSharp.VSIX.Yolo
                     // that already contains a dot (the wrap split inside an extension) is not a bare mid-name
                     // fragment and is left for the standard pass instead.
                     bool reachesEnd = text.Substring(trimmed.Length).Trim().Length == 0;
-                    if (reachesEnd && !combined.Contains('.'))
+                    // A genuine mid-name continuation must look like a file-name fragment: only ASCII
+                    // letters, digits, underscores, and dashes. Sequences containing spaces, Unicode
+                    // symbols (∴, ●, ─, CJK, …), or punctuation are prose/TUI lines — not hard-wrapped
+                    // file names — and must not continue the chain. Without this guard `reachesEnd` is
+                    // always true for lines with no leading whitespace (Substring returns ""), causing
+                    // every subsequent row to be linked.
+                    if (reachesEnd && !combined.Contains('.') && LooksLikeName(trimmed))
                     {
                         wrap.PendingBareName = combined;
                         int cStart = leading;
@@ -290,7 +296,11 @@ namespace CnSharp.VSIX.Yolo
             // (neither a path nor a bare continuation is pending) — otherwise a continuation line would wrongly
             // re-mark its own fragment.
             if (prefix.Length == 0 && barePrefix.Length == 0 &&
-                !text.Contains('/') && !text.Contains('\\') && wrap != null)
+                !text.Contains('/') && !text.Contains('\\') &&
+                // TUI output (Claude Code tool-call labels, box-drawing borders, …) carries Unicode
+                // symbols such as ● ∴ └ that never appear in real code output. Guard on all-ASCII so a
+                // line like "● Bash" or "∴ Thought" is never mistaken for a hard-wrapped file-name head.
+                IsAllAscii(text) && wrap != null)
             {
                 var bh = YoloLinkPatterns.BareHeadPattern.Match(text);
                 if (bh.Success)
@@ -347,6 +357,37 @@ namespace CnSharp.VSIX.Yolo
             string name = sep >= 0 ? path.Substring(sep + 1) : path;
             int dot = name.LastIndexOf('.');
             return dot > 0 && dot < name.Length - 1;
+        }
+
+        /// <summary>
+        /// True when [s] consists solely of ASCII word characters that appear in a hard-wrapped file-name
+        /// fragment: letters, digits, underscore, dash. Prose, TUI chrome (● ∴ └ ─ …), and CJK text never
+        /// satisfy this, so it separates a genuine mid-name continuation from ordinary output.
+        /// </summary>
+        private static bool LooksLikeName(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return false;
+            foreach (char c in s)
+            {
+                if (!(c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' ||
+                      c >= '0' && c <= '9' || c == '_' || c == '-'))
+                    return false;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// True when [s] contains only ASCII characters (&lt; 128). TUI output carries Unicode symbols
+        /// (● ∴ └ ─ …) that never appear in real code output, so an all-ASCII gate cleanly separates the
+        /// two without affecting class names like <c>User</c> or <c>AccountD</c>.
+        /// </summary>
+        private static bool IsAllAscii(string s)
+        {
+            foreach (char c in s)
+            {
+                if (c >= 128) return false;
+            }
+            return true;
         }
     }
 }
