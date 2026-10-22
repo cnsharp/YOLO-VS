@@ -386,7 +386,9 @@ namespace CnSharp.VSIX.Yolo
 
             InstallButton.IsEnabled = canInstall;
             UpdateButton.IsEnabled = canUpdate;
-            CheckUpdatesButton.IsEnabled = !AgentUpdateChecker.IsChecking;
+            // "Check Updates" scans every installed agent, so it is enabled only while at least one agent is
+            // installed (independent of the selected row) and disabled while a scan is running.
+            CheckUpdatesButton.IsEnabled = !AgentUpdateChecker.IsChecking && InstalledAgents.CachedCommands.Count > 0;
         }
 
         private void InstallButton_Click(object sender, RoutedEventArgs e)
