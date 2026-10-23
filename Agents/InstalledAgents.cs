@@ -231,7 +231,25 @@ namespace CnSharp.VSIX.Yolo
 
             var list = new List<AgentConfig>();
 
-            // ① Built-in / known agents (command + id are fixed; skip/resume flag editable).
+            // Index user custom tools by command and by id (case-insensitive) so a newly-built-in agent
+            // that matches a tool the user already added can be field-merged (VSC-style) instead of
+            // duplicated. Matching on either key means an upgrade adding a built-in for an existing custom
+            // tool still resolves even if only one of the two is shared.
+            var customByKey = new Dictionary<string, CustomTool>(StringComparer.OrdinalIgnoreCase);
+            foreach (var tool in settings.CustomTools)
+            {
+                if (!string.IsNullOrWhiteSpace(tool.Command))
+                    customByKey[tool.Command.Trim()] = tool;
+                if (!string.IsNullOrWhiteSpace(tool.Id))
+                    customByKey[tool.Id.Trim()] = tool;
+            }
+            var consumed = new HashSet<CustomTool>();
+
+            // ① Built-in / known agents (command + id are fixed; skip/resume flag editable). When a built-in
+            //    matches a user custom tool (by command or id) the custom fields win for the values it set —
+            //    DisplayName / BaseArgs / IconPath — while the built-in keeps the canonical command, id and
+            //    default skip / resume flags. The user's prior customization is preserved: never lost and
+            //    never shown twice.
             foreach (var def in AgentRegistry.All)
             {
                 var baseCmd = ExecutableNames.BaseName(def.Command);
@@ -241,21 +259,42 @@ namespace CnSharp.VSIX.Yolo
                 var resume = resumeByBase.TryGetValue(baseCmd, out var r) && !string.IsNullOrWhiteSpace(r)
                     ? r
                     : def.ResumeFlag;
-                list.Add(new AgentConfig
+
+                customByKey.TryGetValue(def.Command?.Trim() ?? string.Empty, out var match) ||
+                    customByKey.TryGetValue(def.Id?.Trim() ?? string.Empty, out match);
+                if (match != null)
                 {
-                    Name = def.Id,
-                    DisplayName = def.DisplayName,
-                    Command = def.Command,
-                    BaseArgs = string.Empty,
-                    SkipFlag = skip,
-                    ResumeFlag = resume,
-                    IconPath = def.Icon
-                });
+                    consumed.Add(match);
+                    list.Add(new AgentConfig
+                    {
+                        Name = def.Id,
+                        DisplayName = string.IsNullOrWhiteSpace(match.DisplayName) ? def.DisplayName : match.DisplayName,
+                        Command = def.Command,
+                        BaseArgs = string.IsNullOrWhiteSpace(match.BaseArgs) ? string.Empty : match.BaseArgs,
+                        SkipFlag = skip,
+                        ResumeFlag = resume,
+                        IconPath = string.IsNullOrWhiteSpace(match.IconPath) ? def.Icon : match.IconPath
+                    });
+                }
+                else
+                {
+                    list.Add(new AgentConfig
+                    {
+                        Name = def.Id,
+                        DisplayName = def.DisplayName,
+                        Command = def.Command,
+                        BaseArgs = string.Empty,
+                        SkipFlag = skip,
+                        ResumeFlag = resume,
+                        IconPath = def.Icon
+                    });
+                }
             }
 
-            // ② User-added custom tools (fully configurable).
+            // ② Custom tools NOT matching any built-in — genuine user additions, emitted as-is.
             foreach (var tool in settings.CustomTools)
             {
+                if (consumed.Contains(tool)) continue;
                 if (string.IsNullOrWhiteSpace(tool.Id) || string.IsNullOrWhiteSpace(tool.Command))
                     continue;
                 var baseCmd = ExecutableNames.BaseName(tool.Command);

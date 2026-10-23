@@ -299,7 +299,10 @@ namespace CnSharp.VSIX.Yolo
             if (dupCmds.Count > 0) problems.Add(string.Format(CnSharp.VSIX.Yolo.Resources.Settings_DupCmd, string.Join(", ", dupCmds)));
 
             if (problems.Count > 0)
+            {
+                Console.WriteLine($"YOLO: {string.Join("; ", problems)}");
                 SetStatus(string.Join("; ", problems), true);
+            }
             else if (!string.IsNullOrEmpty(StatusText.Text) && StatusText.Foreground == Brushes.Red)
                 SetStatus(string.Empty, false);
         }
