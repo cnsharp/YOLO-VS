@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Net.Http;
+using Newtonsoft.Json.Linq;
 
 namespace CnSharp.VSIX.Yolo
 {
@@ -96,7 +98,7 @@ namespace CnSharp.VSIX.Yolo
             var specs = AgentRegistry.All
                 .Select(def => new KeyValuePair<string, InstallSpec>(
                     ExecutableNames.BaseName(def.Command).ToLowerInvariant(), def.Install))
-                .Where(kv => kv.Value != null && kv.Value.AutomatableOnPlatform
+                .Where(kv => kv.Value != null && (kv.Value.AutomatableOnPlatform || kv.Value.HasLatestSource)
                             && installed.Any(x => string.Equals(x, kv.Key, StringComparison.OrdinalIgnoreCase)))
                 .Select(kv => new KeyValuePair<string, InstallSpec>(kv.Key, kv.Value!))
                 .ToList();
@@ -167,7 +169,7 @@ namespace CnSharp.VSIX.Yolo
 
         /// <summary>Whether this spec's latest version can be queried on the current platform.</summary>
         private static bool CanQueryVersion(InstallSpec spec) =>
-            spec.AutomatableOnPlatform && spec.Type is "npm" or "pip" or "brew";
+            (spec.AutomatableOnPlatform && spec.Type is "npm" or "pip" or "brew") || spec.HasLatestSource;
 
         /// <summary>Run <c>&lt;command&gt; --version</c> (falling back to <c>-v</c>) and extract the first semver token.</summary>
         private static string CurrentVersion(string command)
@@ -185,13 +187,21 @@ namespace CnSharp.VSIX.Yolo
         }
 
         /// <summary>Latest published version for a package-manager spec. Empty if it cannot be determined.</summary>
-        private static string LatestVersion(InstallSpec spec) => spec.Type switch
+        private static string LatestVersion(InstallSpec spec)
         {
-            "npm" => NpmLatest(spec),
-            "pip" => PipLatest(spec),
-            "brew" => BrewLatest(spec),
-            _ => string.Empty
-        };
+            if (!string.IsNullOrEmpty(spec.Latest?.Npm)) return NpmLatestFromApi(spec.Latest.Npm);
+            if (!string.IsNullOrEmpty(spec.Latest?.Github)) return GithubLatest(spec.Latest.Github);
+            if (!string.IsNullOrEmpty(spec.Latest?.Pypi)) return PypiLatest(spec.Latest.Pypi);
+            if (!string.IsNullOrEmpty(spec.Latest?.Brew)) return BrewLatestFromApi(spec.Latest.Brew);
+            if (spec.Latest?.Web != null && !string.IsNullOrEmpty(spec.Latest.Web.Url)) return WebLatest(spec.Latest.Web);
+            return spec.Type switch
+            {
+                "npm" => NpmLatest(spec),
+                "pip" => PipLatest(spec),
+                "brew" => BrewLatest(spec),
+                _ => string.Empty
+            };
+        }
 
         private static string NpmLatest(InstallSpec spec)
         {
@@ -273,6 +283,130 @@ namespace CnSharp.VSIX.Yolo
                 "brew" => outp.Trim().Length > 0,
                 _ => false
             };
+        }
+
+        private static readonly HttpClient _http = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
+
+        static AgentUpdateChecker()
+        {
+            _http.DefaultRequestHeaders.UserAgent.TryParseAdd("agentyolo");
+        }
+
+        /// <summary>Fetch a URL body as text with a bounded timeout, or null on any failure (so the caller shows a
+        ///  dash instead of hanging the scan on a blocked/slow registry).</summary>
+        private static string? FetchText(string url, string? accept = null)
+        {
+            try
+            {
+                var req = new HttpRequestMessage(HttpMethod.Get, url);
+                if (accept != null) req.Headers.Accept.TryParseAdd(accept);
+                using (var resp = _http.SendAsync(req).GetAwaiter().GetResult())
+                {
+                    if (!resp.IsSuccessStatusCode) return null;
+                    return resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                }
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>Latest version from the npm dist-tags endpoint (small payload, unlike the full packument).</summary>
+        private static string NpmLatestFromApi(string pkg)
+        {
+            var url = "https://registry.npmjs.org/-/package/" + pkg.Replace("/", "%2f") + "/dist-tags";
+            var text = FetchText(url);
+            if (text == null) return string.Empty;
+            try
+            {
+                var obj = JObject.Parse(text);
+                var t = obj["latest"];
+                return t?.ToString() ?? string.Empty;
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        /// <summary>Latest version from a GitHub repo's latest release (release name's semver preferred over tag_name).</summary>
+        private static string GithubLatest(string repo)
+        {
+            var url = "https://api.github.com/repos/" + repo + "/releases/latest";
+            var text = FetchText(url, "application/vnd.github+json");
+            if (text == null) return string.Empty;
+            try
+            {
+                var obj = JObject.Parse(text);
+                foreach (var key in new[] { "name", "tag_name" })
+                {
+                    var raw = obj[key]?.ToString();
+                    if (string.IsNullOrEmpty(raw)) continue;
+                    var cleaned = raw.StartsWith("v") ? raw.Substring(1) : raw;
+                    var v = SemverOf(cleaned);
+                    if (v != null && v[0] < 1000) return string.Join(".", v);
+                }
+                return string.Empty;
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        /// <summary>Latest version from PyPI's JSON API.</summary>
+        private static string PypiLatest(string pkg)
+        {
+            var url = "https://pypi.org/pypi/" + pkg + "/json";
+            var text = FetchText(url);
+            if (text == null) return string.Empty;
+            try
+            {
+                var obj = JObject.Parse(text);
+                var v = obj["info"]?["version"]?.ToString();
+                return v ?? string.Empty;
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        /// <summary>Latest version from the Homebrew formula API (no auth, unlike the GitHub API rate limit).</summary>
+        private static string BrewLatestFromApi(string formula)
+        {
+            var url = "https://formulae.brew.sh/api/formula/" + formula + ".json";
+            var text = FetchText(url);
+            if (text == null) return string.Empty;
+            try
+            {
+                var obj = JObject.Parse(text);
+                var v = obj["versions"]?["stable"]?.ToString();
+                return v ?? string.Empty;
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        /// <summary>Latest version scraped from a web page that has no structured API. Returns the first capture
+        ///  group (or the whole match). Used for date-versioned tools whose install page is server-rendered.</summary>
+        private static string WebLatest(WebSource src)
+        {
+            var html = FetchText(src.Url);
+            if (html == null) return string.Empty;
+            try
+            {
+                var m = Regex.Match(html, src.Pattern, RegexOptions.Multiline);
+                if (m.Success) return m.Groups.Count > 1 ? m.Groups[1].Value : m.Value;
+                return string.Empty;
+            }
+            catch
+            {
+                return string.Empty;
+            }
         }
 
         /// <summary>Extract the first <c>major.minor[.patch]</c> token from arbitrary text (ignoring any pre-release suffix).</summary>

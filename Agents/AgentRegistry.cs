@@ -47,6 +47,24 @@ namespace CnSharp.VSIX.Yolo
     /// </list>
     /// Describes how an agent is installed.
     /// </summary>
+    public sealed class WebSource
+    {
+        public string Url { get; set; } = string.Empty;
+        public string Pattern { get; set; } = string.Empty;
+    }
+
+    /// <summary>Structured source for the latest published version (mirrors the VSCode yolo product's agents.json).
+    ///  When present, AgentUpdateChecker queries that source over HTTP instead of (or in addition to) the
+    ///  package-manager shell probes, so shell/url agents still get a live latest badge.</summary>
+    public sealed class LatestSpec
+    {
+        public string Npm { get; set; } = string.Empty;
+        public string Github { get; set; } = string.Empty;
+        public string Pypi { get; set; } = string.Empty;
+        public string Brew { get; set; } = string.Empty;
+        public WebSource? Web { get; set; }
+    }
+
     public sealed class InstallSpec
     {
         public string Type { get; set; } = string.Empty;
@@ -55,6 +73,23 @@ namespace CnSharp.VSIX.Yolo
         public string CmdWin { get; set; } = string.Empty;
         public string Url { get; set; } = string.Empty;
         public string UpdateCmd { get; set; } = string.Empty;
+
+        /// <summary>Structured source for the latest published version (npm / github / pypi / brew / web).
+        ///  When set, AgentUpdateChecker queries it over HTTP.</summary>
+        public LatestSpec? Latest { get; set; }
+
+        /// <summary>True when a structured latest source is declared (so the version checker can query it over HTTP).</summary>
+        public bool HasLatestSource
+        {
+            get
+            {
+                if (Latest == null) return false;
+                var l = Latest;
+                return !string.IsNullOrEmpty(l.Npm) || !string.IsNullOrEmpty(l.Github)
+                    || !string.IsNullOrEmpty(l.Pypi) || !string.IsNullOrEmpty(l.Brew)
+                    || (l.Web != null && !string.IsNullOrEmpty(l.Web.Url));
+            }
+        }
 
         /// <summary>Whether the plugin can run this install head-less (everything except <c>url</c>).
         /// Data-model field (not platform-aware): whether the plugin can run this install head-less.</summary>
