@@ -19,10 +19,10 @@ namespace CnSharp.VSIX.Yolo
     /// Homebrew doesn't exist) have no queryable package source, so they are reported as
     /// <see cref="Status.MANUAL"/> and the Update button opens the agent's site instead.
     ///
-    /// Results are kept in a transient in-memory cache keyed by lower-cased command base name, so the
-    /// Settings page can reflect them on open and the terminal dropdown could surface a badge. The cache
-    /// is not persisted. <see cref="ResultsChanged"/> is raised on the background thread, so subscribers
-    /// must marshal to the UI thread themselves.
+        /// Results are kept in an in-memory cache keyed by lower-cased command base name, so the
+        /// Settings page can reflect them on open and the terminal dropdown could surface a badge. The cache
+        /// is seeded from <see cref="YoloSettings.LatestVersions"/> on first scan (cache-first) and flushed
+        /// back after every scan/refresh, so last-known latest versions survive restarts.
     /// </summary>
     public static class AgentUpdateChecker
     {
@@ -49,6 +49,8 @@ namespace CnSharp.VSIX.Yolo
             new Dictionary<string, UpdateInfo>(StringComparer.OrdinalIgnoreCase);
         private static readonly List<Action> _listeners = new List<Action>();
         private static bool _checking;
+        private static bool _seeded;
+        private static readonly Dictionary<string, string> _dirtyLatest = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>Full result for a command (lower-cased base name), or null when never checked.</summary>
         public static UpdateInfo? InfoFor(string command)
@@ -90,9 +92,56 @@ namespace CnSharp.VSIX.Yolo
             }
         }
 
+        /// <summary>Seed the in-memory cache with last-known latest versions so the panel shows them
+        ///  immediately (cache-first) before the next network probe lands. Live checks overwrite these.</summary>
+        private static void SeedFromCache()
+        {
+            if (_seeded) return;
+            _seeded = true;
+            try
+            {
+                foreach (var e in YoloSettings.Instance.LatestVersions)
+                {
+                    if (string.IsNullOrEmpty(e.Version)) continue;
+                    var k = e.Command.ToLowerInvariant();
+                    lock (_lock)
+                    {
+                        if (!_results.ContainsKey(k))
+                            _results[k] = new UpdateInfo(Status.NA, string.Empty, e.Version);
+                    }
+                }
+            }
+            catch { /* ignore malformed cache */ }
+        }
+
+        /// <summary>Record a detected latest version for the end-of-scan flush (one disk write per scan).</summary>
+        private static void MarkLatest(string command, string version)
+        {
+            if (!string.IsNullOrEmpty(version))
+                lock (_lock) _dirtyLatest[command.ToLowerInvariant()] = version;
+        }
+
+        /// <summary>Merge dirty detections into the persisted settings and save once.</summary>
+        private static void FlushLatest()
+        {
+            if (_dirtyLatest.Count == 0) return;
+            try
+            {
+                var settings = YoloSettings.Instance;
+                var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var e in settings.LatestVersions) map[e.Command.ToLowerInvariant()] = e.Version;
+                foreach (var kv in _dirtyLatest) map[kv.Key] = kv.Value;
+                settings.LatestVersions = map.Select(kv => new VersionCacheEntry { Command = kv.Key, Version = kv.Value }).ToList();
+                settings.Save();
+            }
+            catch { /* ignore */ }
+            lock (_lock) _dirtyLatest.Clear();
+        }
+
         /// <summary>Check every installed agent that declares an automatable install spec. Safe to call repeatedly.</summary>
         public static void CheckAll()
         {
+            SeedFromCache();
             // Build the spec list (read-only) first so we don't hold the guard during I/O.
             var installed = InstalledAgents.CachedCommands; // lower-cased base names
             var specs = AgentRegistry.All
@@ -122,12 +171,17 @@ namespace CnSharp.VSIX.Yolo
                     Publish();
 
                     foreach (var kv in specs)
-                        lock (_lock) _results[kv.Key] = CheckAgent(kv.Key, kv.Value);
+                    {
+                        var info = CheckAgent(kv.Key, kv.Value);
+                        MarkLatest(kv.Key, info.Latest);
+                        lock (_lock) _results[kv.Key] = info;
+                    }
 
                     Publish();
                 }
                 finally
                 {
+                    FlushLatest();
                     lock (_lock) _checking = false;
                 }
             });
@@ -139,6 +193,8 @@ namespace CnSharp.VSIX.Yolo
             var key = ExecutableNames.BaseName(command ?? string.Empty).ToLowerInvariant();
             var info = CheckAgent(key, spec);
             lock (_lock) _results[key] = info;
+            MarkLatest(key, info.Latest);
+            FlushLatest();
             Publish();
         }
 

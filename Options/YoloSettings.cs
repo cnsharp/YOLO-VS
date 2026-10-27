@@ -94,6 +94,14 @@ namespace CnSharp.VSIX.Yolo
         public List<string> CachedInstalledCommands { get; set; } = new List<string>();
 
         /// <summary>
+        /// Persisted last-known latest versions, keyed by lower-cased command base name. Seeded into
+        /// AgentUpdateChecker on startup so the Options page shows a version immediately (cache-first)
+        /// before the next network probe lands; refreshed after every scan.
+        /// </summary>
+        [XmlArray("LatestVersions"), XmlArrayItem("Entry")]
+        public List<VersionCacheEntry> LatestVersions { get; set; } = new List<VersionCacheEntry>();
+
+        /// <summary>
         /// Load settings from disk
         /// </summary>
         public static YoloSettings? Load()
@@ -154,5 +162,14 @@ namespace CnSharp.VSIX.Yolo
             AutoRefreshAgents = true;
             Save();
         }
+    }
+
+    /// <summary>One persisted last-known latest version, keyed by command base name.</summary>
+    public sealed class VersionCacheEntry
+    {
+        [XmlAttribute("cmd")]
+        public string Command { get; set; } = string.Empty;
+        [XmlAttribute("v")]
+        public string Version { get; set; } = string.Empty;
     }
 }
