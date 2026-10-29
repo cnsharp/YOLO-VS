@@ -58,6 +58,8 @@ namespace CnSharp.VSIX.Yolo
         private readonly YoloLinkFilters _linkFilters;
 
         private string _selectedAgent = string.Empty;
+        /// <summary>Sentinel id for the trailing "Manage Agents" combo entry (opens the document tab).</summary>
+        private const string ManageAgentsComboId = "__yolo_manage_agents__";
         /// <summary>Re-entrancy guard while programmatically syncing the tab switcher / tab strip.</summary>
         private bool _tabSwitchSyncing;
 
@@ -212,6 +214,9 @@ namespace CnSharp.VSIX.Yolo
                 _restoringToggles = false;
             }
             ApplyToggleVisuals();
+
+            // Robot glyph for the Manage Agents entry (mirrors the IntelliJ tool-window dropdown).
+            ManageAgentsIcon.Source = AgentIconImage.FromPath("Resources/icons/robot.svg");
 
             // Restore the last-used agent so the dropdown opens on it (falls back to the first
             // installed agent in LoadAgentsAsync when it is no longer available).
@@ -532,6 +537,15 @@ namespace CnSharp.VSIX.Yolo
                 });
             }
 
+            // Always-present trailing entry that opens the Manage Agents document tab
+            // (mirrors the IDEA tool-window dropdown and the VSCode agent menu).
+            AgentComboBox.Items.Add(new AgentComboItem
+            {
+                Id = ManageAgentsComboId,
+                Name = Resources.Manage_AgentListItem,
+                Icon = AgentIconImage.FromPath("Resources/icons/robot.svg")
+            });
+
             // Select the previously chosen agent (preserved across async refreshes); otherwise
             // fall back to the first installed agent so the dropdown always shows a runnable choice.
             if (!string.IsNullOrEmpty(_selectedAgent))
@@ -547,6 +561,20 @@ namespace CnSharp.VSIX.Yolo
         {
             if (AgentComboBox.SelectedItem is AgentComboItem selectedItem)
             {
+                // The trailing "Manage Agents" entry opens the document tab instead of selecting an agent.
+                if (selectedItem.Id == ManageAgentsComboId)
+                {
+                    // Revert the visible selection to the previously chosen agent (or the first real one).
+                    AgentComboItem? revert = null;
+                    foreach (AgentComboItem item in AgentComboBox.Items)
+                    {
+                        if (item.Id == _selectedAgent) { revert = item; break; }
+                        if (revert == null && item.Id != ManageAgentsComboId) revert = item;
+                    }
+                    if (revert != null) AgentComboBox.SelectedItem = revert;
+                    ManageAgentsCommand.OpenManageAgents();
+                    return;
+                }
                 _selectedAgent = selectedItem.Id;
 
                 if (!string.IsNullOrEmpty(selectedItem.Id))
@@ -818,5 +846,19 @@ namespace CnSharp.VSIX.Yolo
                 return null;
             }
         }
+        /// <summary>Opens the Manage Agents document tab (the VS analog of IntelliJ's editor-area tab).</summary>
+        private void OnManageAgentsClicked(object sender, RoutedEventArgs e)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            try
+            {
+                ManageAgentsCommand.OpenManageAgents();
+            }
+            catch (Exception ex)
+            {
+                Log.Write("Manage Agents open failed: " + ex);
+            }
+        }
+
     }
 }

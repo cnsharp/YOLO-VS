@@ -1,0 +1,45 @@
+<UserControl x:Class="CnSharp.VSIX.Yolo.ManageAgentsControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:CnSharp.VSIX.Yolo"
+             mc:Ignorable="d"
+             d:DesignHeight="480" d:DesignWidth="640">
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+
+    <!-- Toolbar: heading + Check Updates / Update All -->
+    <Border Grid.Row="0" x:Name="Toolbar" BorderThickness="0,0,0,1">
+      <Grid Margin="14,10">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <TextBlock Grid.Column="0" x:Name="Heading"
+                   Text="{x:Static local:Resources.Manage_Heading}"
+                   FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
+        <StackPanel Grid.Column="1" Orientation="Horizontal">
+          <Button x:Name="CheckUpdatesBtn" Content="{x:Static local:Resources.Manage_CheckUpdates}"
+                  Height="26" Padding="12,0" Click="OnCheckUpdates"/>
+          <Button x:Name="UpdateAllBtn" Content="{x:Static local:Resources.Manage_UpdateAll}"
+                  Height="26" Padding="12,0" Margin="8,0,0,0" Click="OnUpdateAll"/>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- Card grid (uniform 300x200 cards, like the VSCode Agent Manager) -->
+    <ScrollViewer Grid.Row="1" x:Name="Scroll" HorizontalScrollBarVisibility="Disabled">
+      <WrapPanel x:Name="CardPanel" Margin="14" Orientation="Horizontal"/>
+    </ScrollViewer>
+
+    <!-- Status line -->
+    <Border Grid.Row="2" x:Name="StatusBorder" BorderThickness="0,1,0,0">
+      <TextBlock x:Name="StatusLine" Margin="14,6" FontSize="12" TextWrapping="Wrap"/>
+    </Border>
+  </Grid>
+</UserControl>

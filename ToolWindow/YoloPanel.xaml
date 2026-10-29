@@ -187,6 +187,17 @@
                           StrokeLineJoin="Round" Width="16" Height="16"/>
                 </ToggleButton>
 
+                <Button x:Name="ManageAgentsButton"
+                        Width="26" Height="26"
+                        Margin="6,0,0,0"
+                        Background="Transparent"
+                        BorderBrush="#3e3e42"
+                        BorderThickness="1"
+                        ToolTip="Manage Agents"
+                        Click="OnManageAgentsClicked">
+                    <Image x:Name="ManageAgentsIcon" Width="16" Height="16" RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Button>
+
                 <Button x:Name="SettingsButton"
                         Width="26" Height="26"
                         Margin="6,0,0,0"

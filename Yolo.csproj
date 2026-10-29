@@ -75,6 +75,7 @@
     <Resource Include="Resources/icons/skipYOn.svg" />
     <Resource Include="Resources/icons/resume.svg" />
     <Resource Include="Resources/icons/resumeOn.svg" />
+    <Resource Include="Resources/icons/robot.svg" />
     <Resource Include="Resources/icons/agents/**" />
   </ItemGroup>
 

@@ -51,6 +51,11 @@ namespace CnSharp.VSIX.Yolo
         private static bool _checking;
         private static bool _seeded;
         private static readonly Dictionary<string, string> _dirtyLatest = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        /// <summary>Dirty current (installed) version detections, flushed once per scan (with a UTC timestamp for TTL).</summary>
+        private static readonly Dictionary<string, CurrentVersionCacheEntry> _dirtyCurrent =
+            new Dictionary<string, CurrentVersionCacheEntry>(StringComparer.OrdinalIgnoreCase);
+        /// <summary>A current-version detection older than this (24h) is treated as stale and re-probed on open.</summary>
+        private static readonly long _cacheTtlTicks = TimeSpan.FromHours(24).Ticks;
 
         /// <summary>Full result for a command (lower-cased base name), or null when never checked.</summary>
         public static UpdateInfo? InfoFor(string command)
@@ -110,6 +115,26 @@ namespace CnSharp.VSIX.Yolo
                             _results[k] = new UpdateInfo(Status.NA, string.Empty, e.Version);
                     }
                 }
+
+                // Seed last-known *current* (installed) versions within TTL so the panel shows the
+                // installed version immediately, preserving any already-seeded latest version.
+                var nowTicks = DateTime.UtcNow.Ticks;
+                foreach (var e in YoloSettings.Instance.CurrentVersions)
+                {
+                    if (string.IsNullOrEmpty(e.Version)) continue;
+                    if (nowTicks - e.Ticks > _cacheTtlTicks) continue; // stale -> re-probe on next scan
+                    var k = e.Command.ToLowerInvariant();
+                    lock (_lock)
+                    {
+                        if (!_results.ContainsKey(k))
+                            _results[k] = new UpdateInfo(Status.NA, e.Version, string.Empty);
+                        else
+                        {
+                            var existing = _results[k];
+                            _results[k] = new UpdateInfo(existing.Status, e.Version, existing.Latest);
+                        }
+                    }
+                }
             }
             catch { /* ignore malformed cache */ }
         }
@@ -121,21 +146,48 @@ namespace CnSharp.VSIX.Yolo
                 lock (_lock) _dirtyLatest[command.ToLowerInvariant()] = version;
         }
 
+        /// <summary>Record a detected current (installed) version + timestamp for the end-of-scan flush.</summary>
+        private static void MarkCurrent(string command, string version)
+        {
+            if (string.IsNullOrEmpty(version)) return;
+            var k = command.ToLowerInvariant();
+            lock (_lock) _dirtyCurrent[k] = new CurrentVersionCacheEntry
+            {
+                Command = k,
+                Version = version,
+                Ticks = DateTime.UtcNow.Ticks
+            };
+        }
+
         /// <summary>Merge dirty detections into the persisted settings and save once.</summary>
         private static void FlushLatest()
         {
-            if (_dirtyLatest.Count == 0) return;
             try
             {
                 var settings = YoloSettings.Instance;
-                var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                foreach (var e in settings.LatestVersions) map[e.Command.ToLowerInvariant()] = e.Version;
-                foreach (var kv in _dirtyLatest) map[kv.Key] = kv.Value;
-                settings.LatestVersions = map.Select(kv => new VersionCacheEntry { Command = kv.Key, Version = kv.Value }).ToList();
-                settings.Save();
+                if (_dirtyLatest.Count > 0)
+                {
+                    var latestMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                    foreach (var e in settings.LatestVersions) latestMap[e.Command.ToLowerInvariant()] = e.Version;
+                    foreach (var kv in _dirtyLatest) latestMap[kv.Key] = kv.Value;
+                    settings.LatestVersions = latestMap.Select(kv => new VersionCacheEntry { Command = kv.Key, Version = kv.Value }).ToList();
+                }
+                if (_dirtyCurrent.Count > 0)
+                {
+                    var currentMap = new Dictionary<string, CurrentVersionCacheEntry>(StringComparer.OrdinalIgnoreCase);
+                    foreach (var e in settings.CurrentVersions) currentMap[e.Command.ToLowerInvariant()] = e;
+                    foreach (var kv in _dirtyCurrent) currentMap[kv.Key] = kv.Value;
+                    settings.CurrentVersions = currentMap.Values.ToList();
+                }
+                if (_dirtyLatest.Count > 0 || _dirtyCurrent.Count > 0)
+                    settings.Save();
             }
             catch { /* ignore */ }
-            lock (_lock) _dirtyLatest.Clear();
+            lock (_lock)
+            {
+                _dirtyLatest.Clear();
+                _dirtyCurrent.Clear();
+            }
         }
 
         /// <summary>Check every installed agent that declares an automatable install spec. Safe to call repeatedly.</summary>
@@ -167,13 +219,22 @@ namespace CnSharp.VSIX.Yolo
                 {
                     lock (_lock)
                         foreach (var kv in specs)
-                            _results[kv.Key] = new UpdateInfo(Status.CHECKING);
+                        {
+                            // Preserve the last-known current/latest so the UI keeps showing them
+                            // (cache-first) instead of blanking to a dash while the probe is in flight.
+                            var prev = _results.TryGetValue(kv.Key, out var p) ? p : null;
+                            _results[kv.Key] = new UpdateInfo(
+                                Status.CHECKING,
+                                prev?.Current ?? string.Empty,
+                                prev?.Latest ?? string.Empty);
+                        }
                     Publish();
 
                     foreach (var kv in specs)
                     {
                         var info = CheckAgent(kv.Key, kv.Value);
                         MarkLatest(kv.Key, info.Latest);
+                        if (!string.IsNullOrEmpty(info.Current)) MarkCurrent(kv.Key, info.Current);
                         lock (_lock) _results[kv.Key] = info;
                     }
 
@@ -194,6 +255,7 @@ namespace CnSharp.VSIX.Yolo
             var info = CheckAgent(key, spec);
             lock (_lock) _results[key] = info;
             MarkLatest(key, info.Latest);
+            if (!string.IsNullOrEmpty(info.Current)) MarkCurrent(key, info.Current);
             FlushLatest();
             Publish();
         }

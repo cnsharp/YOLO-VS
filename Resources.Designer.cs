@@ -771,5 +771,203 @@ namespace CnSharp.VSIX.Yolo {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to Manage Agents.
+        /// </summary>
+        public static string Manage_Heading {
+            get {
+                return ResourceManager.GetString("Manage_Heading", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Manage Agents...
+        /// </summary>
+        public static string Manage_AgentListItem {
+            get {
+                return ResourceManager.GetString("Manage_AgentListItem", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Check Updates.
+        /// </summary>
+        public static string Manage_CheckUpdates {
+            get {
+                return ResourceManager.GetString("Manage_CheckUpdates", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Update All.
+        /// </summary>
+        public static string Manage_UpdateAll {
+            get {
+                return ResourceManager.GetString("Manage_UpdateAll", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Update All ({0}).
+        /// </summary>
+        public static string Manage_UpdateAllCount {
+            get {
+                return ResourceManager.GetString("Manage_UpdateAllCount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Update available.
+        /// </summary>
+        public static string Manage_UpdateAvailable {
+            get {
+                return ResourceManager.GetString("Manage_UpdateAvailable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Current version.
+        /// </summary>
+        public static string Manage_CurrentVersion {
+            get {
+                return ResourceManager.GetString("Manage_CurrentVersion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Latest version.
+        /// </summary>
+        public static string Manage_LatestVersion {
+            get {
+                return ResourceManager.GetString("Manage_LatestVersion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Update.
+        /// </summary>
+        public static string Manage_Update {
+            get {
+                return ResourceManager.GetString("Manage_Update", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Install.
+        /// </summary>
+        public static string Manage_Install {
+            get {
+                return ResourceManager.GetString("Manage_Install", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Website.
+        /// </summary>
+        public static string Manage_Website {
+            get {
+                return ResourceManager.GetString("Manage_Website", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Checking….
+        /// </summary>
+        public static string Manage_Checking {
+            get {
+                return ResourceManager.GetString("Manage_Checking", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to —.
+        /// </summary>
+        public static string Manage_Unknown {
+            get {
+                return ResourceManager.GetString("Manage_Unknown", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to not installed.
+        /// </summary>
+        public static string Manage_NotInstalled {
+            get {
+                return ResourceManager.GetString("Manage_NotInstalled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No agents detected..
+        /// </summary>
+        public static string Manage_Empty {
+            get {
+                return ResourceManager.GetString("Manage_Empty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Working….
+        /// </summary>
+        public static string Manage_Working {
+            get {
+                return ResourceManager.GetString("Manage_Working", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Checking for updates….
+        /// </summary>
+        public static string Manage_StatusChecking {
+            get {
+                return ResourceManager.GetString("Manage_StatusChecking", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} update(s) available.
+        /// </summary>
+        public static string Manage_StatusUpdatesAvailable {
+            get {
+                return ResourceManager.GetString("Manage_StatusUpdatesAvailable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Installing {0} ({1})….
+        /// </summary>
+        public static string Manage_StatusInstalling {
+            get {
+                return ResourceManager.GetString("Manage_StatusInstalling", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} installed / updated.
+        /// </summary>
+        public static string Manage_StatusInstalled {
+            get {
+                return ResourceManager.GetString("Manage_StatusInstalled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to install {0}: {1}.
+        /// </summary>
+        public static string Manage_StatusInstallFailed {
+            get {
+                return ResourceManager.GetString("Manage_StatusInstallFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} ran but is not on PATH ({1}).
+        /// </summary>
+        public static string Manage_StatusUnverified {
+            get {
+                return ResourceManager.GetString("Manage_StatusUnverified", resourceCulture);
+            }
+        }
+        
     }
 }

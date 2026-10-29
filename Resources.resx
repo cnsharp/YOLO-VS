@@ -298,6 +298,74 @@
     <value>Offline / failed</value>
   </data>
 
+  <!-- Manage Agents document tab -->
+  <data name="Manage_Heading" xml:space="preserve">
+    <value>Manage Agents</value>
+  </data>
+  <data name="Manage_AgentListItem" xml:space="preserve">
+    <value>Manage Agents...</value>
+  </data>
+  <data name="Manage_CheckUpdates" xml:space="preserve">
+    <value>Check Updates</value>
+  </data>
+  <data name="Manage_UpdateAll" xml:space="preserve">
+    <value>Update All</value>
+  </data>
+  <data name="Manage_UpdateAllCount" xml:space="preserve">
+    <value>Update All ({0})</value>
+  </data>
+  <data name="Manage_UpdateAvailable" xml:space="preserve">
+    <value>Update available</value>
+  </data>
+  <data name="Manage_CurrentVersion" xml:space="preserve">
+    <value>Current version</value>
+  </data>
+  <data name="Manage_LatestVersion" xml:space="preserve">
+    <value>Latest version</value>
+  </data>
+  <data name="Manage_Update" xml:space="preserve">
+    <value>Update</value>
+  </data>
+  <data name="Manage_Install" xml:space="preserve">
+    <value>Install</value>
+  </data>
+  <data name="Manage_Website" xml:space="preserve">
+    <value>Website</value>
+  </data>
+  <data name="Manage_Checking" xml:space="preserve">
+    <value>Checking…</value>
+  </data>
+  <data name="Manage_Unknown" xml:space="preserve">
+    <value>—</value>
+  </data>
+  <data name="Manage_NotInstalled" xml:space="preserve">
+    <value>not installed</value>
+  </data>
+  <data name="Manage_Empty" xml:space="preserve">
+    <value>No agents detected.</value>
+  </data>
+  <data name="Manage_Working" xml:space="preserve">
+    <value>Working…</value>
+  </data>
+  <data name="Manage_StatusChecking" xml:space="preserve">
+    <value>Checking for updates…</value>
+  </data>
+  <data name="Manage_StatusUpdatesAvailable" xml:space="preserve">
+    <value>{0} update(s) available</value>
+  </data>
+  <data name="Manage_StatusInstalling" xml:space="preserve">
+    <value>Installing {0} ({1})…</value>
+  </data>
+  <data name="Manage_StatusInstalled" xml:space="preserve">
+    <value>{0} installed / updated</value>
+  </data>
+  <data name="Manage_StatusInstallFailed" xml:space="preserve">
+    <value>Failed to install {0}: {1}</value>
+  </data>
+  <data name="Manage_StatusUnverified" xml:space="preserve">
+    <value>{0} ran but is not on PATH ({1})</value>
+  </data>
+
   <!-- Settings dialog -->
   <data name="Dialog_OK" xml:space="preserve">
     <value>OK</value>

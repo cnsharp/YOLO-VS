@@ -15,6 +15,7 @@
     <GuidSymbol name="guidYoloCmdSet" value="{2b5e1d4a-3c6f-4a8b-9c2d-7e1f4a5b6c7d}">
       <IDSymbol name="IDG_YOLO_VIEW" value="0x1020" />
       <IDSymbol name="cmdidYoloToolWindow" value="0x0100" />
+      <IDSymbol name="cmdidManageAgents" value="0x0101" />
     </GuidSymbol>
     <GuidSymbol name="guidImages" value="{9c1a2b3d-4e5f-6a7b-8c9d-0e1f2a3b4c5e}">
       <IDSymbol name="bmpYolo" value="1" />
@@ -42,6 +43,14 @@
           <CommandName>YoloToolWindowCommand</CommandName>
         </Strings>
       </Button>
+      <Button guid="guidYoloCmdSet" id="cmdidManageAgents" priority="0x0110" type="Button">
+        <Parent guid="guidYoloCmdSet" id="IDG_YOLO_VIEW" />
+        <Icon guid="guidImages" id="bmpYolo" />
+        <Strings>
+          <ButtonText>Manage Agents</ButtonText>
+          <CommandName>ManageAgentsCommand</CommandName>
+        </Strings>
+      </Button>
     </Buttons>
 
     <Bitmaps>
@@ -55,5 +64,7 @@
   <KeyBindings>
     <KeyBinding guid="guidYoloCmdSet" id="cmdidYoloToolWindow"
                 editor="guidVSStd97" key1="W" mod1="Control" key2="Y" />
+    <KeyBinding guid="guidYoloCmdSet" id="cmdidManageAgents"
+                editor="guidVSStd97" key1="W" mod1="Control" key2="A" />
   </KeyBindings>
 </CommandTable>

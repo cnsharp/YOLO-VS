@@ -102,6 +102,15 @@ namespace CnSharp.VSIX.Yolo
         public List<VersionCacheEntry> LatestVersions { get; set; } = new List<VersionCacheEntry>();
 
         /// <summary>
+        /// Persisted last-known <i>current</i> (installed) versions, keyed by lower-cased command
+        /// base name, with a timestamp (in UTC ticks) used for 24h TTL eviction on the reader side.
+        /// Seeded into AgentUpdateChecker on startup so the Manage Agents tab shows the installed
+        /// version immediately (cache-first) before the next local probe lands; refreshed after every scan.
+        /// </summary>
+        [XmlArray("CurrentVersions"), XmlArrayItem("Entry")]
+        public List<CurrentVersionCacheEntry> CurrentVersions { get; set; } = new List<CurrentVersionCacheEntry>();
+
+        /// <summary>
         /// Load settings from disk
         /// </summary>
         public static YoloSettings? Load()
@@ -171,5 +180,17 @@ namespace CnSharp.VSIX.Yolo
         public string Command { get; set; } = string.Empty;
         [XmlAttribute("v")]
         public string Version { get; set; } = string.Empty;
+    }
+
+    /// <summary>One persisted last-known current (installed) version, keyed by command base name,
+    /// with a UTC-ticks timestamp so a stale (older than the reader's TTL) entry is ignored when seeded.</summary>
+    public sealed class CurrentVersionCacheEntry
+    {
+        [XmlAttribute("cmd")]
+        public string Command { get; set; } = string.Empty;
+        [XmlAttribute("v")]
+        public string Version { get; set; } = string.Empty;
+        [XmlAttribute("t")]
+        public long Ticks { get; set; }
     }
 }
