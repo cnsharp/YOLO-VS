@@ -50,6 +50,10 @@ namespace CnSharp.VSIX.Yolo
         private static readonly List<Action> _listeners = new List<Action>();
         private static bool _checking;
         private static bool _seeded;
+        /// <summary>Whether an automatic update check has been requested (and started) this session.
+        /// Set by <see cref="CheckAll"/> when a scan begins, so both the Options page's auto-check
+        /// option and the Manage Agents tab agree on "has a check been done yet".</summary>
+        private static bool _autoCheckRequested;
         private static readonly Dictionary<string, string> _dirtyLatest = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         /// <summary>Dirty current (installed) version detections, flushed once per scan (with a UTC timestamp for TTL).</summary>
         private static readonly Dictionary<string, CurrentVersionCacheEntry> _dirtyCurrent =
@@ -69,6 +73,36 @@ namespace CnSharp.VSIX.Yolo
 
         /// <summary>Whether a background scan is currently running (so callers avoid overlapping scans).</summary>
         public static bool IsChecking { get { lock (_lock) return _checking; } }
+
+        /// <summary>Whether an automatic update check has been requested (and started) this session.</summary>
+        public static bool AutoCheckRequested { get { lock (_lock) return _autoCheckRequested; } }
+
+        /// <summary>Seed the in-memory cache from the persisted last-known versions so surfaces can
+        /// show cached current/latest versions immediately, before any network probe lands.</summary>
+        public static void Seed()
+        {
+            SeedFromCache();
+        }
+
+        /// <summary>Honours the YoloSettings.AutoCheckUpdates option. Called from the Options page or
+        /// package init: if the option is enabled and no automatic check has run yet this session, kicks
+        /// off a background scan. The Manage Agents tab covers the option-off case via EnsureCheckedForUi.</summary>
+        public static void AutoCheckIfEnabled()
+        {
+            if (!YoloSettings.Instance.AutoCheckUpdates) return;
+            if (AutoCheckRequested) return;
+            CheckAll();
+        }
+
+        /// <summary>Called when the Manage Agents document tab opens. If an automatic check was never
+        /// requested this session (e.g. AutoCheckUpdates is off, or the tab is the first surface shown),
+        /// start a background scan so the tab shows real versions. If a startup auto-check already
+        /// covered it, this is a no-op and the cached results are shown instead (no redundant scan).</summary>
+        public static void EnsureCheckedForUi()
+        {
+            if (AutoCheckRequested) return;
+            CheckAll();
+        }
 
         /// <summary>Immutable snapshot of all known results, keyed by lower-cased command base name.</summary>
         public static IReadOnlyDictionary<string, UpdateInfo> Snapshot()
@@ -211,6 +245,7 @@ namespace CnSharp.VSIX.Yolo
             {
                 if (_checking) return;
                 _checking = true;
+                _autoCheckRequested = true;
             }
 
             Task.Run(() =>

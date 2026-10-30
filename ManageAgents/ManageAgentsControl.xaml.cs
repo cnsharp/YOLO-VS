@@ -50,10 +50,11 @@ namespace CnSharp.VSIX.Yolo
             ApplyVsTheme();
             AgentUpdateChecker.AddListener(OnUpdateResultsChanged);
             InstalledAgents.CacheChanged += OnAgentCacheChanged;
+            // Show cached versions immediately (cache-first), then refresh from the background scan.
+            AgentUpdateChecker.Seed();
             Rebuild();
-            // Mirror VSCode: kick off the background version scan as soon as the page opens.
-            if (!AgentUpdateChecker.IsChecking())
-                AgentUpdateChecker.CheckAll();
+            // Mirror VSCode: ensure a background version scan runs if it wasn't already auto-checked.
+            AgentUpdateChecker.EnsureCheckedForUi();
         }
 
         /// <summary>Stop listening to background checks (called from the pane's Dispose).</summary>
@@ -345,14 +346,14 @@ namespace CnSharp.VSIX.Yolo
             if (status == AgentUpdateChecker.Status.CHECKING && string.IsNullOrEmpty(current))
                 return Resources.Manage_Checking;
             if (!string.IsNullOrEmpty(current)) return current;
-            return installed ? Resources.Manage_Unknown : Resources.Manage_NotInstalled;
+            return installed ? "-" : Resources.Manage_NotInstalled;
         }
 
         private string LatestText(AgentUpdateChecker.Status status, string latest)
         {
             if (!string.IsNullOrEmpty(latest)) return latest;
             if (status == AgentUpdateChecker.Status.CHECKING) return Resources.Manage_Checking;
-            return Resources.Manage_Unknown;
+            return "-";
         }
 
         // ── buttons ───────────────────────────────────────────────
