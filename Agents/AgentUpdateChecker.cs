@@ -35,12 +35,14 @@ namespace CnSharp.VSIX.Yolo
             public Status Status { get; }
             public string Current { get; }
             public string Latest { get; }
+            public string Error { get; }
 
-            public UpdateInfo(Status status, string current = "", string latest = "")
+            public UpdateInfo(Status status, string current = "", string latest = "", string error = "")
             {
                 Status = status;
                 Current = current;
                 Latest = latest;
+                Error = error;
             }
         }
 
@@ -307,7 +309,21 @@ namespace CnSharp.VSIX.Yolo
                 var outdated = ProbeOutdated(spec);
                 return new UpdateInfo(outdated ? Status.UPDATE_AVAILABLE : Status.UP_TO_DATE, current, latest);
             }
-            return new UpdateInfo(Status.ERROR, current, string.Empty);
+            // Latest version could not be determined even though the source is queryable: surface a
+            // reason so the card can explain the failure instead of showing a silent dash.
+            var reason = spec.Latest?.Npm != null ? "npm registry unreachable"
+                       : spec.Latest?.Github != null ? "github release lookup failed"
+                       : spec.Latest?.Pypi != null ? "pypi lookup failed"
+                       : spec.Latest?.Brew != null ? "brew formula lookup failed"
+                       : spec.Latest?.Web != null ? "web version lookup failed"
+                       : spec.Type switch
+                         {
+                             "npm" => "npm view failed",
+                             "pip" => "pip version query failed",
+                             "brew" => "brew info failed",
+                             _ => "version query failed"
+                         };
+            return new UpdateInfo(Status.ERROR, current, string.Empty, reason);
         }
 
         /// <summary>Whether this spec's latest version can be queried on the current platform.</summary>

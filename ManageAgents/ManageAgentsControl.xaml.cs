@@ -283,6 +283,8 @@ namespace CnSharp.VSIX.Yolo
             };
             rows.Children.Add(VersionRow(Resources.Manage_CurrentVersion, CurrentText(installed, status, current)));
             rows.Children.Add(VersionRow(Resources.Manage_LatestVersion, LatestText(status, latest)));
+            if (status == AgentUpdateChecker.Status.ERROR && !string.IsNullOrEmpty(info?.Error))
+                rows.Children.Add(ErrorLine(info.Error));
             grid.Children.Add(rows);
             Grid.SetRow(rows, 1);
 
@@ -339,6 +341,18 @@ namespace CnSharp.VSIX.Yolo
                 FontSize = 12
             });
             return p;
+        }
+
+        private TextBlock ErrorLine(string text)
+        {
+            return new TextBlock
+            {
+                Text = text,
+                Foreground = _warnFg,
+                FontSize = 11,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 4, 0, 0)
+            };
         }
 
         private string CurrentText(bool installed, AgentUpdateChecker.Status status, string current)
