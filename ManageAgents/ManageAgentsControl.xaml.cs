@@ -172,7 +172,11 @@ namespace CnSharp.VSIX.Yolo
             }
 
             CardPanel.Children.Clear();
-            var defs = AgentRegistry.All;
+            // Installed agents first, uninstalled after; stable alphabetical order within each group.
+            var defs = AgentRegistry.All
+                .OrderByDescending(def => InstalledAgents.IsInstalled(def.Command))
+                .ThenBy(def => def.DisplayName, StringComparer.OrdinalIgnoreCase)
+                .ToList();
             if (defs.Count == 0)
             {
                 CardPanel.Children.Add(new TextBlock
