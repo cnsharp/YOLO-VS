@@ -132,14 +132,11 @@ namespace CnSharp.VSIX.Yolo
 
                 // Default agent selection removed: not part of the reference design.
                 SuppressSkipWarningBox.IsChecked = settings.SuppressSkipWarning;
-                AutoCheckUpdatesBox.IsChecked = settings.AutoCheckUpdates;
                 SetStatus(string.Empty, false);
                 _ = RefreshInstalledAsync();
                 // Show cached versions immediately (cache-first), then reflect them in the grid.
                 AgentUpdateChecker.Seed();
                 ReflectUpdateStatuses();
-                // Honour the auto-check option: background scan on open when enabled.
-                AgentUpdateChecker.AutoCheckIfEnabled();
             }
             finally
             {
@@ -199,7 +196,6 @@ namespace CnSharp.VSIX.Yolo
                 .ToList();
 
             settings.SuppressSkipWarning = SuppressSkipWarningBox.IsChecked == true;
-            settings.AutoCheckUpdates = AutoCheckUpdatesBox.IsChecked == true;
 
             settings.Save();
         }
@@ -310,16 +306,6 @@ namespace CnSharp.VSIX.Yolo
         private void SuppressSkipWarningBox_Changed(object sender, RoutedEventArgs e)
         {
             if (!_loading) Page?.MarkDirty();
-        }
-
-        private void AutoCheckUpdatesBox_Changed(object sender, RoutedEventArgs e)
-        {
-            if (!_loading)
-            {
-                // Honour the option: a check runs (if not already done this session) when re-enabled.
-                AgentUpdateChecker.AutoCheckIfEnabled();
-                Page?.MarkDirty();
-            }
         }
 
         /// <summary>Paint each row's Update column from the current AgentUpdateChecker snapshot.</summary>

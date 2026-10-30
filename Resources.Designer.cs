@@ -286,15 +286,6 @@ namespace CnSharp.VSIX.Yolo {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Automatically check for agent updates on startup.
-        /// </summary>
-        public static string Settings_AutoCheckUpdates {
-            get {
-                return ResourceManager.GetString("Settings_AutoCheckUpdates", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Browse….
         /// </summary>
         public static string Settings_Browse {

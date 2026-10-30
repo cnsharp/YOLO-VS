@@ -84,20 +84,10 @@ namespace CnSharp.VSIX.Yolo
             SeedFromCache();
         }
 
-        /// <summary>Honours the YoloSettings.AutoCheckUpdates option. Called from the Options page or
-        /// package init: if the option is enabled and no automatic check has run yet this session, kicks
-        /// off a background scan. The Manage Agents tab covers the option-off case via EnsureCheckedForUi.</summary>
-        public static void AutoCheckIfEnabled()
-        {
-            if (!YoloSettings.Instance.AutoCheckUpdates) return;
-            if (AutoCheckRequested) return;
-            CheckAll();
-        }
-
-        /// <summary>Called when the Manage Agents document tab opens. If an automatic check was never
-        /// requested this session (e.g. AutoCheckUpdates is off, or the tab is the first surface shown),
-        /// start a background scan so the tab shows real versions. If a startup auto-check already
-        /// covered it, this is a no-op and the cached results are shown instead (no redundant scan).</summary>
+        /// <summary>Called when the Manage Agents document tab opens. If a background check was never
+        /// requested this session (the tab is normally the first surface shown), start a background scan
+        /// so the tab shows real versions. If a check already ran this session (e.g. the user clicked
+        /// Check Updates), this is a no-op and the cached results are shown instead (no redundant scan).</summary>
         public static void EnsureCheckedForUi()
         {
             if (AutoCheckRequested) return;

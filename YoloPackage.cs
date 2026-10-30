@@ -36,10 +36,6 @@ namespace CnSharp.VSIX.Yolo
             // Register the "View ▸ Manage Agents" command (opens the document-well tab).
             await ManageAgentsCommand.InitializeAsync(this);
 
-            // Auto-check for newer agent versions on startup.
-            if (YoloSettings.Instance.AutoCheckUpdates)
-                AgentUpdateChecker.CheckAll();
-
             // Defer showing the tool window until after initialization completes.
             // Creating and showing a tool window frame synchronously inside
             // InitializeAsync deadlocks the VS shell (it is still initializing),

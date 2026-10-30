@@ -235,10 +235,6 @@
   <data name="Settings_SuppressSkipWarning" xml:space="preserve">
     <value>Don't warn me when enabling Y (skip permissions)</value>
   </data>
-  <data name="Settings_AutoCheckUpdates" xml:space="preserve">
-    <value>Automatically check for agent updates on startup</value>
-  </data>
-
   <!-- Install / Update -->
   <data name="Settings_Col_Update" xml:space="preserve">
     <value>Update</value>

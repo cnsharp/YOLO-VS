@@ -82,9 +82,6 @@
             <CheckBox x:Name="SuppressSkipWarningBox"
                       Content="{x:Static local:Resources.Settings_SuppressSkipWarning}"
                       Checked="SuppressSkipWarningBox_Changed" Unchecked="SuppressSkipWarningBox_Changed"/>
-            <CheckBox x:Name="AutoCheckUpdatesBox" Margin="24,0,0,0"
-                      Content="{x:Static local:Resources.Settings_AutoCheckUpdates}"
-                      Checked="AutoCheckUpdatesBox_Changed" Unchecked="AutoCheckUpdatesBox_Changed"/>
         </StackPanel>
 
         <!-- Action buttons -->
