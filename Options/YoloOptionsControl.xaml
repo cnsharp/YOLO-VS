@@ -92,9 +92,6 @@
             <Button x:Name="AddButton" Content="{x:Static local:Resources.Settings_AddCustomTool}" Width="120" Click="AddButton_Click"/>
             <Button x:Name="RemoveButton" Content="{x:Static local:Resources.Settings_RemoveSelected}" Width="120" Margin="8,0,0,0" Click="RemoveButton_Click"/>
             <Button x:Name="ValidateButton" Content="{x:Static local:Resources.Settings_Validate}" Width="90" Margin="8,0,0,0" Click="ValidateButton_Click"/>
-            <Button x:Name="InstallButton" Content="{x:Static local:Resources.Settings_Install}" Width="90" Margin="8,0,0,0" Click="InstallButton_Click" IsEnabled="False"/>
-            <Button x:Name="UpdateButton" Content="{x:Static local:Resources.Settings_Update}" Width="90" Margin="8,0,0,0" Click="UpdateButton_Click" IsEnabled="False"/>
-            <Button x:Name="CheckUpdatesButton" Content="{x:Static local:Resources.Settings_CheckUpdates}" Width="120" Margin="8,0,0,0" Click="CheckUpdatesButton_Click"/>
         </StackPanel>
 
         <!-- Icon chooser for the selected custom tool -->
