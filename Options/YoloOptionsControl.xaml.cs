@@ -351,28 +351,12 @@ namespace CnSharp.VSIX.Yolo
             {
                 var key = ExecutableNames.BaseName(row.Command ?? string.Empty).ToLowerInvariant();
                 snap.TryGetValue(key, out var info);
-                row.UpdateStatus = FormatUpdateStatus(info);
                 if (info != null && info.Status == AgentUpdateChecker.Status.UPDATE_AVAILABLE) updates++;
             }
             UpdateBanner.Text = updates > 0
                 ? string.Format(CnSharp.VSIX.Yolo.Resources.Settings_UpdateBanner, updates)
                 : string.Empty;
         }
-
-        private static string FormatUpdateStatus(AgentUpdateChecker.UpdateInfo? info) => info switch
-        {
-            null => string.Empty,
-            _ when info.Status == AgentUpdateChecker.Status.CHECKING => CnSharp.VSIX.Yolo.Resources.Settings_UpdateChecking,
-            _ when info.Status == AgentUpdateChecker.Status.UP_TO_DATE =>
-                string.IsNullOrEmpty(info.Current)
-                    ? CnSharp.VSIX.Yolo.Resources.Settings_UpdateUpToDate
-                    : string.Format(CnSharp.VSIX.Yolo.Resources.Settings_UpdateUpToDateVer, info.Current),
-            _ when info.Status == AgentUpdateChecker.Status.UPDATE_AVAILABLE =>
-                string.Format(CnSharp.VSIX.Yolo.Resources.Settings_UpdateAvailable, info.Current, info.Latest),
-            _ when info.Status == AgentUpdateChecker.Status.MANUAL => CnSharp.VSIX.Yolo.Resources.Settings_UpdateManual,
-            _ when info.Status == AgentUpdateChecker.Status.ERROR => CnSharp.VSIX.Yolo.Resources.Settings_UpdateError,
-            _ => string.Empty
-        };
 
         /// <summary>Keep a status line short so it fits the single-line TextBlock.</summary>
         private static string Truncate(string s, int max = 120)
@@ -672,7 +656,6 @@ namespace CnSharp.VSIX.Yolo
         private string _iconPath = string.Empty;
         private bool _isLocked;
         private bool _isInstalled;
-        private string _updateStatus = string.Empty;
 
         public string Id { get => _id; set => Set(ref _id, value); }
         public string DisplayName { get => _displayName; set => Set(ref _displayName, value); }
@@ -683,8 +666,6 @@ namespace CnSharp.VSIX.Yolo
         public string IconPath { get => _iconPath; set => Set(ref _iconPath, value); }
         public bool IsLocked { get => _isLocked; set => Set(ref _isLocked, value); }
         public bool IsInstalled { get => _isInstalled; set => Set(ref _isInstalled, value); }
-        /// <summary>Human-readable update status (transient, not persisted). Driven by AgentUpdateChecker.</summary>
-        public string UpdateStatus { get => _updateStatus; set => Set(ref _updateStatus, value); }
 
         public event PropertyChangedEventHandler? PropertyChanged;
 

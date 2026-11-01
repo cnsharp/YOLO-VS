@@ -1,28 +1,38 @@
 using System;
-using System.Drawing.Imaging;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Resources;
 using Microsoft.VisualStudio.PlatformUI;
-using Svg;
+using SharpVectors.Converters;
+using SharpVectors.Renderers.Wpf;
 
 namespace CnSharp.VSIX.Yolo
 {
     /// <summary>
     /// Renders an agent's icon as a WPF <see cref="ImageSource"/>, reusing the original plugin's icon
     /// assets (copied to <c>Resources/icons/agents/</c> and embedded as WPF resources).
-    /// PNG/JPG load directly; SVG files are parsed into vector geometry (WPF's path mini-language
-    /// is a superset of SVG path data, so no external SVG decoder is needed).
+    /// PNG/JPG load directly; SVG files are parsed into WPF <b>vector</b> geometry via SharpVectors
+    /// and exposed as a <see cref="DrawingImage"/>. Because the result is a true vector, it stays
+    /// pixel-perfect at every DPI and size (exactly like the HTML / IDEA renderers), and SVG
+    /// features the browser honours — gradients, <c>feDropShadow</c> filters, <c>@media
+    /// (prefers-color-scheme)</c> theming, and embedded <c>@font-face</c> wordmarks — all render
+    /// correctly with proper transparency (no opaque black background).
     /// </summary>
     internal static class AgentIconImage
     {
         // Resolve at runtime so the pack URI always matches the real assembly name (avoids a
         // hard-coded name drifting from <AssemblyName> in the csproj, which breaks icon loading).
         private static string AssemblyName => typeof(AgentIconImage).Assembly.GetName().Name ?? "Yolo";
+
+        // Icons are immutable once loaded, so cache the parsed ImageSource per (spec, dark-variant).
+        private static readonly Dictionary<string, ImageSource?> Cache =
+            new Dictionary<string, ImageSource?>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// Resolve an agent's icon by id (reads the agents.json icon spec).
@@ -81,14 +91,37 @@ namespace CnSharp.VSIX.Yolo
         private static ImageSource? Resolve(string? icon, bool darkVariant)
         {
             if (icon is null or "") return null;
+            var key = icon + "|" + (darkVariant ? "d" : "l");
+            lock (Cache)
+            {
+                if (Cache.TryGetValue(key, out var cached)) return cached;
+                var built = Build(icon, darkVariant);
+                Cache[key] = built;
+                return built;
+            }
+        }
+
+        private static ImageSource? Build(string icon, bool darkVariant)
+        {
             try
             {
                 // A rooted filesystem path (absolute, or a downloaded network icon) loads from disk.
                 if (Path.IsPathRooted(icon) && File.Exists(icon))
                 {
                     if (icon.EndsWith(".svg", StringComparison.OrdinalIgnoreCase))
+                    {
                         using (var r = new StreamReader(icon))
-                            return SvgToImage(r.ReadToEnd());
+                        {
+                            var v = SvgToImage(r.ReadToEnd());
+                            if (v != null) return v;
+                        }
+                        // SharpVectors can't parse every SVG (e.g. ones embedding a base64
+                        // @font-face). Fall back to a same-named .png sibling so the agent still
+                        // gets an icon instead of going blank.
+                        var png = Path.ChangeExtension(icon, ".png");
+                        if (File.Exists(png)) return new BitmapImage(new Uri(png, UriKind.Absolute));
+                        return null;
+                    }
                     return new BitmapImage(new Uri(icon, UriKind.Absolute));
                 }
 
@@ -105,8 +138,28 @@ namespace CnSharp.VSIX.Yolo
                 {
                     var rs = Application.GetResourceStream(new Uri(pack, UriKind.Absolute));
                     if (rs != null)
+                    {
                         using (var r = new StreamReader(rs.Stream))
-                            return SvgToImage(r.ReadToEnd());
+                        {
+                            var v = SvgToImage(r.ReadToEnd());
+                            if (v != null) return v;
+                        }
+                    }
+                    // Same PNG-sibling fallback for bundled resources.
+                    var pngPack = PackUri(Path.ChangeExtension(spec, ".png"));
+                    try
+                    {
+                        var prs = Application.GetResourceStream(new Uri(pngPack, UriKind.Absolute));
+                        if (prs != null)
+                        {
+                            prs.Stream.Dispose();
+                            return new BitmapImage(new Uri(pngPack, UriKind.Absolute));
+                        }
+                    }
+                    catch
+                    {
+                        // No PNG twin — leave the icon blank.
+                    }
                     return null;
                 }
                 return new BitmapImage(new Uri(pack, UriKind.Absolute));
@@ -131,28 +184,6 @@ namespace CnSharp.VSIX.Yolo
             else if (rel.StartsWith("icons/", StringComparison.OrdinalIgnoreCase))
                 rel = "Resources/" + rel;
             return $"pack://application:,,,/{AssemblyName};component/{rel}";
-        }
-
-        /// <summary>
-        /// Current monitor DPI scale (1.0 at 100%, 2.0 at 200%, …). Used to rasterise SVGs at the
-        /// device's real pixel density. Falls back to 1.0 when no presentation source is available.
-        /// </summary>
-        private static double GetDpiScale()
-        {
-            try
-            {
-                if (Application.Current?.MainWindow is Visual v)
-                {
-                    var source = PresentationSource.FromVisual(v);
-                    if (source?.CompositionTarget != null)
-                        return source.CompositionTarget.TransformToDevice.M22;
-                }
-            }
-            catch
-            {
-                // fall through to 1.0
-            }
-            return 1.0;
         }
 
         /// <summary>
@@ -204,44 +235,77 @@ namespace CnSharp.VSIX.Yolo
             return info == null ? null : candidate;
         }
 
-        // Rasterise the SVG at the device's pixel resolution (not the 16x16 design size) so the
-        // icon stays crisp on HiDPI displays. WPF then downscales this large bitmap to the displayed
-        // size with Fant resampling, which is far sharper than stretching a tiny 64px raster.
-        private const int SvgBaseSize = 32;   // generous upper bound on the displayed size (DIP)
-        private const int SvgSupersample = 8; // extra oversampling for clean downscaling
-        private const int SvgMinSize = 256;   // floor so very small / unscaled displays still look sharp
+        /// <summary>Current VS tool-window text colour as a hex string (#RRGGBB), or null on failure.</summary>
+        private static string? ThemeTextHex()
+        {
+            try
+            {
+                var c = VSColorTheme.GetThemedColor(EnvironmentColors.ToolWindowTextColorKey);
+                return $"#{c.R:X2}{c.G:X2}{c.B:X2}";
+            }
+            catch
+            {
+                return null;
+            }
+        }
 
+        // Rasterise-free SVG → WPF vector. SharpVectors parses the SVG into a DrawingGroup and we wrap
+        // it in a DrawingImage; WPF then strokes/fills that geometry on the fly, so the icon is
+        // resolution-independent (never blurry) and every SVG feature renders with correct alpha.
+        // Theme-aware glyphs: the SVG `currentColor` keyword resolves to black by default, which is
+        // invisible on a dark VS theme — substitute it with the VS tool-window text colour so icons
+        // that use currentColor (e.g. the Manage Agents robot) follow the active theme.
         private static ImageSource? SvgToImage(string svg)
         {
             try
             {
+                var themed = ThemeTextHex();
+                if (themed != null)
+                    svg = svg.Replace("currentColor", themed);
+
+                // Some SVGs attach a filter (e.g. feDropShadow) to a group. The vector renderer
+                // cannot reproduce every SVG filter and, rather than drawing the source graphic,
+                // silently DROPS the whole filtered element — which hides the agent wordmark
+                // (e.g. amp). Strip filter attributes and their <defs> so the underlying artwork
+                // always renders. Losing a drop-shadow is irrelevant at icon sizes.
+                svg = StripSvgFilters(svg);
+
                 using var ms = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(svg));
-                var doc = SvgDocument.Open<SvgDocument>(ms);
-                // The agent SVGs use a viewBox, so overriding the pixel size just rescales the
-                // vector artwork (gradients, circles, rects, url(#…) fills) without distortion.
-                int size = (int)(SvgBaseSize * SvgSupersample * GetDpiScale());
-                if (size < SvgMinSize) size = SvgMinSize;
-                doc.Width = new SvgUnit(SvgUnitType.User, size);
-                doc.Height = new SvgUnit(SvgUnitType.User, size);
+                var settings = new WpfDrawingSettings
+                {
+                    IncludeRuntime = false,
+                    TextAsGeometry = true
+                };
+                var reader = new FileSvgReader(settings);
+                var drawing = reader.Read(ms) as DrawingGroup;
+                if (drawing == null) return null;
 
-                using var bitmap = doc.Draw();
-                using var png = new MemoryStream();
-                bitmap.Save(png, ImageFormat.Png);
-                png.Position = 0;
-
-                var bmp = new BitmapImage();
-                bmp.BeginInit();
-                bmp.CacheOption = BitmapCacheOption.OnLoad;
-                bmp.StreamSource = png;
-                bmp.EndInit();
-                bmp.Freeze();
-                return bmp;
+                var img = new DrawingImage(drawing);
+                img.Freeze();
+                return img;
             }
             catch
             {
-                // Any parse/load failure just shows no icon rather than crashing the UI.
+                // Any parse failure just shows no icon rather than crashing the UI.
                 return null;
             }
+        }
+
+        // Remove `filter="url(#…)"` attributes and the <filter> definitions they reference. Done
+        // with regexes on the raw text because we operate on the SVG string before parsing; this is
+        // a render-time normalisation, not a change to the embedded source asset.
+        private static readonly Regex FilterAttrRegex =
+            new Regex(@"\sfilter=""url\(#[^ ""]+\)""", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+
+        private static readonly Regex FilterDefRegex =
+            new Regex(@"<filter\b[^>]*>.*?</filter>", RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled);
+
+        private static string StripSvgFilters(string svg)
+        {
+            svg = FilterAttrRegex.Replace(svg, "");
+            svg = FilterDefRegex.Replace(svg, "");
+            return svg;
         }
     }
 
@@ -256,10 +320,11 @@ namespace CnSharp.VSIX.Yolo
     }
 
     /// <summary>
-    /// Renders an agent icon for the settings table: a coloured
-    /// (lit) icon when the agent is installed, and a desaturated grey icon when it is not. Takes
-    /// two values — the icon spec and the installed bool. Grayscale preserves the icon's alpha so
-    /// transparent PNGs/SVGs don't pick up a black box.
+    /// Renders an agent icon for the settings table: a coloured (lit) icon when the agent is
+    /// installed, and a desaturated grey icon when it is not. Grayscale preserves the icon's alpha
+    /// so transparent PNGs/SVGs don't pick up a black box. Works for both raster (PNG) and vector
+    /// (SVG) sources — for a vector <see cref="DrawingImage"/> it is first rasterised to a bitmap at
+    /// a fixed thumbnail size, then desaturated.
     /// </summary>
     internal sealed class AgentIconInstalledConverter : IMultiValueConverter
     {
@@ -269,16 +334,17 @@ namespace CnSharp.VSIX.Yolo
             var installed = values.Length > 1 && values[1] is bool b && b;
 
             var src = AgentIconImage.FromPath(icon);
-            if (src is BitmapSource bs && !installed)
-                return ToGrayscale(bs);
+            if (installed) return src ?? DependencyProperty.UnsetValue;
 
+            if (src is BitmapSource bs) return ToGrayscale(bs);
+            if (src is DrawingImage di) return ToGrayscale(di);
             return src ?? DependencyProperty.UnsetValue;
         }
 
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
             => throw new NotSupportedException();
 
-        /// <summary>Per-pixel luminance desaturation that leaves alpha untouched.</summary>
+        /// <summary>Per-pixel luminance desaturation that leaves alpha untouched (raster path).</summary>
         private static BitmapSource ToGrayscale(BitmapSource src)
         {
             try
@@ -304,6 +370,26 @@ namespace CnSharp.VSIX.Yolo
             catch
             {
                 return src;
+            }
+        }
+
+        /// <summary>Rasterise a vector icon to a bitmap, then desaturate it (vector path).</summary>
+        private static ImageSource? ToGrayscale(DrawingImage di)
+        {
+            try
+            {
+                const int size = 96; // settings thumbnail; crisp enough after desaturation
+                var visual = new DrawingVisual();
+                using (var dc = visual.RenderOpen())
+                    dc.DrawDrawing(di.Drawing);
+                var rtb = new RenderTargetBitmap(size, size, 96, 96, PixelFormats.Pbgra32);
+                rtb.Render(visual);
+                rtb.Freeze();
+                return ToGrayscale(rtb);
+            }
+            catch
+            {
+                return di;
             }
         }
     }

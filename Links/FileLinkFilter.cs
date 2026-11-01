@@ -191,7 +191,7 @@ namespace CnSharp.VSIX.Yolo
                     // file names — and must not continue the chain. Without this guard `reachesEnd` is
                     // always true for lines with no leading whitespace (Substring returns ""), causing
                     // every subsequent row to be linked.
-                    if (reachesEnd && !combined.Contains('.') && LooksLikeName(trimmed))
+                    if (reachesEnd && !combined.Contains(".") && LooksLikeName(trimmed))
                     {
                         wrap.PendingBareName = combined;
                         int cStart = leading;
@@ -309,7 +309,7 @@ namespace CnSharp.VSIX.Yolo
             // (neither a path nor a bare continuation is pending) — otherwise a continuation line would wrongly
             // re-mark its own fragment.
             if (prefix.Length == 0 && barePrefix.Length == 0 &&
-                !text.Contains('/') && !text.Contains('\\') &&
+                !text.Contains("/") && !text.Contains("\\") &&
                 // TUI output (Claude Code tool-call labels, box-drawing borders, …) carries Unicode
                 // symbols such as ● ∴ └ that never appear in real code output. Guard on all-ASCII so a
                 // line like "● Bash" or "∴ Thought" is never mistaken for a hard-wrapped file-name head.

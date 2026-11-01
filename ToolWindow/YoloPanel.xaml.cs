@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Windows;
@@ -549,7 +549,7 @@ namespace CnSharp.VSIX.Yolo
             AgentComboBox.Items.Add(new AgentComboItem
             {
                 Id = ManageAgentsComboId,
-                Name = Resources.Manage_AgentListItem,
+                Name = CnSharp.VSIX.Yolo.Resources.Manage_AgentListItem,
                 Icon = AgentIconImage.FromPath("Resources/icons/robot.svg")
             });
 
@@ -566,6 +566,7 @@ namespace CnSharp.VSIX.Yolo
 
         private void OnAgentSelected(object sender, SelectionChangedEventArgs e)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             if (AgentComboBox.SelectedItem is AgentComboItem selectedItem)
             {
                 // The trailing "Manage Agents" entry opens the document tab instead of selecting an agent.
@@ -579,7 +580,7 @@ namespace CnSharp.VSIX.Yolo
                         if (revert == null && item.Id != ManageAgentsComboId) revert = item;
                     }
                     if (revert != null) AgentComboBox.SelectedItem = revert;
-                    ManageAgentsCommand.OpenManageAgents();
+                    ManageAgentsCommand.Open();
                     return;
                 }
                 _selectedAgent = selectedItem.Id;
@@ -854,13 +855,13 @@ namespace CnSharp.VSIX.Yolo
                 return null;
             }
         }
-        /// <summary>Opens the Manage Agents document tab (the VS analog of IntelliJ's editor-area tab).</summary>
+        /// <summary>Opens the Manage Agents tool window (docked tabbed with the YOLO panel).</summary>
         private void OnManageAgentsClicked(object sender, RoutedEventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             try
             {
-                ManageAgentsCommand.OpenManageAgents();
+                ManageAgentsCommand.Open();
             }
             catch (Exception ex)
             {

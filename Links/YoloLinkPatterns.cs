@@ -90,7 +90,7 @@ internal static readonly Regex TypeHeadPattern = new Regex(
 
 internal static readonly Regex BareHeadPattern = new Regex(
     string.Format(CultureInfo.InvariantCulture,
-        @"(?<![\\/\w.\-])([A-Z][A-Za-z0-9_\-]{2,})\s*$",
+        @"(?<![\\/\w.\-])([A-Z][A-Za-z0-9_\-]{{2,}})\s*$",
         ProgrammingExt),
     RegexOptions.Compiled);
 

@@ -29,10 +29,12 @@
     <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="18.5.40034" />
     <!-- JSON parsing for the embedded agents.json (already transitively present via the VS SDK). -->
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" ForceIncludeInVSIX="true" />
-    <!-- Real SVG renderer: the agent icons (codebuddy, copilot, etc.) use gradients,
-         <circle>/<rect> shapes and fill="url(#…)" references that a hand-rolled <path>
-         parser cannot reproduce, so they collapsed to a single flat color. -->
-    <PackageReference Include="Svg" Version="3.4.4" />
+    <!-- SVG renderer: agent icons (codebuddy, copilot, amp, aider, …) use gradients, filters
+         (feDropShadow), @media (prefers-color-scheme) theming and embedded @font-face wordmarks.
+         SharpVectors renders SVG as a true WPF *vector* (DrawingImage), so icons stay crisp at any
+         DPI and every SVG feature the browser/IDEA honour is supported — unlike the rasterising
+         Svg.NET engine, which dropped filters and painted opaque black backgrounds. -->
+    <PackageReference Include="SharpVectors" Version="1.8.6" />
   </ItemGroup>
 
   <!-- Agent metadata is kept in a data file, separated from the program (the original plugin

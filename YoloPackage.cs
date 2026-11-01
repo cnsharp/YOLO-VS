@@ -12,10 +12,10 @@ namespace CnSharp.VSIX.Yolo
     [Guid(Constants.PackageGuid)]
     [ProvideToolWindow(typeof(YoloToolWindowPane), Style = VsDockStyle.Tabbed,
                        Window = ToolWindowGuids80.SolutionExplorer)]
+    // Manage Agents tool window, docked tabbed alongside the YOLO panel.
+    [ProvideToolWindow(typeof(ManageAgentsToolWindowPane), Style = VsDockStyle.Tabbed,
+                       Window = Constants.ToolWindowGuid)]
     [ProvideOptionPage(typeof(YoloOptionsPage), "Agent YOLO", "Agents", 0, 0, true)]
-    // Registers the custom editor factory that opens the synthetic ManageAgents.yolo document as a
-    // real document-well tab (the VS analog of IntelliJ's editor-area Manage Agents tab).
-    [ProvideEditor(typeof(ManageAgentsEditorFactory), "YoloManage")]
     [ProvideMenuResource("Menus.ctmenu", 1)]
     // Auto-load the package once the VS shell is initialized so the tool window can be shown
     [ProvideAutoLoad(Microsoft.VisualStudio.VSConstants.UICONTEXT.ShellInitialized_string, PackageAutoLoadFlags.BackgroundLoad)]
@@ -33,7 +33,7 @@ namespace CnSharp.VSIX.Yolo
             // Register the "View ▸ Other Windows ▸ YOLO" command (toggles the tool window).
             await YoloToolWindowCommand.InitializeAsync(this);
 
-            // Register the "View ▸ Manage Agents" command (opens the document-well tab).
+            // Register the "View ▸ Manage Agents" command (opens the Manage Agents tool window).
             await ManageAgentsCommand.InitializeAsync(this);
 
             // Defer showing the tool window until after initialization completes.

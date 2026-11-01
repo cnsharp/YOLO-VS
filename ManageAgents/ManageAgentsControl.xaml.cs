@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -70,18 +70,32 @@ namespace CnSharp.VSIX.Yolo
 
         private void ApplyVsTheme()
         {
+            // Pull the live VS theme colors; fall back to dark defaults if theming is unavailable.
+            Color bgc = Color.FromRgb(0x25, 0x25, 0x26);
+            Color fgc = Color.FromRgb(0xF1, 0xF1, 0xF1);
             try
             {
                 var bg = VSColorTheme.GetThemedColor(EnvironmentColors.ToolWindowBackgroundColorKey);
-                _bg = new SolidColorBrush(Color.FromRgb(bg.R, bg.G, bg.B));
+                bgc = Color.FromRgb(bg.R, bg.G, bg.B);
                 var fg = VSColorTheme.GetThemedColor(EnvironmentColors.ToolWindowTextColorKey);
-                _fg = new SolidColorBrush(Color.FromRgb(fg.R, fg.G, fg.B));
+                fgc = Color.FromRgb(fg.R, fg.G, fg.B);
             }
             catch
             {
-                // Keep the light defaults if theming is unavailable.
             }
-            _muted = new SolidColorBrush(Mix(_fg, 0.55));
+
+            // Every surface is derived from the window background so the page tracks light AND dark
+            // themes. Previously the card background was a hardcoded WhiteSmoke, so in dark theme the
+            // cards stayed bright white and the (light) card text became unreadable.
+            bool dark = IsDark(bgc);
+            _bg = new SolidColorBrush(bgc);
+            _fg = new SolidColorBrush(fgc);
+            _muted = new SolidColorBrush(Mix(_fg, 0.45));
+            _cardBg = Shade(bgc, dark ? 16 : -10);     // cards sit slightly raised from the window
+            _border = Shade(bgc, dark ? 40 : -34);
+            _badgeBg = Shade(bgc, dark ? 30 : -22);     // secondary-button + badge surface
+            // _badgeFg (gold) and _warnFg (salmon) read on both themes; left as-is.
+
             Background = _bg;
             Toolbar.Background = _bg;
             Toolbar.BorderBrush = _border;
@@ -90,6 +104,15 @@ namespace CnSharp.VSIX.Yolo
             Heading.Foreground = _fg;
             StatusLine.Foreground = _muted;
         }
+
+        // Perceived-luminance test (ITU-R BT.601) used to pick light-vs-dark shade directions.
+        private static bool IsDark(Color c) => (0.299 * c.R + 0.587 * c.G + 0.114 * c.B) < 128;
+
+        // Lightens (delta>0) or darkens (delta<0) a color, clamping each channel to [0,255].
+        private static SolidColorBrush Shade(Color c, int delta) =>
+            new SolidColorBrush(Color.FromRgb(ClampByte(c.R + delta), ClampByte(c.G + delta), ClampByte(c.B + delta)));
+
+        private static byte ClampByte(int v) => (byte)(v < 0 ? 0 : v > 255 ? 255 : v);
 
         // Returns a grey derived from the foreground (for muted text) at the given alpha-ish mix.
         private static Color Mix(Brush fg, double grey)
@@ -108,14 +131,14 @@ namespace CnSharp.VSIX.Yolo
         private void OnUpdateResultsChanged()
         {
             if (_shutdown) return;
-            Dispatcher.InvokeAsync(() =>
+            _ = Dispatcher.InvokeAsync(() =>
             {
                 Rebuild();
-                if (!AgentUpdateChecker.IsChecking())
+                if (!AgentUpdateChecker.IsChecking)
                 {
                     var avail = AgentUpdateChecker.Snapshot().Values.Count(v => v.Status == AgentUpdateChecker.Status.UPDATE_AVAILABLE);
                     SetStatus(avail > 0
-                        ? string.Format(Resources.Manage_StatusUpdatesAvailable, avail)
+                        ? string.Format(CnSharp.VSIX.Yolo.Resources.Manage_StatusUpdatesAvailable, avail)
                         : string.Empty);
                 }
             });
@@ -124,19 +147,19 @@ namespace CnSharp.VSIX.Yolo
         private void OnAgentCacheChanged()
         {
             if (_shutdown) return;
-            Dispatcher.InvokeAsync(Rebuild);
+            _ = Dispatcher.InvokeAsync(Rebuild);
         }
 
         private void OnCheckUpdates(object sender, RoutedEventArgs e)
         {
-            if (AgentUpdateChecker.IsChecking()) return;
-            SetStatus(Resources.Manage_StatusChecking);
+            if (AgentUpdateChecker.IsChecking) return;
+            SetStatus(CnSharp.VSIX.Yolo.Resources.Manage_StatusChecking);
             AgentUpdateChecker.CheckAll();
         }
 
         private void OnUpdateAll(object sender, RoutedEventArgs e)
         {
-            if (AgentUpdateChecker.IsChecking()) return;
+            if (AgentUpdateChecker.IsChecking) return;
             foreach (var def in AgentRegistry.All)
             {
                 var info = AgentUpdateChecker.InfoFor(def.Command);
@@ -168,7 +191,7 @@ namespace CnSharp.VSIX.Yolo
         {
             if (!Dispatcher.CheckAccess())
             {
-                Dispatcher.InvokeAsync(Rebuild);
+                _ = Dispatcher.InvokeAsync(Rebuild);
                 return;
             }
 
@@ -182,7 +205,7 @@ namespace CnSharp.VSIX.Yolo
             {
                 CardPanel.Children.Add(new TextBlock
                 {
-                    Text = Resources.Manage_Empty,
+                    Text = CnSharp.VSIX.Yolo.Resources.Manage_Empty,
                     Foreground = _muted,
                     Margin = new Thickness(4)
                 });
@@ -200,10 +223,10 @@ namespace CnSharp.VSIX.Yolo
                        CanUpgrade(def) && !_busy.Contains(def.Command);
             });
             UpdateAllBtn.Content = updatable > 0
-                ? string.Format(Resources.Manage_UpdateAllCount, updatable)
-                : Resources.Manage_UpdateAll;
-            UpdateAllBtn.IsEnabled = !AgentUpdateChecker.IsChecking() && updatable > 0;
-            CheckUpdatesBtn.IsEnabled = !AgentUpdateChecker.IsChecking();
+                ? string.Format(CnSharp.VSIX.Yolo.Resources.Manage_UpdateAllCount, updatable)
+                : CnSharp.VSIX.Yolo.Resources.Manage_UpdateAll;
+            UpdateAllBtn.IsEnabled = !AgentUpdateChecker.IsChecking && updatable > 0;
+            CheckUpdatesBtn.IsEnabled = !AgentUpdateChecker.IsChecking;
         }
 
         private Border BuildCard(AgentDef def)
@@ -242,6 +265,9 @@ namespace CnSharp.VSIX.Yolo
                 Source = AgentIconImage.GetIcon(def.Id, true),
                 VerticalAlignment = VerticalAlignment.Center
             };
+            // High-quality downscaling keeps raster (PNG) icons crisp; vector (SVG) icons are
+            // resolution-independent already.
+            RenderOptions.SetBitmapScalingMode(icon, BitmapScalingMode.Fant);
             DockPanel.SetDock(icon, Dock.Left);
             var name = new TextBlock
             {
@@ -259,13 +285,13 @@ namespace CnSharp.VSIX.Yolo
                 {
                     Background = _badgeBg,
                     CornerRadius = new CornerRadius(3),
-                    Padding = new Thickness(6, 2),
+                    Padding = new Thickness(6, 2, 6, 2),
                     Margin = new Thickness(8, 0, 0, 0),
                     VerticalAlignment = VerticalAlignment.Center
                 };
                 badge.Child = new TextBlock
                 {
-                    Text = Resources.Manage_UpdateAvailable,
+                    Text = CnSharp.VSIX.Yolo.Resources.Manage_UpdateAvailable,
                     Foreground = _badgeFg,
                     FontSize = 11
                 };
@@ -281,8 +307,8 @@ namespace CnSharp.VSIX.Yolo
                 Margin = new Thickness(0, 12, 0, 0),
                 VerticalAlignment = VerticalAlignment.Top
             };
-            rows.Children.Add(VersionRow(Resources.Manage_CurrentVersion, CurrentText(installed, status, current)));
-            rows.Children.Add(VersionRow(Resources.Manage_LatestVersion, LatestText(status, latest)));
+            rows.Children.Add(VersionRow(CnSharp.VSIX.Yolo.Resources.Manage_CurrentVersion, CurrentText(installed, status, current)));
+            rows.Children.Add(VersionRow(CnSharp.VSIX.Yolo.Resources.Manage_LatestVersion, LatestText(status, latest)));
             if (status == AgentUpdateChecker.Status.ERROR && !string.IsNullOrEmpty(info?.Error))
                 rows.Children.Add(ErrorLine(info.Error));
             grid.Children.Add(rows);
@@ -298,21 +324,21 @@ namespace CnSharp.VSIX.Yolo
             };
             if (_busy.Contains(cmd))
             {
-                actions.Children.Add(DisabledButton(Resources.Manage_Working));
+                actions.Children.Add(DisabledButton(CnSharp.VSIX.Yolo.Resources.Manage_Working));
             }
             else
             {
                 if (status == AgentUpdateChecker.Status.UPDATE_AVAILABLE && CanUpgrade(def))
-                    actions.Children.Add(PrimaryButton(Resources.Manage_Update, () => InstallAgent(def, true)));
+                    actions.Children.Add(PrimaryButton(CnSharp.VSIX.Yolo.Resources.Manage_Update, () => InstallAgent(def, true)));
                 else if (!installed && CanInstall(def))
-                    actions.Children.Add(Button(Resources.Manage_Install, () => InstallAgent(def, false)));
+                    actions.Children.Add(Button(CnSharp.VSIX.Yolo.Resources.Manage_Install, () => InstallAgent(def, false)));
                 else if (installed && CanUpgrade(def) &&
                          status != AgentUpdateChecker.Status.CHECKING &&
                          status != AgentUpdateChecker.Status.UP_TO_DATE)
-                    actions.Children.Add(Button(Resources.Manage_Update, () => InstallAgent(def, true)));
+                    actions.Children.Add(Button(CnSharp.VSIX.Yolo.Resources.Manage_Update, () => InstallAgent(def, true)));
             }
             if (!string.IsNullOrEmpty(def.Url))
-                actions.Children.Add(Button(Resources.Manage_Website, () => AgentInstaller.OpenUrl(def.Url)));
+                actions.Children.Add(Button(CnSharp.VSIX.Yolo.Resources.Manage_Website, () => AgentInstaller.OpenUrl(def.Url)));
             grid.Children.Add(actions);
             Grid.SetRow(actions, 2);
 
@@ -358,15 +384,15 @@ namespace CnSharp.VSIX.Yolo
         private string CurrentText(bool installed, AgentUpdateChecker.Status status, string current)
         {
             if (status == AgentUpdateChecker.Status.CHECKING && string.IsNullOrEmpty(current))
-                return Resources.Manage_Checking;
+                return CnSharp.VSIX.Yolo.Resources.Manage_Checking;
             if (!string.IsNullOrEmpty(current)) return current;
-            return installed ? "-" : Resources.Manage_NotInstalled;
+            return installed ? "-" : CnSharp.VSIX.Yolo.Resources.Manage_NotInstalled;
         }
 
         private string LatestText(AgentUpdateChecker.Status status, string latest)
         {
             if (!string.IsNullOrEmpty(latest)) return latest;
-            if (status == AgentUpdateChecker.Status.CHECKING) return Resources.Manage_Checking;
+            if (status == AgentUpdateChecker.Status.CHECKING) return CnSharp.VSIX.Yolo.Resources.Manage_Checking;
             return "-";
         }
 
@@ -380,6 +406,11 @@ namespace CnSharp.VSIX.Yolo
                 Height = 26,
                 Padding = new Thickness(10, 0, 10, 0),
                 Margin = new Thickness(0, 0, 0, 0),
+                // Themed surface so the label stays readable in both light and dark themes (the
+                // default WPF button chrome is always light, which hid light text in dark theme).
+                Background = _badgeBg,
+                BorderBrush = _border,
+                BorderThickness = new Thickness(1),
                 Foreground = _fg
             };
             if (actionsNeedSpacing) b.Margin = new Thickness(6, 0, 0, 0);
@@ -408,6 +439,9 @@ namespace CnSharp.VSIX.Yolo
                 Height = 26,
                 Padding = new Thickness(10, 0, 10, 0),
                 IsEnabled = false,
+                Background = _badgeBg,
+                BorderBrush = _border,
+                BorderThickness = new Thickness(1),
                 Foreground = _muted
             };
             return b;
@@ -429,19 +463,19 @@ namespace CnSharp.VSIX.Yolo
 
             _busy.Add(cmd);
             Rebuild();
-            SetStatus(string.Format(Resources.Manage_StatusInstalling, def.DisplayName, spec.Target));
-            Task.Run(() =>
+            SetStatus(string.Format(CnSharp.VSIX.Yolo.Resources.Manage_StatusInstalling, def.DisplayName, spec.Target));
+            _ = Task.Run(() =>
             {
                 var command = upgrade
                     ? AgentInstaller.BuildUpdateCommand(spec)
                     : AgentInstaller.BuildInstallCommand(spec);
                 var (ok, lastLine) = AgentInstaller.RunCommand(command);
-                Dispatcher.InvokeAsync(() =>
+                _ = Dispatcher.InvokeAsync(() =>
                 {
                     _busy.Remove(cmd);
                     if (!ok)
                     {
-                        SetStatus(string.Format(Resources.Manage_StatusInstallFailed, def.DisplayName, lastLine), true);
+                        SetStatus(string.Format(CnSharp.VSIX.Yolo.Resources.Manage_StatusInstallFailed, def.DisplayName, lastLine), true);
                         Rebuild();
                         return;
                     }
@@ -450,12 +484,12 @@ namespace CnSharp.VSIX.Yolo
                     {
                         // Incrementally add just this command to the installed cache (no full PATH re-scan).
                         InstalledAgents.MarkInstalled(cmd);
-                        SetStatus(string.Format(Resources.Manage_StatusInstalled, def.DisplayName));
-                        if (upgrade) Task.Run(() => AgentUpdateChecker.Refresh(cmd, spec));
+                        SetStatus(string.Format(CnSharp.VSIX.Yolo.Resources.Manage_StatusInstalled, def.DisplayName));
+                        if (upgrade) _ = Task.Run(() => AgentUpdateChecker.Refresh(cmd, spec));
                     }
                     else
                     {
-                        SetStatus(string.Format(Resources.Manage_StatusUnverified, def.DisplayName, cmd), true);
+                        SetStatus(string.Format(CnSharp.VSIX.Yolo.Resources.Manage_StatusUnverified, def.DisplayName, cmd), true);
                     }
                     Rebuild();
                 });

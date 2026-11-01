@@ -236,9 +236,6 @@
     <value>Don't warn me when enabling Y (skip permissions)</value>
   </data>
   <!-- Install / Update -->
-  <data name="Settings_Col_Update" xml:space="preserve">
-    <value>Update</value>
-  </data>
   <data name="Settings_Install" xml:space="preserve">
     <value>Install</value>
   </data>

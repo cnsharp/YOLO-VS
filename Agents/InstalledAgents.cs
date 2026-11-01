@@ -268,7 +268,7 @@ namespace CnSharp.VSIX.Yolo
 
                 var baseArgs = baseArgsByBase.TryGetValue(baseCmd, out var b) ? b : string.Empty;
 
-                customByKey.TryGetValue(def.Command?.Trim() ?? string.Empty, out var match) ||
+                _ = customByKey.TryGetValue(def.Command?.Trim() ?? string.Empty, out var match) ||
                     customByKey.TryGetValue(def.Id?.Trim() ?? string.Empty, out match);
                 if (match != null)
                 {

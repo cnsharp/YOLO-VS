@@ -460,6 +460,7 @@ namespace CnSharp.VSIX.Yolo
         {
             try
             {
+#pragma warning disable VSTHRD002 // intentional synchronous wait on a background thread (no UI sync context to deadlock)
                 var req = new HttpRequestMessage(HttpMethod.Get, url);
                 if (accept != null) req.Headers.Accept.TryParseAdd(accept);
                 using (var resp = _http.SendAsync(req).GetAwaiter().GetResult())
@@ -467,6 +468,7 @@ namespace CnSharp.VSIX.Yolo
                     if (!resp.IsSuccessStatusCode) return null;
                     return resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
                 }
+#pragma warning restore VSTHRD002
             }
             catch
             {

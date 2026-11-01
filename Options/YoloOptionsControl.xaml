@@ -72,7 +72,6 @@
                     <DataGridTextColumn Header="{x:Static local:Resources.Settings_Col_BaseArgs}" Width="120" Binding="{Binding BaseArgs, UpdateSourceTrigger=PropertyChanged}"/>
                     <DataGridTextColumn Header="{x:Static local:Resources.Settings_Col_SkipFlag}" Width="200" Binding="{Binding SkipFlag, UpdateSourceTrigger=PropertyChanged}"/>
                     <DataGridTextColumn Header="{x:Static local:Resources.Settings_Col_ResumeFlag}" Width="120" Binding="{Binding ResumeFlag, UpdateSourceTrigger=PropertyChanged}"/>
-                    <DataGridTextColumn Header="{x:Static local:Resources.Settings_Col_Update}" Width="150" IsReadOnly="True" Binding="{Binding UpdateStatus}"/>
                     <DataGridTextColumn Header="{x:Static local:Resources.Settings_Col_IconPath}" Width="240" Binding="{Binding IconPath, UpdateSourceTrigger=PropertyChanged}"/>
                 </DataGrid.Columns>
             </DataGrid>
