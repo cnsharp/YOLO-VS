@@ -52,21 +52,21 @@ namespace CnSharp.VSIX.Yolo
         };
 
         /// <summary>
-        /// Mutating upgrade command. For <c>shell</c> agents that declare <c>updateCmd</c>, run that
-        /// (the agent's own self-update subcommand, e.g. <c>claude update</c>); otherwise fall back to
-        /// re-running the installer, which also fetches the latest version. For <c>url</c> type this
-        /// returns the URL (callers open the site instead of running a command).
+        /// Mutating upgrade command. A declared <c>updateCmd</c> (the agent's own self-update subcommand,
+        /// e.g. <c>claude update</c>) is first-class and wins for every install type; otherwise use the
+        /// package manager, or for <c>shell</c> re-run the installer, which also fetches the latest version.
+        /// For <c>url</c> type this returns the URL (callers open the site instead of running a command).
         /// </summary>
-        public static string BuildUpdateCommand(InstallSpec spec) => spec.Type switch
+        public static string BuildUpdateCommand(InstallSpec spec) => !string.IsNullOrEmpty(spec.UpdateCmd)
+            ? spec.UpdateCmd
+            : spec.Type switch
         {
             "npm" => $"npm install -g '{Escape(spec.Pkg)}'",
             "pip" => $"python3 -m pip install --upgrade '{Escape(spec.Pkg)}'",
             "brew" => $"brew upgrade '{Escape(spec.Pkg)}'",
-            "shell" => !string.IsNullOrEmpty(spec.UpdateCmd)
-                ? spec.UpdateCmd
-                : (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && spec.CmdWin.Length > 0
-                    ? spec.CmdWin
-                    : spec.Cmd),
+            "shell" => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && spec.CmdWin.Length > 0
+                ? spec.CmdWin
+                : spec.Cmd,
             _ => spec.Url
         };
 

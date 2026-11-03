@@ -41,8 +41,9 @@ namespace CnSharp.VSIX.Yolo
     ///   <item>npm/pip/brew: install via the named package manager (<c>Pkg</c>).</item>
     ///   <item>shell: run <c>Cmd</c> verbatim through the user's login shell (curl/irm installers, …).
     ///     <c>CmdWin</c> is the Windows-only variant (e.g. a PowerShell one-liner), used on Windows.
-    ///     <c>UpdateCmd</c>, when set, is the agent's own self-update subcommand (e.g. <c>claude update</c>);
-    ///     the Update button runs it directly instead of re-running the installer.</item>
+    ///     <c>UpdateCmd</c> (any type), when set, is the agent's own self-update subcommand (e.g.
+    ///     <c>claude update</c>); it is first-class: the Update button runs it instead of the package
+    ///     manager or re-running the installer.</item>
     ///   <item>url: no automatable package; the Install button opens <c>Url</c> in the browser instead.</item>
     /// </list>
     /// Describes how an agent is installed.

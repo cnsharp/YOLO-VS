@@ -454,12 +454,17 @@ namespace CnSharp.VSIX.Yolo
             var spec = def.Install;
             var cmd = def.Command;
             if (spec == null || string.IsNullOrEmpty(cmd) || _busy.Contains(cmd)) return;
-            if (spec.Type == "url")
+            // The agent's own UpdateCmd is first-class: an upgrade runs it regardless of install type.
+            var selfUpdate = upgrade && !string.IsNullOrEmpty(spec.UpdateCmd);
+            if (!selfUpdate)
             {
-                if (!string.IsNullOrEmpty(spec.Url)) AgentInstaller.OpenUrl(spec.Url);
-                return;
+                if (spec.Type == "url")
+                {
+                    if (!string.IsNullOrEmpty(spec.Url)) AgentInstaller.OpenUrl(spec.Url);
+                    return;
+                }
+                if (!spec.Automatable || string.IsNullOrEmpty(spec.Target)) return;
             }
-            if (!spec.Automatable || string.IsNullOrEmpty(spec.Target)) return;
 
             _busy.Add(cmd);
             Rebuild();
