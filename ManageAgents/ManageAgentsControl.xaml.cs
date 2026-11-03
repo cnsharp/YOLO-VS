@@ -460,7 +460,9 @@ namespace CnSharp.VSIX.Yolo
             {
                 if (spec.Type == "url")
                 {
-                    if (!string.IsNullOrEmpty(spec.Url)) AgentInstaller.OpenUrl(spec.Url);
+                    // Manual install/update opens the download page: prefer install.url, fall back to the homepage.
+                    var target = !string.IsNullOrEmpty(spec.Url) ? spec.Url : def.Url;
+                    if (!string.IsNullOrEmpty(target)) AgentInstaller.OpenUrl(target);
                     return;
                 }
                 if (!spec.Automatable || string.IsNullOrEmpty(spec.Target)) return;

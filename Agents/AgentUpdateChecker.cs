@@ -555,17 +555,38 @@ namespace CnSharp.VSIX.Yolo
             }
         }
 
-        /// <summary>Latest version scraped from a web page that has no structured API. Returns the first capture
-        ///  group (or the whole match). Used for date-versioned tools whose install page is server-rendered.</summary>
+        /// <summary>Latest version scraped from a web page that has no structured API. Returns the highest semver
+        ///  among all capture groups (or whole matches) — a page may list many versions (e.g. a changelog jsonl),
+        ///  so the newest, not the first, must be reported. For non-semver schemes (dates, build ids) falls back
+        ///  to the first match to preserve prior behavior.</summary>
         private static string WebLatest(WebSource src)
         {
             var html = FetchText(src.Url);
             if (html == null) return string.Empty;
             try
             {
-                var m = Regex.Match(html, src.Pattern, RegexOptions.Multiline);
-                if (m.Success) return m.Groups.Count > 1 ? m.Groups[1].Value : m.Value;
-                return string.Empty;
+                var matches = Regex.Matches(html, src.Pattern, RegexOptions.Multiline);
+                if (matches.Count == 0) return string.Empty;
+                string? best = null;
+                int[]? bestSemver = null;
+                foreach (Match m in matches)
+                {
+                    var raw = m.Groups.Count > 1 ? m.Groups[1].Value : m.Value;
+                    var sv = SemverOf(raw);
+                    if (sv != null)
+                    {
+                        if (bestSemver == null || CompareSemver(sv, bestSemver) > 0)
+                        {
+                            bestSemver = sv;
+                            best = raw;
+                        }
+                    }
+                    else if (best == null)
+                    {
+                        best = raw;
+                    }
+                }
+                return best ?? string.Empty;
             }
             catch
             {
