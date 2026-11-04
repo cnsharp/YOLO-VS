@@ -197,7 +197,10 @@ namespace CnSharp.VSIX.Yolo
 
             CardPanel.Children.Clear();
             // Installed agents first, uninstalled after; stable alphabetical order within each group.
+            // Update page = official catalog only: user-added custom tools (YoloSettings.CustomTools)
+            // declare no install/version spec, so exclude any agent without one.
             var defs = AgentRegistry.All
+                .Where(def => def.Install != null)
                 .OrderByDescending(def => InstalledAgents.IsInstalled(def.Command))
                 .ThenBy(def => def.DisplayName, StringComparer.OrdinalIgnoreCase)
                 .ToList();
