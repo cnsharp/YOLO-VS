@@ -60,11 +60,9 @@ namespace CnSharp.VSIX.Yolo
         /// option and the Manage Agents tab agree on "has a check been done yet".</summary>
         private static bool _autoCheckRequested;
         private static readonly Dictionary<string, string> _dirtyLatest = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        /// <summary>Dirty current (installed) version detections, flushed once per scan (with a UTC timestamp for TTL).</summary>
+        /// <summary>Dirty current (installed) version detections, flushed once per scan.</summary>
         private static readonly Dictionary<string, CurrentVersionCacheEntry> _dirtyCurrent =
             new Dictionary<string, CurrentVersionCacheEntry>(StringComparer.OrdinalIgnoreCase);
-        /// <summary>A current-version detection older than this (24h) is treated as stale and re-probed on open.</summary>
-        private static readonly long _cacheTtlTicks = TimeSpan.FromHours(24).Ticks;
 
         /// <summary>Full result for a command (lower-cased base name), or null when never checked.</summary>
         public static UpdateInfo? InfoFor(string command)
@@ -145,13 +143,13 @@ namespace CnSharp.VSIX.Yolo
                     }
                 }
 
-                // Seed last-known *current* (installed) versions within TTL so the panel shows the
-                // installed version immediately, preserving any already-seeded latest version.
-                var nowTicks = DateTime.UtcNow.Ticks;
+                // Seed last-known *current* (installed) versions so the panel shows the installed
+                // version immediately, preserving any already-seeded latest version. Like the
+                // latest-version cache there is no TTL: a remembered version is kept until a
+                // successful scan refreshes it.
                 foreach (var e in YoloSettings.Instance.CurrentVersions)
                 {
                     if (string.IsNullOrEmpty(e.Version)) continue;
-                    if (nowTicks - e.Ticks > _cacheTtlTicks) continue; // stale -> re-probe on next scan
                     var k = e.Command.ToLowerInvariant();
                     lock (_lock)
                     {
@@ -175,7 +173,7 @@ namespace CnSharp.VSIX.Yolo
                 lock (_lock) _dirtyLatest[command.ToLowerInvariant()] = version;
         }
 
-        /// <summary>Record a detected current (installed) version + timestamp for the end-of-scan flush.</summary>
+        /// <summary>Record a detected current (installed) version for the end-of-scan flush.</summary>
         private static void MarkCurrent(string command, string version)
         {
             if (string.IsNullOrEmpty(version)) return;
@@ -183,8 +181,7 @@ namespace CnSharp.VSIX.Yolo
             lock (_lock) _dirtyCurrent[k] = new CurrentVersionCacheEntry
             {
                 Command = k,
-                Version = version,
-                Ticks = DateTime.UtcNow.Ticks
+                Version = version
             };
         }
 
