@@ -271,6 +271,9 @@ namespace CnSharp.VSIX.Yolo
                 {
                     FlushLatest();
                     lock (_lock) _checking = false;
+                    // Publish after the flag is cleared so listeners rebuild with the finished state
+                    // (restore the button label / status) instead of staying "Checking…".
+                    Publish();
                 }
             });
         }

@@ -225,11 +225,16 @@ namespace CnSharp.VSIX.Yolo
                 return info?.Status == AgentUpdateChecker.Status.UPDATE_AVAILABLE &&
                        CanUpgrade(def) && !_busy.Contains(def.Command);
             });
+            var checking = AgentUpdateChecker.IsChecking;
             UpdateAllBtn.Content = updatable > 0
                 ? string.Format(CnSharp.VSIX.Yolo.Resources.Manage_UpdateAllCount, updatable)
                 : CnSharp.VSIX.Yolo.Resources.Manage_UpdateAll;
-            UpdateAllBtn.IsEnabled = !AgentUpdateChecker.IsChecking && updatable > 0;
-            CheckUpdatesBtn.IsEnabled = !AgentUpdateChecker.IsChecking;
+            UpdateAllBtn.IsEnabled = !checking && updatable > 0;
+            CheckUpdatesBtn.IsEnabled = !checking;
+            // Show the in-flight scan on the button itself, not just by disabling it.
+            CheckUpdatesBtn.Content = checking
+                ? CnSharp.VSIX.Yolo.Resources.Manage_Checking
+                : CnSharp.VSIX.Yolo.Resources.Manage_CheckUpdates;
         }
 
         private Border BuildCard(AgentDef def)
